@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\SqlExerciseController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -17,4 +18,13 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 
-require __DIR__.'/auth.php';
+
+Route::prefix('it')->group(function () {
+    Route::get('sql-uebung', [SqlExerciseController::class, 'index'])
+        ->name('sql-uebung');
+});
+
+Route::prefix('wiso')->group(function () {});
+
+
+require __DIR__ . '/auth.php';
