@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Controllers\Controller;
 use App\Services\DatabaseManager;
 use App\Services\QueryHandler;
+use App\Services\OllamaService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 
@@ -14,6 +15,7 @@ use function Laravel\Prompts\table;
 class SqlExerciseController extends Controller
 {
     private $pdo;
+    private $ollama;
 
     public function __construct()
     {
@@ -21,6 +23,7 @@ class SqlExerciseController extends Controller
         $dbManager->cleanOldDatabases();
         $dbName = $dbManager->createTemporaryDatabase();
         $this->pdo = $dbManager->connectToDatabase($dbName);
+        $this->ollama = new OllamaService();
 
         // Beispieltabellen einrichten
         $this->pdo->exec("
@@ -33,31 +36,13 @@ class SqlExerciseController extends Controller
         $this->pdo->exec("INSERT INTO kunden (name, land) VALUES ('Max Mustermann', 'Deutschland'), ('John Doe', 'USA')");
     }
 
-    public function generateTask()
+    
+
+    // API-method
+    public function generateTask($prompt)
     {
-       $prompt = 'Schreibe eine SQL Aufgabe für Fachinformatiker.';
-
-        try {
-            $response = Http::post('http://localhost:11434/api/generate', [
-                'model' => 'mistral',
-                'prompt' => $prompt,
-                'stream' => false,
-            ]);
-
-            if ($response->successful()) {
-                $data = $response->json();
-                dd($data);
-                $answer = $data['response'] ?? 'Keine Antwort vom Modell.';
-            } else {
-                $answer = 'Fehler: ' . $response->status();
-            }
-        } catch (\Exception $e) {
-            $answer = 'Exception: ' . $e->getMessage();
-        }
-        return response()->json([
-            'prompt' => $prompt,
-            'answer' => $answer,
-        ]);
+        $task = $this->ollama->generate($prompt);
+        return $task;
     }
 
 
@@ -67,9 +52,12 @@ class SqlExerciseController extends Controller
     public function index()
     {
         $tables = $this->getAllTables();
-        $output = $this->generateTask();
+        $prompt = "Hallo in English";
+        $task = $this->generateTask($prompt);
+        
         return view('it.sql-exercise.index', [
-            'tables' => $tables
+            'tables' => $tables,
+            'task' => $task
         ]);
     }
 
@@ -85,7 +73,6 @@ class SqlExerciseController extends Controller
 
         return $tables;
     }
-
 
     public function executeUserQuery(Request $request)
     {

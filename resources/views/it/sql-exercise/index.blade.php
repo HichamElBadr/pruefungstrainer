@@ -7,7 +7,8 @@
 
 
 <h2>SQL-Übungsaufgabe</h2>
-<p><strong>Aufgabe:</strong> Zeige alle Kunden aus Deutschland.</p>
+<!-- task bekommen   -->
+<p>{{ $task }}</p>
 
 @if(!empty($tables))
         @foreach($tables as $tableName => $rows)
