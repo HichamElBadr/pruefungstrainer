@@ -87,7 +87,7 @@ class SqlExerciseController extends Controller
         }
 
         //Create new exercise table
-        $this->dbManager->createExerciseTable($mysqlstatement, $this->dbName);
+        $this->dbManager->createMySqlExercise($mysqlstatement, $this->dbName);
 
 
         Exercise::create([
