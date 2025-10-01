@@ -54,4 +54,5 @@
     <summary>Lösung anzeigen</summary>
     <pre>{{ $solution }}</pre>
 </details>
+
 </x-app-layout>
