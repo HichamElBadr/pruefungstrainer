@@ -19,7 +19,7 @@ class DatabaseManager
         $this->pdo_root->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
     }
 
-    public function cleanOldDatabases($maxAgeSeconds = 600)
+    public function cleanOldDatabases($maxAgeSeconds = 2000)
     {
         $stmt = $this->pdo_root->query("SELECT schema_name FROM information_schema.schemata WHERE schema_name LIKE 'sql_exercise_%'");
         foreach ($stmt as $row) {
@@ -42,5 +42,18 @@ class DatabaseManager
     public function connectToDatabase(string $dbName): PDO
     {
         return new PDO("mysql:host=localhost;dbname=$dbName;charset=utf8mb4", 'root', '');
+    }
+
+
+    //Maybe create a new class for this or switch this function into a  other class
+    public function createMySqlExercise(string $mysqlstatement, string $dbName)
+    {
+        $pdo = $this->connectToDatabase($dbName);
+        // Splitten an ; und jede Query einzeln ausführen
+        $statements = array_filter(array_map('trim', explode(';', $mysqlstatement)));
+
+        foreach ($statements as $stmt) {
+            $pdo->exec($stmt);
+        }
     }
 }
