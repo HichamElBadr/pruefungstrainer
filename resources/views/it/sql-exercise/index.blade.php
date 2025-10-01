@@ -52,6 +52,6 @@
 
 <details>
     <summary>Lösung anzeigen</summary>
-    <pre>SELECT * FROM kunden WHERE land='Deutschland';</pre>
+    <pre>{{ $solution }}</pre>
 </details>
 </x-app-layout>
