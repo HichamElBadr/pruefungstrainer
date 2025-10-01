@@ -9,10 +9,10 @@ class OllamaService
     public function askOllama($prompt)
     {
         $model = env('OLLAMA_MODEL');
-        set_time_limit(300);
+        set_time_limit(500);
 
         try {
-            $response = Http::timeout(120)->post('http://localhost:11434/api/generate', [
+            $response = Http::timeout(500)->post('http://localhost:11434/api/generate', [
                 'model' => $model,
                 'prompt' => $prompt,
                 'stream' => false,
