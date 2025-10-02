@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Models\Category;
 use App\Models\Exercise;
 use App\Services\AI\JsonWrapper;
 use App\Services\DatabaseManager;
@@ -88,10 +89,10 @@ class SqlExerciseController extends Controller
 
         //Create new exercise table
         $this->dbManager->createMySqlExercise($mysqlstatement, $this->dbName);
-
+        $category = Category::where('name', 'SQL')->firstOrFail();
 
         Exercise::create([
-            'category' => 'sql',
+            'category_id' => $category->id,
             'prompt' => $prompt,
             'generated_task' => $task ?? $generated_task,
             'solution' => $solution ?? null
