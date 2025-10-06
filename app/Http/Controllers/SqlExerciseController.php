@@ -52,7 +52,9 @@ class SqlExerciseController extends Controller
         $this->dbName = $this->dbManager->createTemporaryDatabase();
         session(['sql_temp_db' => $this->dbName]);
 
-        $prompt = 'Erstelle bitte eine SQL-Aufgabe für einen Fachinformatiker NUR im JSON-Format, exakt folgendes Schema:
+        $prompt = 'Erstelle bitte eine SQL-Aufgabe für einen Fachinformatiker mit mindestens 5 Datensätzen pro Tabelle und es sollen mindestens 4 verschiedene Tabellen exisitieren.
+        Die Tabellen sollen alle auch in der dritten Normalform sein!
+        NUR im JSON-Format, exakt folgendes Schema:
         {
         "task": "Hier kommt die Beschreibung der Aufgabe",
         "mysqlstatement": "Hier kommen alle CREATE TABLE und INSERT INTO Befehle, die die Beispieltabellen befüllen",
