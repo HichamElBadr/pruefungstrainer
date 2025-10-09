@@ -22,6 +22,7 @@ Route::middleware('auth')->group(function () {
 Route::prefix('it')->group(function () {
     Route::get('sql-uebung', [SqlExerciseController::class, 'index'])
         ->name('sql-uebung');
+    Route::post('sql-uebung', [SqlExerciseController::class, 'executeUserQuery']);
 });
 
 Route::prefix('wiso')->group(function () {});
