@@ -6,7 +6,7 @@ use Illuminate\Support\Facades\Http;
 
 class OllamaService
 {
-    public function askOllama($prompt)
+    private function askOllama($prompt)
     {
         $model = env('OLLAMA_MODEL');
         set_time_limit(500);
