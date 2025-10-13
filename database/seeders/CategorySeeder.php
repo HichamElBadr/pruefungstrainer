@@ -18,6 +18,11 @@ class CategorySeeder extends Seeder
             ['name' => 'UML'],
             ['name' => 'ER-Modell'],
             ['name' => 'Programmierung'],
+            ['name' => 'Netzwerktechnik'],
+            ['name' => 'Scan'],
+            ['name' => 'WISO'],
+            ['name' => 'Sonstiges'],
+            ['name' => 'IT-Sicherheit']
         ]);
     }
 }
