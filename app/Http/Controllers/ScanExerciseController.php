@@ -30,15 +30,15 @@ class ScanExerciseController extends Controller
             'solution': 'Hier kommt die Musterlösung aber NUR die Zahl OHNE TEXT ODER EINHEIT'
         }";
 
-        $generated_task = $this->ollama_service->generate($prompt);
+        $output = $this->ollama_service->generate($prompt);
 
         // Parse JSON with own Wrapper
         try {
-            $data = $this->json_wrapper->parse($generated_task);
+            $data = $this->json_wrapper->parse($output);
             $generated_task = (string)($data['task'] ?? '');
             $solution = (string)($data['solution'] ?? '');
         } catch (\Exception $e) {
-            dd($e->getMessage(), $generated_task);
+            dd($e->getMessage(), $output);
         }
 
         $category = Category::where('name', 'Scan')->firstOrFail();
@@ -46,7 +46,7 @@ class ScanExerciseController extends Controller
         Exercise::create([
             'category_id' => $category->id,
             'prompt' => $prompt,
-            'generated_task' => $task ?? $generated_task,
+            'generated_task' => $generated_task ?? $output,
             'solution' => $solution ?? null
         ]);
 
