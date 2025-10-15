@@ -18,7 +18,7 @@ class UmlExerciseController extends Controller
     ) {}
     public function index()
     {
-        $prompt = "Erstelle bitte eine Rechnungsaufgaben mit Musterlösung im JSON Format, folgendes Schema:
+        $prompt = "Erstelle bitte EINE, WIRKLICH NUR EINE Rechnungsaufgaben mit Musterlösung im JSON Format, folgendes Schema:
         {
             'task': 'Hier kommt die Beschreibung der Aufgabe',
         }";
@@ -30,7 +30,7 @@ class UmlExerciseController extends Controller
             $data = $this->json_wrapper->parse($output);
             $generated_task = (string)($data['task'] ?? '');
         } catch (\Exception $e) {
-            dd($e->getMessage(), $generated_task);
+            dd($e->getMessage(), $output);
         }
 
         $category = Category::where('name', 'UML')->firstOrFail();
