@@ -52,30 +52,44 @@ class SqlExerciseController extends Controller
         $this->dbName = $this->dbManager->createTemporaryDatabase();
         session(['sql_temp_db' => $this->dbName]);
 
-        $prompt = 'Erstelle bitte eine SQL-Aufgabe für einen Fachinformatiker mit mindestens 5 Datensätzen pro Tabelle und es sollen mindestens 4 verschiedene Tabellen exisitieren.
-        Die Tabellen sollen alle auch in der dritten Normalform sein!
-        NUR im JSON-Format, exakt folgendes Schema:
-        {
-        "task": "Hier kommt die Beschreibung der Aufgabe",
-        "mysqlstatement": "Hier kommen alle CREATE TABLE und INSERT INTO Befehle, die die Beispieltabellen befüllen",
-        "solution": "Hier kommt die SQL-Lösung als SELECT-Statement"
-        }
+        $prompt = '
+Erstelle bitte eine anspruchsvolle SQL-Aufgabe für angehende Fachinformatiker für Anwendungsentwicklung.
 
-        WICHTIG:
-        1. Keine Markdown-Syntax, keine Listen, keine Backticks.
-        2. Verwende nur doppelte Anführungszeichen für Strings.
-        3. JSON muss gültig sein, es darf kein zusätzliches Text außerhalb der JSON-Struktur kommen.
-        4. Die Aufgabe soll nur SELECT-Abfragen enthalten, möglichst mit JOINs zwischen Tabellen.
-        5. Halte alles in einer einzigen JSON-Struktur.
+Die Aufgabe soll:
+- mindestens 3 verschiedene Tabellen enthalten (z. B. kunden, bestellungen, produkte, kategorie, mitarbeiter usw.)
+- mindestens 3 Datensätze pro Tabelle haben,
+- alle Tabellen in der **dritten Normalform (3NF)** sein. Das bedeutet u. a.:
+  - Vorname und Nachname müssen getrennt gespeichert werden,
+  - keine redundanten oder abgeleiteten Attribute,
+  - Fremdschlüssel müssen korrekt genutzt werden.
+- nur SELECT-Abfragen enthalten, idealerweise mit mehreren JOINs (z. B. INNER JOIN, LEFT JOIN)
+- einen realistischen betrieblichen Kontext haben (z. B. ein Online-Shop, eine Firma, eine Schule, etc.)
+- in der Bestellung Tabellen sollen korrekt alle passenden Fremdschlüsseln drinnen sein.
 
-        Beispielausgabe, die gültig sein muss:
+Antworte **ausschließlich im gültigen JSON-Format** nach folgendem Schema:
 
-        {
-        "task": "Erstelle eine SQL-Abfrage, die alle Bestellungen mit Kundenname und Produktname anzeigt.",
-        "mysqlstatement": "CREATE TABLE kunden (...); CREATE TABLE produkte (...); INSERT INTO kunden ...; INSERT INTO produkte ...;",
-        "solution": "SELECT ... FROM kunden JOIN produkte ON ..."
-        }'
-        ;
+{
+  "task": "Hier steht die Aufgabenbeschreibung in einem Satz oder kurzen Absatz.",
+  "mysqlstatement": "Hier kommen alle CREATE TABLE und INSERT INTO Befehle, die die Tabellen und Beispielwerte anlegen.",
+  "solution": "Hier kommt die korrekte SQL-Abfrage (nur SELECT, keine anderen Befehle)."
+}
+
+WICHTIG:
+1. Keine Markdown-Syntax, keine Listen, keine Backticks.
+2. Nur doppelte Anführungszeichen für Strings.
+3. Keine Kommentare oder Text außerhalb der JSON-Struktur.
+4. Der JSON-String muss **vollständig gültig und parsebar** sein.
+5. Die Abfrage soll inhaltlich sinnvoll sein und JOINs zwischen mehreren Tabellen enthalten.
+
+Beispielausgabe (nur zur Orientierung):
+
+{
+  "task": "Erstelle eine SQL-Abfrage, die alle Bestellungen mit Kundenvorname, Nachname, Produktname und Kategoriebezeichnung anzeigt.",
+  "mysqlstatement": "CREATE TABLE kunden (...); CREATE TABLE produkte (...); CREATE TABLE kategorien (...); CREATE TABLE bestellungen (...); INSERT INTO ...;",
+  "solution": "SELECT k.vorname, k.nachname, p.name AS produktname, kat.name AS kategorie FROM bestellungen b JOIN kunden k ON b.kunden_id = k.id JOIN produkte p ON b.produkt_id = p.id JOIN kategorien kat ON p.kategorie_id = kat.id;"
+}
+';
+
 
         $generated_task = $this->generateTask($prompt);
 
@@ -114,23 +128,23 @@ class SqlExerciseController extends Controller
     {
         $dbName = session('sql_temp_db');
 
-    if (!$dbName) {
-        dd('Keine temporäre Datenbank in der Session gefunden. Bitte Seite neu laden.');
-    }
+        if (!$dbName) {
+            dd('Keine temporäre Datenbank in der Session gefunden. Bitte Seite neu laden.');
+        }
 
-    // Neue Verbindung zur richtigen DB aufbauen
-    $pdo = $this->dbManager->connectToDatabase($dbName);
+        // Neue Verbindung zur richtigen DB aufbauen
+        $pdo = $this->dbManager->connectToDatabase($dbName);
 
-    $stmt = $pdo->query("SHOW TABLES");
-    $tables = [];
+        $stmt = $pdo->query("SHOW TABLES");
+        $tables = [];
 
-    $tableNames = $stmt->fetchAll(\PDO::FETCH_COLUMN);
-    foreach ($tableNames as $table) {
-        $data = $pdo->query("SELECT * FROM `$table`")->fetchAll(\PDO::FETCH_ASSOC);
-        $tables[$table] = $data;
-    }
+        $tableNames = $stmt->fetchAll(\PDO::FETCH_COLUMN);
+        foreach ($tableNames as $table) {
+            $data = $pdo->query("SELECT * FROM `$table`")->fetchAll(\PDO::FETCH_ASSOC);
+            $tables[$table] = $data;
+        }
 
-    return $tables;
+        return $tables;
     }
 
     public function executeUserQuery(Request $request)
@@ -148,7 +162,7 @@ class SqlExerciseController extends Controller
             'solution' => $solution,
             'result' => $result,
             'userSql' => $sql,
-            
+
         ]);
     }
 }

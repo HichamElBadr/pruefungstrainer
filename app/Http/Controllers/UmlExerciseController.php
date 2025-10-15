@@ -18,10 +18,20 @@ class UmlExerciseController extends Controller
     ) {}
     public function index()
     {
-        $prompt = "Erstelle bitte EINE, WIRKLICH NUR EINE Rechnungsaufgaben mit Musterlösung im JSON Format, folgendes Schema:
-        {
-            'task': 'Hier kommt die Beschreibung der Aufgabe',
-        }";
+        $prompt = "
+            Erstelle bitte **EINE einzige** Rechnungsaufgabe mit Musterlösung **im JSON Format**. 
+            Die Ausgabe darf **nichts anderes enthalten** als das folgende Schema exakt:
+
+            {
+                'task': 'Hier kommt die Beschreibung der Aufgabe ALS Beispiel eine Mulitiplikations Aufgaben'
+            }
+
+            WICHTIG:
+            - Gib nur **genau ein JSON-Objekt** zurück.
+            - Kein zusätzliches Feld wie 'solution', 'description', 'steps' usw.
+            - Keine Einleitungen, Erklärungen oder Text außerhalb des JSON.
+            - Verwende **doppelte Anführungszeichen** wie oben, kein anderes Format.
+            ";
 
         $output = $this->ollama_service->generate($prompt);
 
@@ -45,6 +55,5 @@ class UmlExerciseController extends Controller
         return view('it.uml-exercise.index', [
             'generated_task' => $generated_task,
         ]);
-
     }
 }

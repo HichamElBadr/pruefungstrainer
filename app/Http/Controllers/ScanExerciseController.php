@@ -24,7 +24,7 @@ class ScanExerciseController extends Controller
      */
     public function index()
     {
-        $prompt = "Erstelle bitte eine Rechnungsaufgaben mit Musterlösung im JSON Format, folgendes Schema:
+        $prompt = "Erstelle bitte NUR EINE Rechnungsaufgaben mit Musterlösung im JSON Format, folgendes Schema:
         {
             'task': 'Hier kommt die Beschreibung der Aufgabe',
             'solution': 'Hier kommt die Musterlösung aber NUR die Zahl OHNE TEXT ODER EINHEIT'
