@@ -41,8 +41,8 @@ class UmlExerciseController extends Controller
             ]);
         }
 
-        // Wenn der Nutzer bereits echtes PlantUML mit @startuml nutzt, nimm es 1:1.
-        $plantUml = str_contains($raw, '@startuml') ? $raw : $this->normalizeToPlantUml($raw);
+
+        $plantUml= $this->normalizeToPlantUml($raw);
 
         try {
             $pngPath = $plantUmlService->generate($plantUml);
@@ -70,6 +70,7 @@ class UmlExerciseController extends Controller
      */
     private function normalizeToPlantUml(string $input): string
     {
+
         $lines = preg_split('/\R/', $input);
         $out = [];
         $inClass = false;
@@ -112,7 +113,7 @@ class UmlExerciseController extends Controller
 
         if ($inClass) { $out[] = "}"; }
 
-        // @startuml/@enduml packt dein Service automatisch, falls nicht vorhanden
+        // @startuml/@enduml
         return implode("\n", $out);
     }
 }
