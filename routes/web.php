@@ -29,8 +29,8 @@ Route::prefix('it')->group(function () {
     Route::get('scan-uebung', [ScanExerciseController::class, 'index'])
         ->name('scan-uebung');
     Route::post('scan-uebung', [ScanExerciseController::class, 'check']);
-    Route::get('uml-uebung', [UmlExerciseController::class, 'index'])
-        ->name('uml-uebung');
+    Route::get('/uml', [UmlExerciseController::class, 'create'])->name('uml.form');
+    Route::post('/uml', [UmlExerciseController::class, 'render'])->name('uml.render');
 });
 
 Route::prefix('wiso')->group(function () {});
