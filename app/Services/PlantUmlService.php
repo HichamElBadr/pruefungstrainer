@@ -35,7 +35,7 @@ class PlantUmlService
 
         // >>> 2) Nutzer darf ohne @startuml/@enduml schreiben <<<
         if (!str_contains($umlCode, '@startuml')) {
-            $umlCode = "@startuml\n" . trim($umlCode) . "\n@enduml";
+        $umlCode = "@startuml\n" . "hide circle\n".trim($umlCode) . "\n@enduml";
         }
 
         // >>> 3) .puml temporär im Projekt ablegen (debug-freundlich) <<<
