@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\ScanExerciseController;
 use App\Http\Controllers\SqlExerciseController;
 use Illuminate\Support\Facades\Route;
 
@@ -22,6 +23,11 @@ Route::middleware('auth')->group(function () {
 Route::prefix('it')->group(function () {
     Route::get('sql-uebung', [SqlExerciseController::class, 'index'])
         ->name('sql-uebung');
+    Route::post('sql-uebung', [SqlExerciseController::class, 'executeUserQuery']);
+
+    Route::get('scan-uebung', [ScanExerciseController::class, 'index'])
+        ->name('scan-uebung');
+    Route::post('scan-uebung', [ScanExerciseController::class, 'check']);
 });
 
 Route::prefix('wiso')->group(function () {});
