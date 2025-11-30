@@ -13,8 +13,9 @@ class JsonWrapper
      */
     public static function parse(string $rawResponse): array
     {
+
         // 1. Alles zwischen ```json ... ``` extrahieren
-        if (preg_match('/```json(.*?)```/s', $rawResponse, $matches)) {
+        if (preg_match('/```(?:json)?(.*?)```/s', $rawResponse, $matches)) {
             $jsonString = trim($matches[1]);
         } else {
             $jsonString = trim($rawResponse);
@@ -24,7 +25,7 @@ class JsonWrapper
         $jsonString = preg_replace('/[\x00-\x1F\x7F]/u', '', $jsonString);
 
         // 3. Ersetze echte Zeilenumbrüche innerhalb von Strings durch \n
-        $jsonString = preg_replace("/\r\n|\r|\n/", '\\n', $jsonString);
+       //$jsonString = preg_replace("/\r\n|\r|\n/", '\\n', $jsonString);
 
         // 4. Optional: einfache Anführungszeichen zu doppelten konvertieren,
         // nur innerhalb von Strings, nicht bei MySQL Code in insert Statements
@@ -33,12 +34,6 @@ class JsonWrapper
 
         // 5. JSON decoden
         $data = json_decode($jsonString, true);
-
-        if (json_last_error() !== JSON_ERROR_NONE) {
-            // Extra Logging: Rohstring mitgeben
-            throw new \Exception("Ungültiges JSON von der KI: " . json_last_error_msg() . "\nRaw Response:\n" . $rawResponse);
-        }
-
         return $data;
     }
 }

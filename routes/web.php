@@ -3,6 +3,7 @@
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ScanExerciseController;
 use App\Http\Controllers\SqlExerciseController;
+use App\Http\Controllers\UmlExerciseController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -28,6 +29,8 @@ Route::prefix('it')->group(function () {
     Route::get('scan-uebung', [ScanExerciseController::class, 'index'])
         ->name('scan-uebung');
     Route::post('scan-uebung', [ScanExerciseController::class, 'check']);
+    Route::get('/uml', [UmlExerciseController::class, 'create'])->name('uml.form');
+    Route::post('/uml', [UmlExerciseController::class, 'render'])->name('uml.render');
 });
 
 Route::prefix('wiso')->group(function () {});
