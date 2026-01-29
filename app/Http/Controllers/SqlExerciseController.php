@@ -6,9 +6,11 @@ use App\Http\Controllers\Controller;
 use App\Models\Category;
 use App\Models\Exercise;
 use App\Services\AI\JsonWrapper;
+use App\Services\AI\AiResponseProvider;
 use App\Services\DatabaseManager;
 use App\Services\QueryHandler;
 use App\Services\OllamaService;
+
 use Illuminate\Container\Attributes\Database;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
@@ -71,7 +73,7 @@ class SqlExerciseController extends Controller
      *
      * @throws \Throwable On JSON parsing issues or DB provisioning failures.
      */
-    public function index()
+    public function index(AiResponseProvider $ai)
     {
         $this->dbName = $this->dbManager->createTemporaryDatabase();
         session(['sql_temp_db' => $this->dbName]);
@@ -114,16 +116,15 @@ class SqlExerciseController extends Controller
         }
         PROMPT;
 
-        $generated_task = $this->generateTask($prompt);
+        $data = $ai->get($prompt, 'sql');
                 
         // Parse JSON with own Wrapper
         try {
-            $data = $this->jsonWrapper->parse($generated_task);
             $task = (string) ($data['task'] ?? '');
             $mysqlstatement = (string) ($data['mysqlstatement'] ?? '');
             $solution = (string) ($data['solution'] ?? '');
         } catch (\Exception $e) {
-            dd($e->getMessage(), $generated_task);
+            dd($e->getMessage(), $data);
         }
 
         //Create new exercise table
@@ -133,7 +134,7 @@ class SqlExerciseController extends Controller
         Exercise::create([
             'category_id' => $category->id,
             'prompt' => $prompt,
-            'generated_task' => $task ?? $generated_task,
+            'generated_task' => $task ?? $data,
             'solution' => $solution ?? null
         ]);
 
@@ -141,7 +142,7 @@ class SqlExerciseController extends Controller
 
         return view('it.sql-exercise.index', [
             'tables' => $tables,
-            'task' => $task ?? $generated_task,
+            'task' => $task ?? $data,
             'solution' => $solution ?? null,
             'mysqlstatement' => $mysqlstatement ?? null
         ]);
