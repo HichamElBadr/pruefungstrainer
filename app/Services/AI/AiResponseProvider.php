@@ -34,7 +34,7 @@ class AiResponseProvider
                 $selectedFixture = request()->get('fixture', $fixtureKey);
             }
 
-            return $this->ai_Fixture_service->load("{$selectedFixture}.json");
+            return $this->ai_Fixture_service->load($selectedFixture);
         }
 
         // normal generate with ollama

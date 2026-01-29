@@ -12,19 +12,22 @@ use RuntimeException;
  */
 class AiFixtureService
 {
-    public function load(string $path): array
+    public function load(string $fixtureName): array
     {
-        if (!Storage::disk('ai_fixtures')->exists($path)) {
+        $path = resource_path("ai-fixtures/{$fixtureName}.json");
+
+        if (!file_exists($path)) {
             throw new RuntimeException("Fixture not found: {$path}");
         }
 
-        $raw = Storage::disk('ai_fixtures')->get($path);
+        $raw = file_get_contents($path);
         $data = json_decode($raw, true);
 
         if (!is_array($data)) {
-            throw new RuntimeException("Invalid JSON fixture: {$path}");
+            throw new RuntimeException("Invalid JSON fixture: {$fixtureName}");
         }
 
         return $data;
     }
 }
+
