@@ -14,6 +14,11 @@ return [
     |
     */
 
+    'ai' => [
+    'mode' => env('AI_MODE', 'ollama'), // fixtures | ollama
+],
+
+
     'postmark' => [
         'token' => env('POSTMARK_TOKEN'),
     ],
