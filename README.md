@@ -1,61 +1,210 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Prüfungstrainer – AI-Driven Learning Platform for Technical Education
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Prüfungstrainer is a modular, AI-powered learning platform designed for **technical education and IT professions**.
 
-## About Laravel
+It combines a Laravel-based web application with a dedicated Python-based AI Gateway to generate structured, robust, and reproducible learning tasks using locally hosted language models.
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+The system is designed for extensibility, privacy, and long-term maintainability.
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+---
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+## Core Philosophy
 
-## Learning Laravel
+- Privacy-first (fully local AI via Ollama)
+- Clear architectural separation (Web ↔ AI Gateway)
+- Deterministic, structured AI output (validated JSON)
+- Designed for real educational environments
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+---
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+## Key Features
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+- AI-generated tasks (SQL, UML, calculation tasks, extensible)
+- In-browser task execution
+- Isolated SQL practice environment with temporary databases
+- UML diagram rendering via PlantUML
+- Robust AI output validation layer (JSON normalization)
+- Python-based AI microservice (`ai-gateway/`)
+- Modular category-based task system
+- Designed for multi-model support and model routing
 
-## Laravel Sponsors
+---
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+## System Architecture
 
-### Premium Partners
+The system is split into two independent layers:
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+1. Laravel Application  
+   - Web UI  
+   - Business logic  
+   - Database management  
+   - Task rendering  
 
-## Contributing
+2. AI Gateway (Python Service)  
+   - Prompt orchestration  
+   - Model communication (Ollama)  
+   - Output validation & normalization  
+   - Schema enforcement  
+   - Future: model routing & response caching  
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+This separation ensures:
 
-## Code of Conduct
+- Clean responsibility boundaries
+- Independent scaling
+- Easier model replacement
+- Cleaner testing
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+---
 
-## Security Vulnerabilities
+## High-Level Data Flow
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+1. User selects a task type (e.g. SQL)
+2. Laravel sends a structured request to the AI Gateway
+3. AI Gateway builds a controlled prompt
+4. Ollama generates raw output
+5. AI Gateway validates & normalizes JSON
+6. Laravel renders task + solution
+7. User executes solution (if applicable)
+
+---
+
+## Example Structured AI Response
+
+Example normalized response from AI Gateway:
+
+{
+  "task": "Write a SQL query to retrieve all customers with orders above 1000€.",
+  "mysqlstatement": "CREATE TABLE customers (...); INSERT INTO ...;",
+  "solution": "SELECT ... FROM customers JOIN orders ...;",
+}
+
+All responses are validated before being forwarded to the web application.
+
+---
+
+## Technology Stack
+
+### Web Layer
+- Laravel 12
+- PHP 8.2+
+- MySQL
+- Blade
+
+### AI Layer
+- Python (FastAPI recommended)
+- Ollama (local LLM runtime)
+- Structured JSON validation
+- Schema enforcement
+
+### Diagram Rendering
+- PlantUML (local JAR execution)
+
+---
+
+## Repository Structure
+
+- app/              Laravel application code
+- routes/           HTTP routes
+- database/         Migrations and seeders
+- docs/             Technical documentation
+- ai-gateway/       Python AI microservice
+- tests/            Automated tests
+
+---
+
+## Screenshots
+
+### Login Interface
+
+![login](docs/image_login.png)
+
+### SQL Practice Interface
+
+![sqltask](docs/image_sqltask.png)
+
+---
+
+## Quickstart (Conceptual)
+
+This project requires two running services:
+
+1. Laravel Web Application
+2. AI Gateway (Python)
+
+Additionally required:
+- Local Ollama installation
+- MySQL
+- Java (for PlantUML)
+
+Detailed setup instructions should be documented in:
+docs/INSTALLATION.md
+
+---
+
+## Security Considerations
+
+- Fully local AI execution (no external API calls)
+- SQL environment should restrict destructive queries
+- Environment variables used for configuration
+- AI responses validated before use
+- Errors handled gracefully
+
+---
+
+## Extensibility Strategy
+
+The system is designed to evolve in the following directions:
+
+- Additional task types (networking, programming, security)
+- Difficulty-based generation
+- Model routing (task model vs solution model)
+- Multi-model benchmarking
+- RAG integration
+- Learning state persistence
+- Caching layer in AI Gateway
+- Horizontal deployment
+
+---
+
+## Development Philosophy
+
+- Clear separation of concerns
+- Minimal coupling between AI and UI
+- Service-oriented architecture
+- Feature branches
+- Controlled AI outputs
+- Future-ready for distributed deployment
+
+---
+
+## Roadmap
+
+- Model routing architecture
+- Response caching
+- Structured prompt versioning
+- Performance monitoring
+- Docker-based deployment
+- Automated tests for AI Gateway
+- Role-based permission system
+
+---
+
+## Contribution Guidelines
+
+- Use feature branches
+- No secrets in commits
+- Keep PRs focused and reviewable
+- Add documentation for new modules
+- Keep AI responses schema-compliant
+
+---
 
 ## License
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+This project is licensed under the GNU General Public License v3.0.
+
+---
+
+## Author
+
+Hicham El Badr

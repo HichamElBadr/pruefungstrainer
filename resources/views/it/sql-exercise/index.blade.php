@@ -12,10 +12,10 @@
 
     @if(!empty($tables))
         @foreach($tables as $tableName => $rows)
-            <div style="margin-top: 30px;">
-                <h4 style="margin-bottom: 5px; color: #444;">{{ $tableName }}</h4>
+            <div style="margin-top: 30px; text-align: center;">
+                <h4 style="margin-bottom: 5px; color: #444;text-align: left;">{{ $tableName }}</h4>
                 @if(count($rows) > 0)
-                    <table style="width: 100%; border-collapse: collapse; margin-bottom: 15px;">
+                    <table style="border-collapse: collapse; margin-bottom: 15px;">
                         <thead>
                             <tr style="background-color: #eee;">
                                 @foreach(array_keys($rows[0]) as $column)
