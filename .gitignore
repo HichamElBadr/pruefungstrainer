@@ -6,7 +6,6 @@
 .phpactor.json
 # phpDocumentor cache & generated docs
 .phpdoc/
-docs/
 .phpunit.result.cache
 /.fleet
 /.idea
