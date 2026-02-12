@@ -125,12 +125,6 @@ All responses are validated before being forwarded to the web application.
 
 ![sqltask](docs/image_sqltask.png)
 
-<!-- SCREENSHOT: SQL task page with editor and result table -->
-
-### UML Generation
-
-<!-- SCREENSHOT: UML text input and generated diagram -->
-
 ---
 
 ## Quickstart (Conceptual)
