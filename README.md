@@ -119,9 +119,11 @@ All responses are validated before being forwarded to the web application.
 
 ### Login Interface
 
-![login](image.png)
+![login](docs/image_login.png)
 
 ### SQL Practice Interface
+
+![sqltask](docs/image_sqltask.png)
 
 <!-- SCREENSHOT: SQL task page with editor and result table -->
 
