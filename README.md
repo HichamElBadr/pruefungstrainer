@@ -13,10 +13,7 @@ The system is designed for extensibility, privacy, and long-term maintainability
 - Privacy-first (fully local AI via Ollama)
 - Clear architectural separation (Web ↔ AI Gateway)
 - Deterministic, structured AI output (validated JSON)
-- Extensible task architecture
 - Designed for real educational environments
-
-This is not just a prototype — it is structured as a long-term platform.
 
 ---
 
