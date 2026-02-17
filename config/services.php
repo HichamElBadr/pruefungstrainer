@@ -15,9 +15,12 @@ return [
     */
 
     'ai' => [
-    'mode' => env('AI_MODE', 'ollama'), // fixtures | ollama
-],
+        'mode' => env('AI_MODE', 'ollama'), // fixtures | ollama
+    ],
 
+    'ai_gateway' => [
+        'url' => env('AI_GATEWAY_URL', 'http://127.0.0.1:8001'),
+    ],
 
     'postmark' => [
         'token' => env('POSTMARK_TOKEN'),

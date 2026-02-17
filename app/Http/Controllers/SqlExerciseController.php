@@ -5,15 +5,15 @@ namespace App\Http\Controllers;
 use App\Http\Controllers\Controller;
 use App\Models\Category;
 use App\Models\Exercise;
-use App\Services\AI\JsonWrapper;
+use App\Services\AI\AiGatewayClient;
 use App\Services\AI\AiResponseProvider;
 use App\Services\DatabaseManager;
 use App\Services\QueryHandler;
-use App\Services\OllamaService;
 
 use Illuminate\Container\Attributes\Database;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Str;
 use Termwind\Components\Ol;
 
 use function Laravel\Prompts\table;
@@ -33,118 +33,87 @@ class SqlExerciseController extends Controller
      * Note: Old temporary databases are cleaned up on construction.
      *
      * @param DatabaseManager $dbManager Manages temporary DB creation/cleanup and connections.
-     * @param JsonWrapper     $jsonWrapper Robust JSON parser/validator for AI responses.
-     * @param OllamaService   $ollamaService Client for the local AI (Ollama).
      */
-    public function __construct(DatabaseManager $dbManager, JsonWrapper $jsonWrapper, OllamaService $ollamaService)
+    public function __construct(DatabaseManager $dbManager)
     {
-        $this->ollama = $ollamaService;
-        $this->jsonWrapper = $jsonWrapper;
         $this->dbManager = $dbManager;
 
         //TODO umlagern in einer Methode.
         $this->dbManager->cleanOldDatabases();
     }
 
-    /**
-     * Calls the AI service with a given prompt and stores the raw response.
-     *
-     * @param string $prompt Prompt instructing the AI to produce a SQL exercise JSON.
-     * @return string The raw AI response (expected to be JSON).
-     */
-    public function generateTask($prompt)
-    {
-        $this->task = $this->ollama->generate($prompt);
-        return $this->task;
-    }
-
-    /**
-     * Generates a new SQL exercise, provisions a temporary database with tables/data,
-     * persists the exercise meta, and renders the exercise view including table previews.
-     *
-     * Steps:
-     *  1) Create a per-session temporary database and store its name in the session.
-     *  2) Ask the AI for a strict JSON payload: {"task","mysqlstatement","solution"}.
-     *  3) Parse JSON safely; on failure, dump the error and raw payload.
-     *  4) Execute the provided DDL/DML on the temporary DB.
-     *  5) Persist exercise (category=SQL) and render the page with table snapshots.
-     *
-     * @return \Illuminate\Contracts\View\View The exercise screen with schema preview and task text.
-     *
-     * @throws \Throwable On JSON parsing issues or DB provisioning failures.
-     */
-    public function index(AiResponseProvider $ai)
+    public function index(AiGatewayClient $gateway)
     {
         $this->dbName = $this->dbManager->createTemporaryDatabase();
         session(['sql_temp_db' => $this->dbName]);
 
-        $prompt = <<<'PROMPT'
-        Erstelle bitte eine anspruchsvolle SQL-Aufgabe für angehende Fachinformatiker für Anwendungsentwicklung.
+        // Parameter aus UI oder Defaults
+        $difficulty = request()->get('difficulty', 'medium'); // oder fest
+        $topic = request()->get('topic'); // optional, kannst du auch weglassen
+        $language = 'de';
 
-        Die Aufgabe soll:
-        - mindestens 3 verschiedene Tabellen enthalten (z. B. kunden, bestellungen, produkte, kategorie, mitarbeiter usw.)
-        - mindestens 3 Datensätze pro Tabelle haben,
-        - alle Tabellen in der dritten Normalform (3NF) sein. Das bedeutet u. a.:
-        - Vorname und Nachname müssen getrennt gespeichert werden,
-        - keine redundanten oder abgeleiteten Attribute,
-        - Fremdschlüssel müssen korrekt genutzt werden.
-        - nur SELECT-Abfragen enthalten, idealerweise mit mehreren JOINs (z. B. INNER JOIN, LEFT JOIN)
-        - einen realistischen betrieblichen Kontext haben (z. B. ein Online-Shop, eine Firma, eine Schule, etc.)
-        - in der Bestellung Tabellen sollen korrekt alle passenden Fremdschlüsseln drinnen sein.
+        // Das ersetzt deinen riesigen Prompt: nur Kontext/Constraints
+        $extraContext = implode("\n", [
+            "Zielgruppe: Fachinformatiker Anwendungsentwicklung (IHK AP2).",
+            "Mindestens 3 Tabellen, je mind. 3 Datensätze.",
+            "3NF: Vorname/Nachname getrennt, keine redundanten Felder, saubere FK.",
+            "Nur SELECT in der solution, idealerweise mehrere JOINs.",
+            "Realistischer Kontext: z.B. Online-Shop oder Hochschule.",
+        ]);
 
-        Antworte ausschließlich im gültigen JSON-Format nach folgendem Schema:
+        $payload = [
+            'request_id' => (string) Str::uuid(),
+            'difficulty' => $difficulty,
+            'language' => $language,
+            'extra_context' => $extraContext,
+        ];
 
-        {
-        "task": "Hier steht die Aufgabenbeschreibung in einem Satz oder kurzen Absatz.",
-        "mysqlstatement": "Hier kommen alle CREATE TABLE und INSERT INTO Befehle, die die Tabellen und Beispielwerte anlegen.",
-        "solution": "Hier kommt die korrekte SQL-Abfrage (nur SELECT, keine anderen Befehle)."
+        // topic wirklich optional lassen
+        if (!empty($topic)) {
+            $payload['topic'] = $topic;
         }
 
-        WICHTIG:
-        1. Keine Markdown-Syntax, keine Listen, keine Backticks.
-        2. Nur doppelte Anführungszeichen für Strings.
-        3. Keine Kommentare oder Text außerhalb der JSON-Struktur.
-        4. Der JSON-String muss vollständig gültig und parsebar sein.
-        5. Die Abfrage soll inhaltlich sinnvoll sein und JOINs zwischen mehreren Tabellen enthalten.
-
-        Beispielausgabe (nur zur Orientierung):
-
-        {
-        "task": "Erstelle eine SQL-Abfrage, die alle Bestellungen mit Kundenvorname, Nachname, Produktname und Kategoriebezeichnung anzeigt.",
-        "mysqlstatement": "CREATE TABLE kunden (...); CREATE TABLE produkte (...); CREATE TABLE kategorien (...); CREATE TABLE bestellungen (...); INSERT INTO ...;",
-        "solution": "SELECT k.vorname, k.nachname, p.name AS produktname, kat.name AS kategorie FROM bestellungen b JOIN kunden k ON b.kunden_id = k.id JOIN produkte p ON b.produkt_id = p.id JOIN kategorien kat ON p.kategorie_id = kat.id;"
-        }
-        PROMPT;
-
-        $data = $ai->get($prompt, 'sql');
-                
-        // Parse JSON with own Wrapper
+        // Call Python AI Gateway
         try {
-            $task = (string) ($data['task'] ?? '');
-            $mysqlstatement = (string) ($data['mysqlstatement'] ?? '');
-            $solution = (string) ($data['solution'] ?? '');
-        } catch (\Exception $e) {
-            dd($e->getMessage(), $data);
+            $aiResult = $gateway->generateSql($payload);
+        } catch (\Throwable $e) {
+            // Für dev erstmal dd, später Fehlerseite/flash
+            dd('AI Gateway failed', $e->getMessage());
         }
 
-        //Create new exercise table
+        $task = (string) ($aiResult['task'] ?? '');
+        $mysqlstatement = (string) ($aiResult['mysqlstatement'] ?? '');
+        $solution = (string) ($aiResult['solution'] ?? '');
+        $meta = $aiResult['meta'] ?? [];
+
+        // Minimal-Checks
+        if ($task === '' || $mysqlstatement === '' || $solution === '') {
+            dd('Invalid AI response', $aiResult);
+        }
+
+        // Temp-DB befüllen
         $this->dbManager->createMySqlExercise($mysqlstatement, $this->dbName);
+
         $category = Category::where('name', 'SQL')->firstOrFail();
 
         Exercise::create([
             'category_id' => $category->id,
-            'prompt' => $prompt,
-            'generated_task' => $task ?? $data,
-            'solution' => $solution ?? null
+            // du kannst hier entweder den „alten Prompt“ speichern oder die Parameter
+            'prompt' => json_encode($payload, JSON_UNESCAPED_UNICODE),
+            'generated_task' => $task,
+            'solution' => $solution,
+            // optional: meta speichern (wenn du Spalte hast)
+            // 'meta' => json_encode($meta),
         ]);
 
         $tables = $this->getAllTables();
 
         return view('it.sql-exercise.index', [
             'tables' => $tables,
-            'task' => $task ?? $data,
-            'solution' => $solution ?? null,
-            'mysqlstatement' => $mysqlstatement ?? null
+            'task' => $task,
+            'solution' => $solution,
+            'mysqlstatement' => $mysqlstatement,
+            'meta' => $meta, // optional anzeigen
         ]);
     }
 
