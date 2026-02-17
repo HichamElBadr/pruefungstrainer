@@ -1,9 +1,10 @@
 from fastapi import HTTPException
-import json
-import re
 from pathlib import Path
 
 from app.schemas.sql import GenerateSqlRequest
+from app.clients.ollama_client import OllamaClient
+from app.services.json_extractor import extract_json_best_effort
+
 
 
 PROMPT_PATH = Path(__file__).resolve().parents[2] / "prompts" / "sql" / "sql_v1.txt"
@@ -24,31 +25,38 @@ def build_sql_prompt(payload: GenerateSqlRequest) -> str:
         language=payload.language,
     ).strip()
 
+async def generate_sql_exercise(
+    payload: GenerateSqlRequest,
+    client: OllamaClient,
+) -> dict:
+    """
+    Orchestriert die komplette SQL-Generierung:
+    1) Prompt bauen
+    2) Ollama aufrufen
+    3) JSON extrahieren
+    4) Validieren
+    """
 
-def extract_json_best_effort(text: str) -> dict:
-    if not text:
-        raise HTTPException(status_code=422, detail="Empty response from model.")
+    prompt = build_sql_prompt(payload)
+    raw = await client.generate(prompt)
 
-    s = text.strip()
+    obj = extract_json_best_effort(raw)
 
-    m = re.search(r"```(?:json)?\s*(\{.*?\})\s*```", s, flags=re.DOTALL | re.IGNORECASE)
-    if m:
-        candidate = m.group(1).strip()
-        try:
-            return json.loads(candidate)
-        except json.JSONDecodeError as e:
-            raise HTTPException(status_code=422, detail=f"Invalid JSON inside code block: {e}")
+    for k in ("task", "mysqlstatement", "solution"):
+        if k not in obj or not isinstance(obj[k], str) or not obj[k].strip():
+            raise HTTPException(
+                status_code=422,
+                detail=f"Missing/invalid field '{k}' in model JSON.",
+            )
 
-    start = s.find("{")
-    end = s.rfind("}")
-    if start != -1 and end != -1 and end > start:
-        candidate = s[start:end + 1].strip()
-        try:
-            return json.loads(candidate)
-        except json.JSONDecodeError as e:
-            raise HTTPException(status_code=422, detail=f"Invalid JSON extracted by braces: {e}")
-
-    try:
-        return json.loads(s)
-    except json.JSONDecodeError as e:
-        raise HTTPException(status_code=422, detail=f"Invalid JSON from model: {e}")
+    return {
+        "task": obj["task"].strip(),
+        "mysqlstatement": obj["mysqlstatement"].strip(),
+        "solution": obj["solution"].strip(),
+        "meta": {
+            "provider": "ollama",
+            "model": client.model,
+            "timeout_sec": client.timeout_sec,
+            "prompt_version": "sql_v1",
+        },
+    }
