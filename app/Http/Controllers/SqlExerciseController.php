@@ -20,15 +20,10 @@ use function Laravel\Prompts\table;
 
 class SqlExerciseController extends Controller
 {
-    private $pdo;
-    private $ollama;
-    private $task;
     private $dbManager;
     private $dbName;
-    private $jsonWrapper;
 
     /**
-     * Injects all required services and performs initial housekeeping.
      *
      * Note: Old temporary databases are cleaned up on construction.
      *
@@ -42,79 +37,48 @@ class SqlExerciseController extends Controller
         $this->dbManager->cleanOldDatabases();
     }
 
-    public function index(AiGatewayClient $gateway)
+    public function index(AiResponseProvider $ai)
     {
         $this->dbName = $this->dbManager->createTemporaryDatabase();
         session(['sql_temp_db' => $this->dbName]);
 
-        // Parameter aus UI oder Defaults
-        $difficulty = request()->get('difficulty', 'medium'); // oder fest
-        $topic = request()->get('topic'); // optional, kannst du auch weglassen
-        $language = 'de';
-
-        // Das ersetzt deinen riesigen Prompt: nur Kontext/Constraints
-        $extraContext = implode("\n", [
-            "Zielgruppe: Fachinformatiker Anwendungsentwicklung (IHK AP2).",
-            "Mindestens 3 Tabellen, je mind. 3 Datensätze.",
-            "3NF: Vorname/Nachname getrennt, keine redundanten Felder, saubere FK.",
-            "Nur SELECT in der solution, idealerweise mehrere JOINs.",
-            "Realistischer Kontext: z.B. Online-Shop oder Hochschule.",
-        ]);
-
         $payload = [
             'request_id' => (string) Str::uuid(),
-            'difficulty' => $difficulty,
-            'language' => $language,
-            'extra_context' => $extraContext,
+            'difficulty' => request()->get('difficulty', 'medium'),
+            'language' => 'de',
+            'extra_context' => implode("\n", [
+                "Zielgruppe: Fachinformatiker Anwendungsentwicklung (IHK AP2).",
+                "Mindestens 3 Tabellen, je mind. 3 Datensätze.",
+                "3NF: Vorname/Nachname getrennt, keine redundanten Felder, saubere FK.",
+                "Nur SELECT in der solution, idealerweise mehrere JOINs.",
+                "Kontext: Online-Shop oder Hochschule."
+            ]),
+            // 'topic' => 'JOIN', // optional
         ];
 
-        // topic wirklich optional lassen
-        if (!empty($topic)) {
-            $payload['topic'] = $topic;
-        }
+        $data = $ai->getSql($payload, 'sql');
 
-        // Call Python AI Gateway
-        try {
-            $aiResult = $gateway->generateSql($payload);
-        } catch (\Throwable $e) {
-            // Für dev erstmal dd, später Fehlerseite/flash
-            dd('AI Gateway failed', $e->getMessage());
-        }
+        $task = (string) $data['task'];
+        $mysqlstatement = (string) $data['mysqlstatement'];
+        $solution = (string) $data['solution'];
+        $meta = $data['meta'] ?? null;
 
-        $task = (string) ($aiResult['task'] ?? '');
-        $mysqlstatement = (string) ($aiResult['mysqlstatement'] ?? '');
-        $solution = (string) ($aiResult['solution'] ?? '');
-        $meta = $aiResult['meta'] ?? [];
-
-        // Minimal-Checks
-        if ($task === '' || $mysqlstatement === '' || $solution === '') {
-            dd('Invalid AI response', $aiResult);
-        }
-
-        // Temp-DB befüllen
         $this->dbManager->createMySqlExercise($mysqlstatement, $this->dbName);
 
         $category = Category::where('name', 'SQL')->firstOrFail();
 
         Exercise::create([
             'category_id' => $category->id,
-            // du kannst hier entweder den „alten Prompt“ speichern oder die Parameter
             'prompt' => json_encode($payload, JSON_UNESCAPED_UNICODE),
             'generated_task' => $task,
             'solution' => $solution,
-            // optional: meta speichern (wenn du Spalte hast)
-            // 'meta' => json_encode($meta),
+            // optional: meta speichern falls Spalte vorhanden
+            // 'meta' => json_encode($meta, JSON_UNESCAPED_UNICODE),
         ]);
 
         $tables = $this->getAllTables();
 
-        return view('it.sql-exercise.index', [
-            'tables' => $tables,
-            'task' => $task,
-            'solution' => $solution,
-            'mysqlstatement' => $mysqlstatement,
-            'meta' => $meta, // optional anzeigen
-        ]);
+        return view('it.sql-exercise.index', compact('tables', 'task', 'solution', 'mysqlstatement'));
     }
 
     /**

@@ -3,48 +3,41 @@
 namespace App\Services\AI;
 
 use RuntimeException;
-use App\Services\OllamaService;
 
 class AiResponseProvider
 {
     public function __construct(
-        private readonly OllamaService $ollama,
-        private readonly JsonWrapper $jsonWrapper,
-        private readonly AiFixtureService $ai_Fixture_service,
-    ) {
-    }
+        private readonly AiGatewayClient $gateway,
+        private readonly AiFixtureService $aiFixtureService,
+    ) {}
 
     /**
-     * $fixtureKey: "sql" | "uml" |
-     * 
+     * $fixtureKey: "sql" | "uml" | ...
      */
-    public function get(string $prompt, string $fixtureKey): array
+    public function getSql(array $payload, string $fixtureKey = 'sql'): array
     {
-        $mode = config('services.ai.mode', 'ollama');
+        $mode = config('services.ai.mode', 'ollama'); // "fixtures" | "ollama"
 
-        // Wenn wir im Fixture-Modus sind, kommen die Daten aus JSON-Dateien
         if ($mode === 'fixtures') {
-
-            // Standard-Fixture (z. B. "sql", "uml", "scan")
             $selectedFixture = $fixtureKey;
 
-            // Nur in der lokalen Entwicklungsumgebung erlauben wir
-            // ein Umschalten über die URL (?fixture=sql2)
             if (app()->environment('local')) {
                 $selectedFixture = request()->get('fixture', $fixtureKey);
             }
 
-            return $this->ai_Fixture_service->load($selectedFixture);
+            return $this->aiFixtureService->load($selectedFixture);
         }
 
-        // normal generate with ollama
-        $raw = $this->ollama->generate($prompt);
-        $parsed = $this->jsonWrapper->parse($raw);
+        // Real mode -> call AI Gateway
+        $data = $this->gateway->generateSql($payload);
 
-        if (!is_array($parsed)) {
-            throw new RuntimeException('AI response parsing failed.');
+        // Minimal sanity check
+        foreach (['task', 'mysqlstatement', 'solution'] as $k) {
+            if (!isset($data[$k]) || !is_string($data[$k]) || trim($data[$k]) === '') {
+                throw new RuntimeException("AI response missing/invalid field: {$k}");
+            }
         }
 
-        return $parsed;
+        return $data;
     }
 }
