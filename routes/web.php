@@ -21,7 +21,7 @@ Route::middleware('auth')->group(function () {
 });
 
 
-Route::prefix('it')->group(function () {
+Route::middleware(['auth', 'verified'])->prefix('it')->group(function () {
     Route::get('sql-uebung', [SqlExerciseController::class, 'index'])
         ->name('sql-uebung');
     Route::post('sql-uebung', [SqlExerciseController::class, 'executeUserQuery']);

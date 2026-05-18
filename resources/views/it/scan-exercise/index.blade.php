@@ -9,7 +9,7 @@
     <div style="margin-top: 30px;">
         <h3 style="margin-bottom: 5px;">Aufgabe:</h3>
         <div style="background: #f7f7f7; padding: 15px; border: 1px solid #ccc; border-radius: 5px; font-family: monospace;">
-            {!! $generated_task !!}
+            {{ $generated_task }}
         </div>
     </div>
     @endif
@@ -19,6 +19,7 @@
         <div style="margin-bottom: 15px;">
             <label for="user_solution" style="font-weight: bold;">Deine Lösung:</label>
             <textarea id="user_solution" name="user_solution" rows="5" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 5px; font-family: monospace;"></textarea>
+            <x-input-error :messages="$errors->get('user_solution')" class="mt-2" />
         </div>
         <button type="submit" style="background: #4CAF50; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer;">
             Lösung prüfen
@@ -29,7 +30,7 @@
     <div style="margin-top: 30px;">
         <h3 style="margin-bottom: 5px;">Musterlösung:</h3>
         <div style="background: #f7f7f7; padding: 15px; border: 1px solid #ccc; border-radius: 5px; font-family: monospace;">
-            {!! $solution !!}
+            {{ $solution }}
         </div>
     </div>
     @endif

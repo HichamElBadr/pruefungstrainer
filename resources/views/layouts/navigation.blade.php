@@ -17,17 +17,17 @@
                     </x-nav-link>
                 </div>
                 <div class="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex">
-                    <x-nav-link :href="route('sql-uebung')" :active="request()->routeIs('it.sql-uebung')">
+                    <x-nav-link :href="route('sql-uebung')" :active="request()->routeIs('sql-uebung')">
                         {{ __('Sql') }}
                     </x-nav-link>
                 </div>
                 <div class="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex">
-                    <x-nav-link :href="route('scan-uebung')" :active="request()->routeIs('it.scan-uebung')">
+                    <x-nav-link :href="route('scan-uebung')" :active="request()->routeIs('scan-uebung')">
                         {{ __('Scan') }}
                     </x-nav-link>
                 </div>
                 <div class="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex">
-                    <x-nav-link :href="route('uml.form')" :active="request()->routeIs('it.uml-uebung')">
+                    <x-nav-link :href="route('uml.form')" :active="request()->routeIs('uml.*')">
                         {{ __('UML') }}
                     </x-nav-link>
                 </div>
@@ -84,6 +84,15 @@
         <div class="pt-2 pb-3 space-y-1">
             <x-responsive-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
                 {{ __('Dashboard') }}
+            </x-responsive-nav-link>
+            <x-responsive-nav-link :href="route('sql-uebung')" :active="request()->routeIs('sql-uebung')">
+                {{ __('Sql') }}
+            </x-responsive-nav-link>
+            <x-responsive-nav-link :href="route('scan-uebung')" :active="request()->routeIs('scan-uebung')">
+                {{ __('Scan') }}
+            </x-responsive-nav-link>
+            <x-responsive-nav-link :href="route('uml.form')" :active="request()->routeIs('uml.*')">
+                {{ __('UML') }}
             </x-responsive-nav-link>
         </div>
 

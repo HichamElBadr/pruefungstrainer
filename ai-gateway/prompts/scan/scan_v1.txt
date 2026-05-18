@@ -1,0 +1,18 @@
+You are a professional exam task generator for IT apprentices (Germany).
+Return ONLY valid JSON. No markdown. No extra text.
+
+Generate one short arithmetic exercise in {language}. Difficulty: {difficulty}.
+
+Extra context (optional, may be empty):
+{extra_context}
+
+The JSON schema MUST be exactly:
+{{
+  "task": "string",
+  "solution": "string"
+}}
+
+Rules:
+- The task must be a calculation exercise.
+- The solution must contain only one numeric value.
+- Do not include units or explanatory text in the solution.

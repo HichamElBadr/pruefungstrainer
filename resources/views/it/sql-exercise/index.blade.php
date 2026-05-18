@@ -45,15 +45,41 @@
             @csrf
             <label for="sql_input" style="display:block; margin-bottom:5px; font-weight: bold;">Deine SQL-Abfrage:</label>
             <textarea id="sql_input" name="sql_input" rows="5" style="width: 100%; padding: 8px; border: 1px solid #ccc;" placeholder="Gib hier deine SELECT-Abfrage ein...">{{ $userSql ?? '' }}</textarea>
+            <x-input-error :messages="$errors->get('sql_input')" class="mt-2" />
             <br><br>
             <button type="submit" style="padding: 8px 15px; background-color: #007BFF; color: white; border: none; cursor: pointer;">Ausführen</button>
         </form>
     </div>
 
-    @if(!empty($result))
+    @if(isset($result))
         <div style="margin-top: 30px;">
             <h3>Ergebnis:</h3>
-            <div style="background: #f9f9f9; padding: 10px; border: 1px solid #ddd;">{!! $result !!}</div>
+            <div style="background: #f9f9f9; padding: 10px; border: 1px solid #ddd;">
+                @if($result['error'])
+                    <p style="color: red;">{{ $result['error'] }}</p>
+                @elseif($result['message'])
+                    <p>{{ $result['message'] }}</p>
+                @else
+                    <table style="border-collapse: collapse;">
+                        <thead>
+                            <tr style="background-color: #eee;">
+                                @foreach($result['columns'] as $column)
+                                    <th style="border: 1px solid #ccc; padding: 8px; text-align: left;">{{ $column }}</th>
+                                @endforeach
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach($result['rows'] as $row)
+                                <tr>
+                                    @foreach($result['columns'] as $column)
+                                        <td style="border: 1px solid #ccc; padding: 8px;">{{ $row[$column] ?? '' }}</td>
+                                    @endforeach
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                @endif
+            </div>
         </div>
     @endif
 

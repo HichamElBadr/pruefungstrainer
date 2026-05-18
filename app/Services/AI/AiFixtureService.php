@@ -2,13 +2,10 @@
 
 namespace App\Services\AI;
 
-use Illuminate\Support\Facades\Storage;
 use RuntimeException;
 
 /**
- * Summary of AiFixtureService
- * 
- * decode the fixture json and return an array.
+ * Decode fixture JSON and return it as an array.
  */
 class AiFixtureService
 {
@@ -30,4 +27,3 @@ class AiFixtureService
         return $data;
     }
 }
-

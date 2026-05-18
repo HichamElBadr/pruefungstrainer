@@ -4,12 +4,12 @@ namespace App\Http\Controllers;
 
 use App\Services\PlantUmlService;
 use Illuminate\Http\Request;
+use InvalidArgumentException;
 
 class UmlExerciseController extends Controller
 {
     public function create()
     {
-        // Beispiel-Eingabe im vereinfachten Format (ohne @startuml/@enduml)
         $sample = <<<TXT
             class Person
             - name : String
@@ -31,22 +31,17 @@ class UmlExerciseController extends Controller
 
     public function render(Request $request, PlantUmlService $plantUmlService)
     {
-        $raw = (string) $request->input('uml_text');
+        $validated = $request->validate([
+            'uml_text' => ['required', 'string', 'max:10000'],
+        ]);
 
-        if (trim($raw) === '') {
-            return view('it.uml-exercise.index', [
-                'input' => $raw,
-                'imageDataUrl' => null,
-                'error' => 'Bitte gib etwas Text ein.',
-            ]);
-        }
-
-
-        $plantUml= $this->normalizeToPlantUml($raw);
+        $raw = $validated['uml_text'];
 
         try {
+            $plantUml = $this->normalizeToPlantUml($raw);
             $pngPath = $plantUmlService->generate($plantUml);
             $dataUrl = 'data:image/png;base64,' . base64_encode(file_get_contents($pngPath));
+            @unlink($pngPath);
 
             return view('it.uml-exercise.index', [
                 'input' => $raw,
@@ -62,58 +57,64 @@ class UmlExerciseController extends Controller
         }
     }
 
-    /**
-     * Mini-Normalizer: wandelt vereinfachte Eingabe in PlantUML für Klassen um.
-     * Unterstützt:
-     *  - class Foo  (+ nachfolgende Zeilen als Body)
-     *  - Beziehungen: A -> B : label (oder -->, ..>, etc.)
-     */
     private function normalizeToPlantUml(string $input): string
     {
+        if (preg_match('/@(?:startuml|enduml)\b/i', $input)) {
+            if (!config('plantuml.allow_raw_directives')) {
+                throw new InvalidArgumentException('Direkte PlantUML-Direktiven sind deaktiviert.');
+            }
+
+            return trim($input);
+        }
 
         $lines = preg_split('/\R/', $input);
         $out = [];
         $inClass = false;
 
         foreach ($lines as $line) {
-            $t = rtrim($line);
-            $trim = ltrim($t);
+            $trim = ltrim(rtrim($line));
 
             if ($trim === '') {
-                // Leere Zeile trennt ggf. Klassenblöcke
-                if ($inClass) { $out[] = "}"; $inClass = false; }
+                if ($inClass) {
+                    $out[] = '}';
+                    $inClass = false;
+                }
+
                 continue;
             }
 
-            // Neue Klasse?
-            if (preg_match('/^class\s+([A-Za-z_]\w*)$/i', $trim, $m)) {
-                if ($inClass) { $out[] = "}"; }
-                $out[] = "class {$m[1]} {";
+            if (preg_match('/^class\s+([A-Za-z_]\w*)$/i', $trim, $matches)) {
+                if ($inClass) {
+                    $out[] = '}';
+                }
+
+                $out[] = "class {$matches[1]} {";
                 $inClass = true;
                 continue;
             }
 
-            // Beziehung (A -> B : label)
-            if (preg_match('/^\w[\w$]*\s*[-.o*+#<]*[<>]*\s*[-.]*>\s*\w[\w$]*(?:\s*:\s*.*)?$/', $trim)) {
-                if ($inClass) { $out[] = "}"; $inClass = false; }
+            if (preg_match('/^\w[\w$]*\s+(?:--|->|-->|o--|\*--|\.\.>|<\|--)\s+\w[\w$]*(?:\s*:\s*.*)?$/', $trim)) {
+                if ($inClass) {
+                    $out[] = '}';
+                    $inClass = false;
+                }
+
                 $out[] = $trim;
                 continue;
             }
 
-            // Zeilen innerhalb einer Klasse (Attribute/Methoden)
             if ($inClass) {
-                // einfach übernehmen (PlantUML versteht +/-/# prefix)
-                $out[] = "  " . $trim;
+                $out[] = '  ' . $trim;
                 continue;
             }
 
-            // Fallback: unbekannte Zeile außerhalb – gib sie roh aus (PlantUML erlaubt viele Direktiven)
-            $out[] = $trim;
+            throw new InvalidArgumentException("Unbekannte UML-Zeile: {$trim}");
         }
 
-        if ($inClass) { $out[] = "}"; }
+        if ($inClass) {
+            $out[] = '}';
+        }
 
-        // @startuml/@enduml
         return implode("\n", $out);
     }
 }

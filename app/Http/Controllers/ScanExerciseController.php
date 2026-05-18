@@ -2,71 +2,76 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Controllers\Controller;
 use App\Models\Category;
 use App\Models\Exercise;
 use App\Services\AI\AiResponseProvider;
-use App\Services\AI\JsonWrapper;
-use App\Services\OllamaService;
 use App\Services\SolutionEvaluator;
 use Illuminate\Http\Request;
-use Illuminate\Support\Js;
+use Illuminate\Support\Str;
 
 class ScanExerciseController extends Controller
 {
+    public function __construct(private readonly SolutionEvaluator $solutionEvaluator) {}
 
-    public function __construct(
-        private OllamaService $ollama_service,
-        private JsonWrapper $json_wrapper,
-        private SolutionEvaluator $solution_evaluator
-    ) {}
-    /**
-     * Display a listing of the resource.
-     */
     public function index(AiResponseProvider $ai)
     {
-        $prompt = "Erstelle bitte NUR EINE Rechnungsaufgaben mit Musterlösung im JSON Format, folgendes Schema:
-        {
-            'task': 'Hier kommt die Beschreibung der Aufgabe',
-            'solution': 'Hier kommt die Musterlösung aber NUR die Zahl OHNE TEXT ODER EINHEIT'
-        }";
+        $payload = [
+            'request_id' => (string) Str::uuid(),
+            'difficulty' => request()->get('difficulty', 'medium'),
+            'language' => 'de',
+            'extra_context' => 'Erzeuge genau eine kurze Rechenaufgabe. Die Lösung muss nur eine Zahl ohne Einheit sein.',
+        ];
 
-        $data = $ai->get($prompt, 'scan');
-        // Parse JSON with own Wrapper
-        try {
-            $task = (string)($data['task'] ?? '');
-            $solution = (string)($data['solution'] ?? '');
-        } catch (\Exception $e) {
-            dd($e->getMessage(), $data);
-        }
+        $data = $ai->getScan($payload, 'scan');
+        $task = (string) $data['task'];
+        $solution = (string) $data['solution'];
 
         $category = Category::where('name', 'Scan')->firstOrFail();
 
-        Exercise::create([
+        $exercise = Exercise::create([
+            'user_id' => auth()->id(),
             'category_id' => $category->id,
-            'prompt' => $prompt,
+            'prompt' => json_encode($payload, JSON_UNESCAPED_UNICODE),
             'generated_task' => $task,
-            'solution' => $solution ?? null
+            'solution' => $solution,
         ]);
+
+        session(['scan_exercise_id' => $exercise->id]);
 
         return view('it.scan-exercise.index', [
             'generated_task' => $task,
-            'solution' => $solution
+            'solution' => $solution,
         ]);
     }
 
     public function check(Request $request)
     {
-        $user_input = $request->input('user_solution');
-        $solution = Exercise::latest()->value('solution');
-        $last_task = Exercise::latest()->value(column: 'generated_task');
+        $validated = $request->validate([
+            'user_solution' => ['required', 'numeric'],
+        ]);
 
-        $is_correct = $this->solution_evaluator->compareNumeric($user_input, $solution);
+        $exercise = $this->currentExercise();
+        $isCorrect = $this->solutionEvaluator->compareNumeric(
+            $validated['user_solution'],
+            $exercise->solution,
+        );
 
         return view('it.scan-exercise.index', [
-            'is_correct' => $is_correct,
-            'solution' => $solution,
-            'generated_task' => $last_task,
+            'is_correct' => $isCorrect,
+            'solution' => $exercise->solution,
+            'generated_task' => $exercise->generated_task,
         ]);
+    }
+
+    private function currentExercise(): Exercise
+    {
+        $exerciseId = session('scan_exercise_id');
+
+        abort_if(!$exerciseId, 409, 'Keine Scan-Übung in der Session gefunden. Bitte starte die Übung neu.');
+
+        return Exercise::query()
+            ->whereKey($exerciseId)
+            ->where('user_id', auth()->id())
+            ->firstOrFail();
     }
 }

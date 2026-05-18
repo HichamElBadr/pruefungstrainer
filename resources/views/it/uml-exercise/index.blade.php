@@ -51,7 +51,7 @@
                     <code class="font-mono">A ..> B</code> (Dependency),
                     <code class="font-mono">Parent &lt;|-- Child</code> (Vererbung).
                 </li>
-                <li><strong>Schon PlantUML?</strong> Du kannst auch direkt einen kompletten Block mit <code class="font-mono">@startuml ... @enduml</code> einfügen.</li>
+                <li><strong>Format:</strong> Verwende die vereinfachte Schreibweise aus diesem Formular.</li>
             </ul>
 
             <div class="mt-3">

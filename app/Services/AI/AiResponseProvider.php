@@ -2,6 +2,7 @@
 
 namespace App\Services\AI;
 
+use Closure;
 use RuntimeException;
 
 class AiResponseProvider
@@ -11,33 +12,47 @@ class AiResponseProvider
         private readonly AiFixtureService $aiFixtureService,
     ) {}
 
-    /**
-     * $fixtureKey: "sql" | "uml" | ...
-     */
     public function getSql(array $payload, string $fixtureKey = 'sql'): array
     {
-        $mode = config('services.ai.mode', 'ollama'); // "fixtures" | "ollama"
+        return $this->getValidatedResponse(
+            fixtureKey: $fixtureKey,
+            liveResolver: fn () => $this->gateway->generateSql($payload),
+            requiredFields: ['task', 'mysqlstatement', 'solution'],
+        );
+    }
 
-        if ($mode === 'fixtures') {
-            $selectedFixture = $fixtureKey;
+    public function getScan(array $payload, string $fixtureKey = 'scan'): array
+    {
+        return $this->getValidatedResponse(
+            fixtureKey: $fixtureKey,
+            liveResolver: fn () => $this->gateway->generateScan($payload),
+            requiredFields: ['task', 'solution'],
+        );
+    }
 
-            if (app()->environment('local')) {
-                $selectedFixture = request()->get('fixture', $fixtureKey);
-            }
+    private function getValidatedResponse(string $fixtureKey, Closure $liveResolver, array $requiredFields): array
+    {
+        $mode = config('services.ai.mode', 'ollama');
 
-            return $this->aiFixtureService->load($selectedFixture);
-        }
+        $data = $mode === 'fixtures'
+            ? $this->aiFixtureService->load($this->selectedFixture($fixtureKey))
+            : $liveResolver();
 
-        // Real mode -> call AI Gateway
-        $data = $this->gateway->generateSql($payload);
-
-        // Minimal sanity check
-        foreach (['task', 'mysqlstatement', 'solution'] as $k) {
-            if (!isset($data[$k]) || !is_string($data[$k]) || trim($data[$k]) === '') {
-                throw new RuntimeException("AI response missing/invalid field: {$k}");
+        foreach ($requiredFields as $field) {
+            if (!isset($data[$field]) || !is_string($data[$field]) || trim($data[$field]) === '') {
+                throw new RuntimeException("AI response missing/invalid field: {$field}");
             }
         }
 
         return $data;
+    }
+
+    private function selectedFixture(string $fixtureKey): string
+    {
+        if (app()->environment('local')) {
+            return request()->get('fixture', $fixtureKey);
+        }
+
+        return $fixtureKey;
     }
 }
