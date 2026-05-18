@@ -38,7 +38,7 @@ async def generate_sql_exercise(
     """
 
     prompt = build_sql_prompt(payload)
-    raw = await client.generate(prompt)
+    raw = await client.generate(prompt, response_format="json")
 
     obj = extract_json_best_effort(raw)
 

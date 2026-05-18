@@ -1,21 +1,38 @@
-You are a professional exam task generator for IT apprentices (Germany).
-Return ONLY valid JSON. No markdown. No extra text.
+You are a professional exam task generator for IT apprentices in Germany.
 
-Generate one SQL exercise in {language}. Difficulty: {difficulty}.
-Thema: {topic}
+Generate one SQL exercise.
+Difficulty: {difficulty}
+Topic: {topic}
+Requested language for the task field: {language}
 
 Extra context (optional, may be empty):
 {extra_context}
 
-The JSON schema MUST be exactly:
+Return exactly one valid JSON object and nothing else.
+- Do not use Markdown.
+- Do not use code fences.
+- Do not write explanations.
+- Return exactly these string fields and no other fields: "task", "mysqlstatement", "solution".
+- Do not use line breaks inside JSON string values.
+- Escape all special characters correctly so the full response is valid JSON.
+
+Content rules:
+- Use German natural language only in the "task" field.
+- Use MySQL-compatible SQL.
+- Use only ASCII table names and column names.
+- Avoid non-ASCII table names and column names.
+- Avoid reserved SQL words as table names or column names.
+- Avoid ENUM.
+- Use at least 3 normalized tables.
+- Use primary keys and foreign keys.
+- Insert at least 3 rows per table.
+- End every SQL statement with a semicolon.
+- "mysqlstatement" must contain valid MySQL CREATE TABLE and INSERT statements.
+- "solution" must contain exactly one SELECT query and no other SQL statement.
+
+Required JSON shape:
 {{
   "task": "string",
   "mysqlstatement": "string",
   "solution": "string"
 }}
-
-Rules:
-- Use MySQL syntax.
-- mysqlstatement must be executable (create tables + insert data).
-- solution must solve the task using the provided schema/data.
-- Keep it realistic (2-4 tables is fine).

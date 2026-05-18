@@ -1,3 +1,5 @@
+from typing import Optional
+
 import httpx
 from fastapi import HTTPException
 
@@ -8,13 +10,15 @@ class OllamaClient:
         self.model = model
         self.timeout_sec = timeout_sec
 
-    async def generate(self, prompt: str) -> str:
+    async def generate(self, prompt: str, response_format: Optional[str] = None) -> str:
         url = f"{self.base_url}/api/generate"
         body = {
             "model": self.model,
             "prompt": prompt,
             "stream": False,
         }
+        if response_format:
+            body["format"] = response_format
 
         async with httpx.AsyncClient(timeout=self.timeout_sec) as client:
             resp = await client.post(url, json=body)

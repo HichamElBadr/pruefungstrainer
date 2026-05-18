@@ -1,5 +1,33 @@
 # Progress Update
 
+## 2026-05-18 - Harden SQL AI JSON generation
+
+### Summary
+
+Tightened the SQL exercise prompt and enabled Ollama JSON mode for SQL generation to prevent malformed AI JSON responses in the SQL exercise flow.
+
+### Changed Files
+
+- `ai-gateway/prompts/sql/sql_v1.txt`
+- `ai-gateway/app/clients/ollama_client.py`
+- `ai-gateway/app/services/sql_service.py`
+- `docs/progress.md`
+
+### Behavior Changes
+
+- SQL generation now instructs the local model to return exactly one plain JSON object with the existing `task`, `mysqlstatement`, and `solution` string fields.
+- SQL generation now requests Ollama JSON mode while keeping non-SQL AI flows unchanged.
+
+### Testing
+
+- `php artisan test --filter=ItExerciseFlowTest`: passed.
+- Manual POST to the local AI gateway `/generate/sql` endpoint with Ollama running: returned a valid JSON response with the expected SQL fields.
+- Authenticated local SQL navigation flow through the Laravel app: `/it/sql-uebung` loaded successfully without an `AI-Gateway error`.
+
+### Follow-up Notes
+
+- A later live SQL-page retry exposed a separate model-generated foreign-key issue in the SQL content; that is unrelated to malformed JSON formatting and was not changed here.
+
 ## Completed Improvements
 
 ### Exercise ownership and route protection
