@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use Illuminate\Support\Facades\Log;
 use PDO;
 
 class QueryHandler
@@ -46,6 +47,12 @@ class QueryHandler
                 'error' => null,
             ];
         } catch (\Exception $e) {
+            Log::channel('sql_exercise')->error('Learner SQL query failed.', [
+                'query' => $sql,
+                'exception' => $e::class,
+                'error' => $e->getMessage(),
+            ]);
+
             return self::error('Fehler: ' . $e->getMessage());
         }
     }

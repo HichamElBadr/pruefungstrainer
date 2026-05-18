@@ -22,13 +22,20 @@ Content rules:
 - Use only ASCII table names and column names.
 - Avoid non-ASCII table names and column names.
 - Avoid reserved SQL words as table names or column names.
+- Use lowercase snake_case table names and column names only.
+- Do not use hyphens, spaces, quotes, or punctuation inside table names or column names.
 - Avoid ENUM.
 - Use at least 3 normalized tables.
 - Use primary keys and foreign keys.
+- Create referenced tables before tables that contain foreign keys to them.
+- Do not reference a table or column before it exists.
+- Use one CREATE TABLE statement per table.
+- Do not combine multiple table definitions into one CREATE TABLE statement.
 - Insert at least 3 rows per table.
 - End every SQL statement with a semicolon.
 - "mysqlstatement" must contain valid MySQL CREATE TABLE and INSERT statements.
 - "solution" must contain exactly one SELECT query and no other SQL statement.
+- If the extra context contains a previous MariaDB error or rejected SQL attempt, correct that error and do not repeat the same invalid SQL.
 
 Required JSON shape:
 {{

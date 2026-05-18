@@ -1,5 +1,70 @@
 # Progress Update
 
+## 2026-05-18 - Regenerate invalid SQL exercises automatically
+
+### Summary
+
+Added bounded regeneration for AI-generated SQL exercises when MariaDB rejects the generated setup SQL.
+
+### Changed Files
+
+- `app/Services/SqlExerciseGenerator.php`
+- `app/Services/DatabaseManager.php`
+- `app/Http/Controllers/SqlExerciseController.php`
+- `config/exercises.php`
+- `.env.example`
+- `tests/Unit/SqlExerciseGeneratorTest.php`
+- `docs/progress.md`
+
+### Behavior Changes
+
+- SQL exercise generation now retries up to a configurable number of attempts when generated setup SQL is invalid.
+- Failed generated attempts are rejected before the learner sees them, logged, and their temporary databases are dropped immediately.
+- Retry prompts now include the previous MariaDB error and rejected SQL so the model can correct the failed setup instead of repeating it unchanged.
+- If all live attempts fail, the app now falls back to the local SQL fixture so the exercise page still opens instead of returning an error.
+- The retry limit can be configured with `SQL_EXERCISE_GENERATION_ATTEMPTS`.
+
+### Testing
+
+- `php artisan test --filter=SqlExerciseGeneratorTest`: passed.
+- `php artisan test --filter=ItExerciseFlowTest`: passed.
+- `php artisan test --filter=QueryHandlerTest`: passed.
+- Live SQL route check with Ollama running: invalid live generations were rejected and the page still loaded successfully through the fixture fallback.
+
+### Follow-up Notes
+
+- The retry path only handles generated SQL execution failures; unrelated gateway or application errors still surface normally.
+
+## 2026-05-18 - Add SQL exercise error protocol
+
+### Summary
+
+Added a dedicated SQL exercise error log so generated SQL failures and learner-query execution failures can be reviewed after they occur.
+
+### Changed Files
+
+- `config/logging.php`
+- `app/Http/Controllers/SqlExerciseController.php`
+- `app/Services/DatabaseManager.php`
+- `app/Services/QueryHandler.php`
+- `docs/progress.md`
+
+### Behavior Changes
+
+- SQL exercise failures are now written to `storage/logs/sql-exercise.log`.
+- Failed generated SQL statements are logged with the failing statement number and SQL text.
+- SQL exercise flow failures are logged with request context, and learner-query execution exceptions are logged separately.
+
+### Testing
+
+- `php artisan test --filter=ItExerciseFlowTest`: passed.
+- `php artisan test --filter=QueryHandlerTest`: passed.
+- Live SQL route failure test: confirmed the generated SQL error was written to `storage/logs/sql-exercise.log`.
+
+### Follow-up Notes
+
+- The protocol is intended for troubleshooting the SQL exercise flow and does not change UML, Scan, auth, or UI behavior.
+
 ## 2026-05-18 - Harden SQL AI JSON generation
 
 ### Summary
