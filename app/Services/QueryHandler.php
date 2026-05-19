@@ -1,38 +1,69 @@
 <?php
 
 namespace App\Services;
+
+use Illuminate\Support\Facades\Log;
 use PDO;
 
 class QueryHandler
 {
-     public static function executeUserQuery(PDO $pdo, string $sql): string
+    /**
+     * @return array{columns: array<int,string>, rows: array<int,array<string,mixed>>, message: ?string, error: ?string}
+     */
+    public static function executeUserQuery(PDO $pdo, string $sql): array
     {
+        $sql = trim($sql);
+        $sql = preg_replace('/;\s*$/', '', $sql) ?? '';
+
+        if ($sql === '') {
+            return self::error('Bitte gib eine SELECT-Abfrage ein.');
+        }
+
+        if (str_contains($sql, ';')) {
+            return self::error('Es ist nur eine einzelne SELECT-Abfrage erlaubt.');
+        }
+
+        if (!preg_match('/^select\b/i', $sql)) {
+            return self::error('Es sind nur SELECT-Abfragen erlaubt.');
+        }
+
         try {
             $stmt = $pdo->query($sql);
             $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
             if (empty($rows)) {
-                return "<p>Keine Ergebnisse gefunden.</p>";
+                return [
+                    'columns' => [],
+                    'rows' => [],
+                    'message' => 'Keine Ergebnisse gefunden.',
+                    'error' => null,
+                ];
             }
 
-            $html = "<table border='1'><tr>";
-            foreach (array_keys($rows[0]) as $col) {
-                $html .= "<th>$col</th>";
-            }
-            $html .= "</tr>";
-
-            foreach ($rows as $row) {
-                $html .= "<tr>";
-                foreach ($row as $val) {
-                    $html .= "<td>$val</td>";
-                }
-                $html .= "</tr>";
-            }
-            $html .= "</table>";
-
-            return $html;
+            return [
+                'columns' => array_keys($rows[0]),
+                'rows' => $rows,
+                'message' => null,
+                'error' => null,
+            ];
         } catch (\Exception $e) {
-            return "<p style='color:red;'>Fehler: " . $e->getMessage() . "</p>";
+            Log::channel('sql_exercise')->error('Learner SQL query failed.', [
+                'query' => $sql,
+                'exception' => $e::class,
+                'error' => $e->getMessage(),
+            ]);
+
+            return self::error('Fehler: ' . $e->getMessage());
         }
+    }
+
+    private static function error(string $message): array
+    {
+        return [
+            'columns' => [],
+            'rows' => [],
+            'message' => null,
+            'error' => $message,
+        ];
     }
 }

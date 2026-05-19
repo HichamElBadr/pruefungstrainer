@@ -2,58 +2,141 @@
 
 namespace App\Services;
 
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 use PDO;
+use Throwable;
 
 class DatabaseManager
 {
-    private $pdo_root;
+    private PDO $pdoRoot;
+    private array $config;
 
     public function __construct()
     {
-        $host = 'localhost';
-        $user = 'root';
-        $pass = '';
-        $charset = 'utf8mb4';
-
-        $this->pdo_root = new PDO("mysql:host=$host;charset=$charset", $user, $pass);
-        $this->pdo_root->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        $this->config = config('exercises.sql');
+        $this->pdoRoot = $this->makePdo(null, 'admin');
     }
 
-    public function cleanOldDatabases($maxAgeSeconds = 2000)
+    public function cleanOldDatabases(?int $maxAgeSeconds = null): int
     {
-        $stmt = $this->pdo_root->query("SELECT schema_name FROM information_schema.schemata WHERE schema_name LIKE 'sql_exercise_%'");
+        $maxAgeSeconds ??= $this->config['max_age_seconds'];
+        $prefix = $this->config['database_prefix'];
+        $like = $this->pdoRoot->quote($prefix . '%');
+        $stmt = $this->pdoRoot->query("SELECT schema_name FROM information_schema.schemata WHERE schema_name LIKE {$like}");
+        $dropped = 0;
+
         foreach ($stmt as $row) {
-            $dbNameOld = $row['schema_name'];
-            $parts = explode('_', $dbNameOld);
-            $timestamp = end($parts);
-            if (is_numeric($timestamp) && (time() - (int)$timestamp) > $maxAgeSeconds) {
-                $this->pdo_root->exec("DROP DATABASE `$dbNameOld`");
+            $dbName = $row['schema_name'];
+
+            if (!preg_match('/^' . preg_quote($prefix, '/') . '(\d{10})_[a-z0-9]+$/i', $dbName, $matches)) {
+                continue;
+            }
+
+            if ((time() - (int) $matches[1]) > $maxAgeSeconds) {
+                $this->pdoRoot->exec("DROP DATABASE `{$dbName}`");
+                $dropped++;
             }
         }
+
+        return $dropped;
     }
 
     public function createTemporaryDatabase(): string
     {
-        $dbName = 'sql_exercise_' . time();
-        $this->pdo_root->exec("CREATE DATABASE `$dbName` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci");
+        $dbName = $this->config['database_prefix'] . time() . '_' . Str::lower(Str::random(10));
+        $charset = $this->config['charset'];
+        $collation = $this->config['collation'];
+
+        $this->pdoRoot->exec("CREATE DATABASE `{$dbName}` CHARACTER SET {$charset} COLLATE {$collation}");
+        $this->grantRuntimeAccess($dbName);
+
         return $dbName;
+    }
+
+    public function dropTemporaryDatabase(string $dbName): void
+    {
+        $prefix = preg_quote($this->config['database_prefix'], '/');
+
+        if (!preg_match('/^' . $prefix . '\d{10}_[a-z0-9]+$/i', $dbName)) {
+            throw new \InvalidArgumentException('Invalid temporary SQL database name.');
+        }
+
+        $this->pdoRoot->exec("DROP DATABASE IF EXISTS `{$dbName}`");
     }
 
     public function connectToDatabase(string $dbName): PDO
     {
-        return new PDO("mysql:host=localhost;dbname=$dbName;charset=utf8mb4", 'root', '');
+        return $this->makePdo($dbName, 'runtime');
     }
 
-
-    //Maybe create a new class for this or switch this function into a  other class
-    public function createMySqlExercise(string $mysqlstatement, string $dbName)
+    public function getTables(string $dbName): array
     {
         $pdo = $this->connectToDatabase($dbName);
-        // Splitten an ; und jede Query einzeln ausführen
+        $tableNames = $pdo->query('SHOW TABLES')->fetchAll(PDO::FETCH_COLUMN);
+        $tables = [];
+
+        foreach ($tableNames as $table) {
+            $tables[$table] = $pdo->query("SELECT * FROM `{$table}`")->fetchAll(PDO::FETCH_ASSOC);
+        }
+
+        return $tables;
+    }
+
+    public function createMySqlExercise(string $mysqlstatement, string $dbName): void
+    {
+        $pdo = $this->makePdo($dbName, 'admin');
         $statements = array_filter(array_map('trim', explode(';', $mysqlstatement)));
 
-        foreach ($statements as $stmt) {
-            $pdo->exec($stmt);
+        foreach (array_values($statements) as $index => $stmt) {
+            try {
+                $pdo->exec($stmt);
+            } catch (Throwable $e) {
+                Log::channel('sql_exercise')->error('Generated SQL statement failed.', [
+                    'database' => $dbName,
+                    'statement_number' => $index + 1,
+                    'statement' => $stmt,
+                    'exception' => $e::class,
+                    'error' => $e->getMessage(),
+                ]);
+
+                throw $e;
+            }
         }
+    }
+
+    private function makePdo(?string $dbName, string $role): PDO
+    {
+        $connection = $this->config[$role];
+        $charset = $this->config['charset'];
+        $dsn = "mysql:host={$connection['host']};port={$connection['port']};charset={$charset}";
+
+        if ($dbName !== null) {
+            $dsn .= ";dbname={$dbName}";
+        }
+
+        return new PDO($dsn, $connection['username'], $connection['password'], [
+            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+            PDO::MYSQL_ATTR_MULTI_STATEMENTS => false,
+        ]);
+    }
+
+    private function grantRuntimeAccess(string $dbName): void
+    {
+        $admin = $this->config['admin'];
+        $runtime = $this->config['runtime'];
+
+        if (
+            $admin['username'] === $runtime['username']
+            && $admin['password'] === $runtime['password']
+        ) {
+            return;
+        }
+
+        $username = str_replace("'", "''", $runtime['username']);
+        $host = str_replace("'", "''", $runtime['grant_host']);
+
+        $this->pdoRoot->exec("GRANT SELECT ON `{$dbName}`.* TO '{$username}'@'{$host}'");
     }
 }

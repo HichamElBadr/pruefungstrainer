@@ -1,0 +1,5 @@
+# Python virtual environment
+/ai-gateway/.venv/
+__pycache__/
+*.pyc
+/ai-gateway/.env
