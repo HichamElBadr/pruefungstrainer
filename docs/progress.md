@@ -1,5 +1,48 @@
 # Progress Update
 
+## 2026-05-19 - Refresh exercise page UI
+
+### Summary
+
+Improved the exercise area with a shared layout, left sidebar navigation, consistent cards, badges, typography, and styled SQL/table displays.
+
+### Changed Files
+
+- `app/Http/Controllers/CalculationExerciseController.php`
+- `app/Http/Controllers/SqlExerciseController.php`
+- `resources/css/app.css`
+- `resources/views/components/exercise-layout.blade.php`
+- `resources/views/it/partials/exercise-sidebar.blade.php`
+- `resources/views/it/sql-exercise/index.blade.php`
+- `resources/views/it/sql-exercise/select-difficulty.blade.php`
+- `resources/views/it/calculation-exercises/index.blade.php`
+- `resources/views/it/uml-exercise/index.blade.php`
+- `resources/views/layouts/app.blade.php`
+- `resources/views/layouts/navigation.blade.php`
+- `tailwind.config.js`
+- `tests/Feature/ItExerciseFlowTest.php`
+- `docs/progress.md`
+
+### Behavior Changes
+
+- Exercise pages now share a professional two-column layout with a left sidebar for SQL, UML, and calculation exercises.
+- The active exercise section is highlighted in the sidebar and main navigation.
+- SQL tables, query results, SQL input, and solution code now use consistent learning-oriented styling.
+- Calculation exercises now separate the task, answer input, feedback, expected result, and sample solution into distinct cards.
+- Fixture-backed exercises now display `Beispielaufgabe`; generated exercises display `KI-generiert`.
+- Existing routes, form actions, request methods, AI generation, SQL execution, and calculation checking were left unchanged.
+
+### Testing
+
+- `php artisan test --filter=ItExerciseFlowTest`: passed.
+- `php artisan test`: passed.
+- `npm.cmd run build`: passed.
+- `vendor\bin\pint.bat --dirty --test`: passed after formatting dirty PHP files with Pint.
+
+### Follow-up Notes
+
+- No Aufgabenverlauf route currently exists, so no history link is shown in the sidebar.
+
 ## 2026-05-19 - Add exercise source badges
 
 ### Summary

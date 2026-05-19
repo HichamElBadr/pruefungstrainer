@@ -1,103 +1,138 @@
-<x-app-layout>
-    <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-            Rechenaufgaben
-        </h2>
+<x-exercise-layout
+    title="Rechenaufgaben"
+    description="Trainiere typische IT-Rechenwege und prüfe dein Ergebnis direkt im Browser."
+>
+    <x-slot name="badges">
+        <span class="exercise-badge">Rechenaufgabe</span>
+        <span class="exercise-badge">Übungsaufgabe</span>
+        @if(!empty($sourceLabel))
+            <span class="exercise-badge">{{ $sourceLabel }}</span>
+        @endif
     </x-slot>
 
-    <div class="py-10">
-        <div class="max-w-5xl mx-auto sm:px-6 lg:px-8 space-y-8">
-            <section>
-                <h3 class="text-lg font-semibold text-gray-900 mb-4">Thema auswählen</h3>
-                <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                    @foreach($topics as $topic)
-                        <form method="POST" action="{{ route('calculation-exercises.generate', $topic['slug']) }}">
-                            @csrf
-                            <button
-                                type="submit"
-                                class="w-full min-h-24 rounded border border-gray-200 bg-white px-4 py-4 text-left shadow-sm transition hover:border-indigo-300 hover:shadow focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                            >
-                                <span class="block text-base font-semibold text-gray-900">{{ $topic['label'] }}</span>
-                                <span class="mt-2 block text-sm text-gray-600">Neue Aufgabe erzeugen</span>
-                            </button>
-                        </form>
-                    @endforeach
-                </div>
-            </section>
+    @if(!empty($generated_task))
+        <section class="exercise-card">
+            <div class="exercise-card-body">
+                <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                    <div>
+                        @if(!empty($selectedTopic))
+                            <p class="font-heading text-sm font-semibold text-slate-500">{{ $selectedTopic['label'] }}</p>
+                        @endif
 
-            @if(!empty($generated_task))
-                <section class="rounded border border-gray-200 bg-white p-6 shadow-sm">
-                    @if(!empty($selectedTopic))
-                        <p class="mb-2 text-sm font-medium text-gray-600">{{ $selectedTopic['label'] }}</p>
-                    @endif
-
-                    @if(!empty($sourceLabel))
-                        <span class="mb-3 inline-flex rounded border border-gray-200 bg-gray-100 px-2 py-1 text-xs font-semibold text-gray-700">
-                            {{ $sourceLabel }}
-                        </span>
-                    @endif
-
-                    @if(!empty($title))
-                        <h3 class="mb-4 text-xl font-semibold text-gray-900">{{ $title }}</h3>
-                    @endif
-
-                    <h4 class="mb-3 text-lg font-semibold text-gray-900">Aufgabe</h4>
-                    <div class="rounded border border-gray-200 bg-gray-50 p-4 text-gray-900">
-                        {{ $generated_task }}
+                        <h2 class="mt-1 font-heading text-xl font-semibold text-slate-950">
+                            {{ $title ?? 'Rechenaufgabe' }}
+                        </h2>
                     </div>
 
-                    <form action="{{ route('calculation-exercises.check') }}" method="POST" class="mt-6">
-                        @csrf
-                        <div>
-                            <label for="user_solution" class="block text-sm font-semibold text-gray-800">Deine Lösung</label>
-                            <input
-                                id="user_solution"
-                                name="user_solution"
-                                type="text"
-                                value="{{ old('user_solution') }}"
-                                class="mt-2 block w-full rounded border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                            >
-                            @if(!empty($expected_unit))
-                                <p class="mt-2 text-sm text-gray-600">Einheit: {{ $expected_unit }}</p>
-                            @endif
-                            <x-input-error :messages="$errors->get('user_solution')" class="mt-2" />
-                        </div>
+                    @if(!empty($sourceLabel))
+                        <span class="exercise-badge">{{ $sourceLabel }}</span>
+                    @endif
+                </div>
 
+                <div class="exercise-muted-panel mt-5 whitespace-pre-line leading-7">
+                    {{ $generated_task }}
+                </div>
+            </div>
+        </section>
+
+        <section class="exercise-card">
+            <div class="exercise-card-body">
+                <h2 class="font-heading text-xl font-semibold text-slate-950">Deine Antwort</h2>
+
+                <form action="{{ route('calculation-exercises.check') }}" method="POST" class="mt-4">
+                    @csrf
+
+                    <label for="user_solution" class="font-heading block text-sm font-semibold text-slate-800">Ergebnis</label>
+                    <div class="mt-2 flex flex-col gap-3 sm:flex-row">
+                        <input
+                            id="user_solution"
+                            name="user_solution"
+                            type="text"
+                            value="{{ old('user_solution') }}"
+                            class="block w-full rounded-lg border-slate-300 shadow-sm focus:border-slate-500 focus:ring-slate-500"
+                            placeholder="Dein Ergebnis"
+                        >
+
+                        @if(!empty($expected_unit))
+                            <div class="inline-flex min-h-10 items-center rounded-lg border border-slate-200 bg-slate-50 px-4 text-sm font-semibold text-slate-700">
+                                Einheit: {{ $expected_unit }}
+                            </div>
+                        @endif
+                    </div>
+                    <x-input-error :messages="$errors->get('user_solution')" class="mt-2" />
+
+                    <button type="submit" class="exercise-button mt-4">Lösung prüfen</button>
+                </form>
+            </div>
+        </section>
+
+        @if(isset($is_correct))
+            <section class="exercise-card">
+                <div class="exercise-card-body">
+                    @if($is_correct)
+                        <div class="exercise-alert exercise-alert-success">
+                            <p class="font-heading font-semibold">Deine Lösung ist korrekt.</p>
+                        </div>
+                    @else
+                        <div class="exercise-alert exercise-alert-error">
+                            <p class="font-heading font-semibold">Deine Lösung ist leider falsch.</p>
+                            <p class="mt-1">Vergleiche dein Ergebnis mit dem erwarteten Ergebnis und der Musterlösung.</p>
+                        </div>
+                    @endif
+                </div>
+            </section>
+        @endif
+
+        @if(!empty($solution))
+            <section class="exercise-card">
+                <div class="exercise-card-body">
+                    <h2 class="font-heading text-xl font-semibold text-slate-950">Erwartetes Ergebnis</h2>
+                    <div class="exercise-muted-panel mt-4 text-lg font-semibold">
+                        {{ $solution }}@if(!empty($expected_unit)) {{ $expected_unit }}@endif
+                    </div>
+                </div>
+            </section>
+        @endif
+
+        @if(!empty($sample_solution))
+            <section class="exercise-card">
+                <div class="exercise-card-body">
+                    <h2 class="font-heading text-xl font-semibold text-slate-950">Musterlösung</h2>
+                    <div class="exercise-muted-panel mt-4 whitespace-pre-line leading-7">
+                        {{ $sample_solution }}
+                    </div>
+                </div>
+            </section>
+        @endif
+    @endif
+
+    <section class="exercise-card">
+        <div class="exercise-card-body">
+            <div>
+                <h2 class="font-heading text-xl font-semibold text-slate-950">
+                    @if(!empty($generated_task))
+                        Weitere Aufgabe erzeugen
+                    @else
+                        Thema auswählen
+                    @endif
+                </h2>
+                <p class="mt-2 text-sm text-slate-600">Wähle ein Thema, um eine neue Rechenaufgabe zu starten.</p>
+            </div>
+
+            <div class="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                @foreach($topics as $topic)
+                    <form method="POST" action="{{ route('calculation-exercises.generate', $topic['slug']) }}">
+                        @csrf
                         <button
                             type="submit"
-                            class="mt-4 rounded bg-indigo-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+                            class="group flex min-h-28 w-full flex-col justify-between rounded-lg border border-slate-200 bg-white p-4 text-left shadow-sm transition hover:border-slate-400 hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2"
                         >
-                            Lösung prüfen
+                            <span class="font-heading text-base font-semibold text-slate-950">{{ $topic['label'] }}</span>
+                            <span class="mt-3 text-sm text-slate-600">Neue Aufgabe erzeugen</span>
                         </button>
                     </form>
-
-                    @if(isset($is_correct))
-                        <div class="mt-6">
-                            @if($is_correct)
-                                <div class="font-semibold text-green-700">Deine Lösung ist korrekt.</div>
-                            @else
-                                <div class="font-semibold text-red-700">Deine Lösung ist leider falsch.</div>
-                            @endif
-                        </div>
-                    @endif
-
-                    @if(!empty($solution))
-                        <div class="mt-6">
-                            <h3 class="mb-2 text-base font-semibold text-gray-900">Erwartetes Ergebnis</h3>
-                            <div class="rounded border border-gray-200 bg-gray-50 p-4 text-gray-900">
-                                {{ $solution }}@if(!empty($expected_unit)) {{ $expected_unit }}@endif
-                            </div>
-                        </div>
-                    @endif
-
-                    @if(!empty($sample_solution))
-                        <div class="mt-6">
-                            <h3 class="mb-2 text-base font-semibold text-gray-900">Musterlösung</h3>
-                            <div class="whitespace-pre-line rounded border border-gray-200 bg-gray-50 p-4 text-gray-900">{{ $sample_solution }}</div>
-                        </div>
-                    @endif
-                </section>
-            @endif
+                @endforeach
+            </div>
         </div>
-    </div>
-</x-app-layout>
+    </section>
+</x-exercise-layout>

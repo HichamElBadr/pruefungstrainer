@@ -28,7 +28,7 @@ class CalculationExerciseController extends Controller
     {
         $selectedTopic = $this->topics->find($topic);
 
-        abort_if(!$selectedTopic, 404, 'Unbekanntes Rechenthema.');
+        abort_if(! $selectedTopic, 404, 'Unbekanntes Rechenthema.');
 
         $payload = [
             'request_id' => (string) Str::uuid(),
@@ -103,7 +103,7 @@ class CalculationExerciseController extends Controller
     {
         $exerciseId = session('calculation_exercise_id');
 
-        abort_if(!$exerciseId, 409, 'Keine Rechenaufgabe in der Session gefunden. Bitte starte eine neue Aufgabe.');
+        abort_if(! $exerciseId, 409, 'Keine Rechenaufgabe in der Session gefunden. Bitte starte eine neue Aufgabe.');
 
         return Exercise::query()
             ->whereKey($exerciseId)
@@ -115,7 +115,7 @@ class CalculationExerciseController extends Controller
     {
         $payload = json_decode($exercise->prompt, true);
 
-        if (!is_array($payload) || !isset($payload['topic'])) {
+        if (! is_array($payload) || ! isset($payload['topic'])) {
             return null;
         }
 
@@ -131,8 +131,8 @@ class CalculationExerciseController extends Controller
     private function sourceLabel(?string $source): ?string
     {
         return match ($source) {
-            'generated' => 'KI-generierte Aufgabe',
-            'fixture' => 'Vorbereitete Aufgabe',
+            'generated' => 'KI-generiert',
+            'fixture' => 'Beispielaufgabe',
             default => null,
         };
     }

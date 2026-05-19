@@ -46,7 +46,7 @@ class SqlExerciseController extends Controller
 
     public function generate(string $difficulty, AiResponseProvider $ai)
     {
-        abort_if(!array_key_exists($difficulty, self::DIFFICULTIES), 404, 'Unbekannter Schwierigkeitsgrad.');
+        abort_if(! array_key_exists($difficulty, self::DIFFICULTIES), 404, 'Unbekannter Schwierigkeitsgrad.');
 
         $payload = [
             'request_id' => (string) Str::uuid(),
@@ -54,8 +54,8 @@ class SqlExerciseController extends Controller
             'language' => 'de',
             'extra_context' => implode("\n", [
                 'Target audience: Fachinformatiker Anwendungsentwicklung (IHK AP2).',
-                'Selected difficulty: ' . $difficulty . ' (' . self::DIFFICULTIES[$difficulty]['label'] . ').',
-                'Difficulty definition: ' . self::DIFFICULTIES[$difficulty]['prompt'],
+                'Selected difficulty: '.$difficulty.' ('.self::DIFFICULTIES[$difficulty]['label'].').',
+                'Difficulty definition: '.self::DIFFICULTIES[$difficulty]['prompt'],
                 'The generated SQL task must match exactly the selected difficulty.',
                 'Keep task text in German.',
                 'Use normalized, coherent sample data with at least 3 rows per table.',
@@ -151,7 +151,7 @@ class SqlExerciseController extends Controller
     {
         $dbName = session('sql_temp_db');
 
-        abort_if(!$dbName, 409, 'Keine temporäre Datenbank in der Session gefunden. Bitte starte die SQL-Übung neu.');
+        abort_if(! $dbName, 409, 'Keine temporäre Datenbank in der Session gefunden. Bitte starte die SQL-Übung neu.');
 
         return $dbName;
     }
@@ -160,7 +160,7 @@ class SqlExerciseController extends Controller
     {
         $exerciseId = session('sql_exercise_id');
 
-        abort_if(!$exerciseId, 409, 'Keine SQL-Übung in der Session gefunden. Bitte starte die SQL-Übung neu.');
+        abort_if(! $exerciseId, 409, 'Keine SQL-Übung in der Session gefunden. Bitte starte die SQL-Übung neu.');
 
         return Exercise::query()
             ->whereKey($exerciseId)
@@ -182,7 +182,7 @@ class SqlExerciseController extends Controller
 
     private function difficultyLabel(?string $difficulty): ?string
     {
-        if ($difficulty === null || !array_key_exists($difficulty, self::DIFFICULTIES)) {
+        if ($difficulty === null || ! array_key_exists($difficulty, self::DIFFICULTIES)) {
             return null;
         }
 
@@ -192,8 +192,8 @@ class SqlExerciseController extends Controller
     private function sourceLabel(?string $source): ?string
     {
         return match ($source) {
-            'generated' => 'KI-generierte Aufgabe',
-            'fixture' => 'Vorbereitete Aufgabe',
+            'generated' => 'KI-generiert',
+            'fixture' => 'Beispielaufgabe',
             default => null,
         };
     }

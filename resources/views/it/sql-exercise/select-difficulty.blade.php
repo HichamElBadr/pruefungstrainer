@@ -1,30 +1,35 @@
-<x-app-layout>
-    <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-            SQL-Aufgaben
-        </h2>
+<x-exercise-layout
+    title="SQL-Aufgaben"
+    description="Wähle einen Schwierigkeitsgrad und starte eine neue SQL-Übungsaufgabe mit passender Datenbasis."
+>
+    <x-slot name="badges">
+        <span class="exercise-badge">SQL</span>
+        <span class="exercise-badge">Übungsaufgabe</span>
     </x-slot>
 
-    <div class="py-10">
-        <div class="max-w-4xl mx-auto sm:px-6 lg:px-8">
-            <section>
-                <h3 class="text-lg font-semibold text-gray-900">SQL-Aufgaben</h3>
-                <p class="mt-2 text-sm text-gray-600">Wähle einen Schwierigkeitsgrad aus.</p>
-
-                <div class="mt-6 grid gap-3 sm:grid-cols-3">
-                    @foreach($difficulties as $difficulty)
-                        <form method="POST" action="{{ route('sql-uebung.generate', $difficulty['value']) }}">
-                            @csrf
-                            <button
-                                type="submit"
-                                class="w-full min-h-24 rounded border border-gray-200 bg-white px-4 py-4 text-center shadow-sm transition hover:border-indigo-300 hover:shadow focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                            >
-                                <span class="block text-base font-semibold text-gray-900">{{ $difficulty['label'] }}</span>
-                            </button>
-                        </form>
-                    @endforeach
+    <section class="exercise-card">
+        <div class="exercise-card-body">
+            <div class="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+                <div>
+                    <h2 class="font-heading text-xl font-semibold text-slate-950">Schwierigkeit auswählen</h2>
+                    <p class="mt-2 text-sm text-slate-600">Die Auswahl bestimmt Umfang, Tabellenstruktur und SQL-Konzepte der Aufgabe.</p>
                 </div>
-            </section>
+            </div>
+
+            <div class="mt-6 grid gap-3 sm:grid-cols-3">
+                @foreach($difficulties as $difficulty)
+                    <form method="POST" action="{{ route('sql-uebung.generate', $difficulty['value']) }}">
+                        @csrf
+                        <button
+                            type="submit"
+                            class="group flex min-h-28 w-full flex-col justify-between rounded-lg border border-slate-200 bg-white p-4 text-left shadow-sm transition hover:border-slate-400 hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2"
+                        >
+                            <span class="font-heading text-lg font-semibold text-slate-950">{{ $difficulty['label'] }}</span>
+                            <span class="mt-3 text-sm text-slate-600">Aufgabe erzeugen</span>
+                        </button>
+                    </form>
+                @endforeach
+            </div>
         </div>
-    </div>
-</x-app-layout>
+    </section>
+</x-exercise-layout>

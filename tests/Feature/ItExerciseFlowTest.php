@@ -55,7 +55,7 @@ class ItExerciseFlowTest extends TestCase
             ->get(route('sql-uebung'))
             ->assertOk()
             ->assertSeeText('SQL-Aufgaben')
-            ->assertSeeText('Wähle einen Schwierigkeitsgrad aus.')
+            ->assertSeeText('Schwierigkeit auswählen')
             ->assertSeeText('Einfach')
             ->assertSeeText('Mittel')
             ->assertSeeText('Schwer')
@@ -112,7 +112,7 @@ class ItExerciseFlowTest extends TestCase
 
         $response
             ->assertOk()
-            ->assertSeeText('KI-generierte Aufgabe');
+            ->assertSeeText('KI-generiert');
 
         $this->assertSame('generated', $exercise->source);
     }
@@ -152,7 +152,7 @@ class ItExerciseFlowTest extends TestCase
         $response
             ->assertOk()
             ->assertSeeText('Erstelle eine SQL-Abfrage')
-            ->assertSeeText('Vorbereitete Aufgabe')
+            ->assertSeeText('Beispielaufgabe')
             ->assertSeeText('Schwierigkeit: Einfach')
             ->assertSessionHas('sql_temp_db', 'sql_exercise_test')
             ->assertSessionHas('sql_exercise_id', $exercise->id);
@@ -164,7 +164,7 @@ class ItExerciseFlowTest extends TestCase
         $this->actingAs($user)
             ->post(route('sql-uebung'), ['sql_input' => 'SELECT name, preis FROM produkte'])
             ->assertOk()
-            ->assertSeeText('Vorbereitete Aufgabe')
+            ->assertSeeText('Beispielaufgabe')
             ->assertSeeText('Schwierigkeit: Einfach')
             ->assertSeeText('name')
             ->assertSeeText('Maus');
@@ -197,7 +197,7 @@ class ItExerciseFlowTest extends TestCase
 
         $response
             ->assertOk()
-            ->assertSeeText('Vorbereitete Aufgabe')
+            ->assertSeeText('Beispielaufgabe')
             ->assertSeeText('Prozentrechnung: Mehrwertsteuer berechnen')
             ->assertSeeText('Ein Server kostet netto 960 Euro. Darauf werden 19 % Mehrwertsteuer berechnet.')
             ->assertSeeText('Einheit: Euro')
@@ -217,7 +217,7 @@ class ItExerciseFlowTest extends TestCase
         $this->actingAs($user)
             ->post(route('calculation-exercises.check'), ['user_solution' => '182.40'])
             ->assertOk()
-            ->assertSeeText('Vorbereitete Aufgabe')
+            ->assertSeeText('Beispielaufgabe')
             ->assertSeeText('Deine Lösung ist korrekt.')
             ->assertSeeText('Erwartetes Ergebnis')
             ->assertSeeText('182.40 Euro')
@@ -248,7 +248,7 @@ class ItExerciseFlowTest extends TestCase
 
         $response
             ->assertOk()
-            ->assertSeeText('KI-generierte Aufgabe');
+            ->assertSeeText('KI-generiert');
 
         $this->assertSame('generated', $exercise->source);
     }
@@ -267,7 +267,7 @@ class ItExerciseFlowTest extends TestCase
         $user = User::factory()->create();
         $pngPath = storage_path('framework/testing/uml.png');
 
-        if (!is_dir(dirname($pngPath))) {
+        if (! is_dir(dirname($pngPath))) {
             mkdir(dirname($pngPath), 0755, true);
         }
 
@@ -316,7 +316,7 @@ class ItExerciseFlowTest extends TestCase
     {
         Category::create(['name' => 'SQL']);
         $user = User::factory()->create();
-        $dbName = 'sql_exercise_test_' . $difficulty;
+        $dbName = 'sql_exercise_test_'.$difficulty;
 
         $dbManager = Mockery::mock(DatabaseManager::class);
         $dbManager->shouldReceive('createTemporaryDatabase')->once()->andReturn($dbName);
@@ -342,14 +342,14 @@ class ItExerciseFlowTest extends TestCase
         $response
             ->assertOk()
             ->assertSeeText('Erstelle eine SQL-Abfrage')
-            ->assertSeeText('Vorbereitete Aufgabe')
-            ->assertSeeText('Schwierigkeit: ' . $label)
+            ->assertSeeText('Beispielaufgabe')
+            ->assertSeeText('Schwierigkeit: '.$label)
             ->assertSessionHas('sql_temp_db', $dbName)
             ->assertSessionHas('sql_exercise_id', $exercise->id);
 
         $this->assertSame($user->id, $exercise->user_id);
         $this->assertSame($difficulty, $exercise->difficulty);
         $this->assertSame('fixture', $exercise->source);
-        $this->assertStringContainsString('"difficulty":"' . $difficulty . '"', $exercise->prompt);
+        $this->assertStringContainsString('"difficulty":"'.$difficulty.'"', $exercise->prompt);
     }
 }
