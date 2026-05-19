@@ -21,6 +21,8 @@ class SqlExerciseGenerator
      * @return array{
      *     database: string,
      *     payload: array<string, mixed>,
+     *     title?: ?string,
+     *     source: string,
      *     task: string,
      *     mysqlstatement: string,
      *     solution: string
@@ -36,6 +38,7 @@ class SqlExerciseGenerator
         for ($attempt = 1; $attempt <= $maxAttempts; $attempt++) {
             $attemptPayload = $this->buildAttemptPayload($payload, $lastSqlException, $lastGeneratedSql);
             $dbName = null;
+            $mysqlstatement = null;
 
             try {
                 $data = $ai->getSql($attemptPayload, $fixtureKey);
@@ -46,6 +49,8 @@ class SqlExerciseGenerator
                 return [
                     'database' => $dbName,
                     'payload' => $attemptPayload,
+                    'title' => isset($data['title']) ? (string) $data['title'] : null,
+                    'source' => (string) ($data['source'] ?? 'generated'),
                     'task' => (string) $data['task'],
                     'mysqlstatement' => $mysqlstatement,
                     'solution' => (string) $data['solution'],
@@ -119,17 +124,22 @@ class SqlExerciseGenerator
 
     private function generateFallbackExercise(array $payload, string $fixtureKey): array
     {
-        $data = $this->aiFixtureService->load($fixtureKey);
+        $data = $this->aiFixtureService->loadMatching($fixtureKey, [
+            'difficulty' => $payload['difficulty'] ?? null,
+        ]);
         $dbName = $this->dbManager->createTemporaryDatabase();
         $mysqlstatement = (string) $data['mysqlstatement'];
 
         $this->dbManager->createMySqlExercise($mysqlstatement, $dbName);
 
         $payload['fallback_fixture'] = $fixtureKey;
+        $payload['fallback_fixture_difficulty'] = $data['difficulty'] ?? null;
 
         return [
             'database' => $dbName,
             'payload' => $payload,
+            'title' => isset($data['title']) ? (string) $data['title'] : null,
+            'source' => 'fixture',
             'task' => (string) $data['task'],
             'mysqlstatement' => $mysqlstatement,
             'solution' => (string) $data['solution'],

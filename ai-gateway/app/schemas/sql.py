@@ -1,10 +1,10 @@
 from pydantic import BaseModel, Field
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, Literal
 
 
 class GenerateSqlRequest(BaseModel):
     request_id: str = Field(..., description="Eindeutige ID aus Laravel")
-    difficulty: str = Field("medium", description="easy|medium|hard")
+    difficulty: Literal["easy", "medium", "hard"] = Field("medium", description="easy|medium|hard")
     topic: Optional[str] = Field(None, description="z.B. JOIN, GROUP BY, Subquery")
     language: str = Field("de", description="Ausgabesprache")
     extra_context: Optional[str] = None

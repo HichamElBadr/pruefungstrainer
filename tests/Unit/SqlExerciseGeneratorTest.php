@@ -61,7 +61,7 @@ class SqlExerciseGeneratorTest extends TestCase
             ->with('CREATE TABLE answers (id INT PRIMARY KEY);', 'sql_exercise_1779115613_valid');
 
         $fixtures = Mockery::mock(AiFixtureService::class);
-        $fixtures->shouldReceive('load')->never();
+        $fixtures->shouldReceive('loadMatching')->never();
 
         $service = new SqlExerciseGenerator($dbManager, $fixtures);
         $result = $service->generate($ai, $payload);
@@ -87,10 +87,11 @@ class SqlExerciseGeneratorTest extends TestCase
             ->andThrow(new RuntimeException('bad gateway payload'));
 
         $fixtures = Mockery::mock(AiFixtureService::class);
-        $fixtures->shouldReceive('load')
+        $fixtures->shouldReceive('loadMatching')
             ->once()
-            ->with('sql')
+            ->with('sql', ['difficulty' => null])
             ->andReturn([
+                'title' => 'Fixture Titel',
                 'task' => 'Fixture Aufgabe',
                 'mysqlstatement' => 'CREATE TABLE answers (id INT PRIMARY KEY);',
                 'solution' => 'SELECT id FROM answers;',
@@ -110,5 +111,6 @@ class SqlExerciseGeneratorTest extends TestCase
         $this->assertSame('sql_exercise_1779115614_fixture', $result['database']);
         $this->assertSame('sql', $result['payload']['fallback_fixture']);
         $this->assertSame('Fixture Aufgabe', $result['task']);
+        $this->assertSame('Fixture Titel', $result['title']);
     }
 }

@@ -1,77 +1,82 @@
-<x-app-layout>
-    <x-slot name="header">
-        <h2 class="font-bold text-xl text-gray-800">
-            UML
-        </h2>
+<x-exercise-layout
+    title="UML-Aufgaben"
+    description="Erstelle aus vereinfachter Texteingabe ein UML-Klassendiagramm und prüfe die Darstellung direkt als Vorschau."
+>
+    <x-slot name="badges">
+        <span class="exercise-badge">UML</span>
+        <span class="exercise-badge">Übungsaufgabe</span>
     </x-slot>
 
-    <div class="max-w-4xl mx-auto py-6">
-        @if(!empty($error))
-        <div class="mb-4 p-3 bg-red-100 text-red-800 rounded">
-            {{ $error }}
+    @if(!empty($error))
+        <div class="exercise-alert exercise-alert-error">
+            <p class="font-heading font-semibold">Rendering fehlgeschlagen</p>
+            <p class="mt-1">{{ $error }}</p>
         </div>
-        @endif
+    @endif
 
-        <form action="{{ route('uml.render') }}" method="POST" class="space-y-3">
-            @csrf
-            <label for="uml_text" class="block text-sm text-gray-700">UML (vereinfachter Text)</label>
-            <textarea id="uml_text" name="uml_text" rows="10"
-                class="w-full border rounded p-2 font-mono text-sm"
-                placeholder="class Person&#10;  - name : String&#10;  + getName() : String">{{ old('uml_text', $input ?? '') }}</textarea>
+    <section class="exercise-card">
+        <div class="exercise-card-body">
+            <h2 class="font-heading text-xl font-semibold text-slate-950">UML-Eingabe</h2>
 
-            <button type="submit"
-                class="px-4 py-2 rounded bg-gray-800 text-white">
-                Diagramm generieren
-            </button>
-        </form>
+            <form action="{{ route('uml.render') }}" method="POST" class="mt-4 space-y-4">
+                @csrf
 
-        @if(!empty($imageDataUrl))
-        <div class="mt-6">
-            <h3 class="text-sm text-gray-600 mb-2">Vorschau:</h3>
-            <img src="{{ $imageDataUrl }}" alt="UML Diagramm" class="max-w-full border rounded">
+                <div>
+                    <label for="uml_text" class="font-heading block text-sm font-semibold text-slate-800">Vereinfachter UML-Text</label>
+                    <textarea
+                        id="uml_text"
+                        name="uml_text"
+                        rows="12"
+                        class="mt-2 block w-full rounded-lg border-slate-300 text-sm shadow-sm focus:border-slate-500 focus:ring-slate-500"
+                        placeholder="class Person&#10;  - name : String&#10;  + getName() : String"
+                    >{{ old('uml_text', $input ?? '') }}</textarea>
+                    <x-input-error :messages="$errors->get('uml_text')" class="mt-2" />
+                </div>
+
+                <button type="submit" class="exercise-button">Diagramm generieren</button>
+            </form>
         </div>
-        @endif
+    </section>
 
-        
-        {{-- How to use --}}
-        <div class="mt-6 border rounded p-4 bg-white">
-            <h3 class="font-semibold mb-2">How to use (Kurz-Anleitung)</h3>
-            <ul class="list-disc pl-6 space-y-1 text-sm text-gray-800">
-                <li><strong>Klasse beginnen:</strong> <code class="font-mono">class Klassenname</code></li>
-                <li><strong>Mitglieder einrücken:</strong> jede Attribut-/Methodenzeile mit zwei Leerzeichen beginnen.</li>
-                <li><strong>Sichtbarkeit:</strong> <code class="font-mono">+</code> public, <code class="font-mono">-</code> private, <code class="font-mono">#</code> protected.</li>
-                <li><strong>Attribute:</strong> <code class="font-mono">- name : String</code> (Typ optional).</li>
-                <li><strong>Methoden:</strong> <code class="font-mono">+ getName() : String</code> (Rückgabetyp optional).</li>
-                <li><strong>Mehrere Klassen:</strong> Klassenblöcke durch eine <em>Leerzeile</em> trennen.</li>
-                <li><strong>Beziehungen (optional):</strong>
-                    <code class="font-mono">A -> B : label</code>,
-                    <code class="font-mono">A -- B</code>,
-                    <code class="font-mono">A o-- B</code> (Aggregation),
-                    <code class="font-mono">A *-- B</code> (Komposition),
-                    <code class="font-mono">A ..> B</code> (Dependency),
-                    <code class="font-mono">Parent &lt;|-- Child</code> (Vererbung).
-                </li>
-                <li><strong>Format:</strong> Verwende die vereinfachte Schreibweise aus diesem Formular.</li>
-            </ul>
+    @if(!empty($imageDataUrl))
+        <section class="exercise-card">
+            <div class="exercise-card-body">
+                <h2 class="font-heading text-xl font-semibold text-slate-950">Vorschau</h2>
+                <div class="mt-4 overflow-x-auto rounded-lg border border-slate-200 bg-slate-50 p-4">
+                    <img src="{{ $imageDataUrl }}" alt="UML-Diagramm" class="max-w-full rounded-md border border-slate-200 bg-white">
+                </div>
+            </div>
+        </section>
+    @endif
 
-            <div class="mt-3">
-                <div class="text-xs text-gray-600 mb-1">Beispiel-Eingabe:</div>
-                <pre class="border rounded p-3 bg-gray-50 text-sm overflow-auto"><code>
-                class Person
-                - name : String
-                - age  : Integer
-                + getName() : String
+    <section class="exercise-card">
+        <div class="exercise-card-body">
+            <h2 class="font-heading text-xl font-semibold text-slate-950">Syntaxhilfe</h2>
 
-                class Hund
-                - rasse : String
-                + bellen() : void
+            <div class="mt-4 grid gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(18rem,0.9fr)]">
+                <ul class="space-y-2 text-sm leading-6 text-slate-700">
+                    <li><span class="font-semibold text-slate-900">Klasse:</span> <code>class Klassenname</code></li>
+                    <li><span class="font-semibold text-slate-900">Mitglieder:</span> Attribute und Methoden stehen unter der Klasse.</li>
+                    <li><span class="font-semibold text-slate-900">Sichtbarkeit:</span> <code>+</code> public, <code>-</code> private, <code>#</code> protected.</li>
+                    <li><span class="font-semibold text-slate-900">Attribute:</span> <code>- name : String</code></li>
+                    <li><span class="font-semibold text-slate-900">Methoden:</span> <code>+ getName() : String</code></li>
+                    <li><span class="font-semibold text-slate-900">Beziehungen:</span> <code>A -&gt; B : label</code>, <code>A o-- B</code>, <code>Parent &lt;|-- Child</code></li>
+                </ul>
 
-                Person -> Hund : besitzt</code></pre>
-                <p class="text-xs text-gray-600 mt-2">
-                    Tipp: Achte auf eine <em>Leerzeile zwischen Klassen</em>, damit der Parser den Klassenblock sauber schließt.
-                </p>
+                <div>
+                    <p class="mb-2 font-heading text-sm font-semibold text-slate-800">Beispiel-Eingabe</p>
+                    <pre class="exercise-code overflow-x-auto"><code>class Person
+- name : String
+- age : Integer
++ getName() : String
+
+class Hund
+- rasse : String
++ bellen() : void
+
+Person -> Hund : besitzt</code></pre>
+                </div>
             </div>
         </div>
-    </div>
-
-</x-app-layout>
+    </section>
+</x-exercise-layout>

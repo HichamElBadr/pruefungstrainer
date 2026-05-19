@@ -1,9 +1,9 @@
 from fastapi import APIRouter, Depends
-from app.schemas.scan import GenerateScanRequest, GenerateScanResponse
+from app.schemas.calculation import GenerateCalculationRequest, GenerateCalculationResponse
 from app.schemas.sql import GenerateSqlRequest, GenerateSqlResponse
 from app.core.settings import settings
 from app.clients.ollama_client import OllamaClient
-from app.services.scan_service import generate_scan_exercise
+from app.services.calculation_service import generate_calculation_exercise
 from app.services.sql_service import generate_sql_exercise
 
 router = APIRouter()
@@ -33,16 +33,19 @@ async def generate_sql(
     )
 
 
-@router.post("/generate/scan", response_model=GenerateScanResponse)
-async def generate_scan(
-    req: GenerateScanRequest,
+@router.post("/generate/calculation", response_model=GenerateCalculationResponse)
+async def generate_calculation(
+    req: GenerateCalculationRequest,
     client: OllamaClient = Depends(get_ollama_client),
 ):
-    result = await generate_scan_exercise(req, client)
+    result = await generate_calculation_exercise(req, client)
 
-    return GenerateScanResponse(
+    return GenerateCalculationResponse(
         request_id=req.request_id,
+        title=result["title"],
         task=result["task"],
-        solution=result["solution"],
+        expected_result=result["expected_result"],
+        expected_unit=result["expected_unit"],
+        sample_solution=result["sample_solution"],
         meta=result["meta"],
     )

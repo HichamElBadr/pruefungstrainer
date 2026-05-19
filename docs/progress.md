@@ -1,5 +1,360 @@
 # Progress Update
 
+## 2026-05-19 - Move app navigation into sidebar
+
+### Summary
+
+Removed the redundant authenticated top navigation and made the existing left sidebar the primary navigation for dashboard and exercise pages.
+
+### Changed Files
+
+- `resources/views/layouts/app.blade.php`
+- `resources/views/components/exercise-layout.blade.php`
+- `resources/views/it/partials/exercise-sidebar.blade.php`
+- `resources/views/components/primary-button.blade.php`
+- `resources/views/dashboard.blade.php`
+- `resources/views/profile/edit.blade.php`
+- `resources/views/it/sql-exercise/select-difficulty.blade.php`
+- `resources/views/it/calculation-exercises/index.blade.php`
+- `resources/css/app.css`
+- `tests/Feature/ItExerciseFlowTest.php`
+- `docs/progress.md`
+
+### Behavior Changes
+
+- Authenticated pages no longer render the Breeze top navigation bar or Laravel logo.
+- The sidebar now contains the app identity, Dashboard, SQL-Aufgaben, Rechenaufgaben, UML-Aufgaben, and the authenticated user area.
+- Profile and logout actions are available from the sidebar, with logout still submitted through the existing POST route.
+- Dashboard and profile pages now use the same sidebar-based shell as the exercise pages.
+- Primary action buttons now use an indigo style instead of the previous dark slate style.
+- Existing routes, controllers, AI generation, SQL execution, and calculation evaluation were left unchanged.
+
+### Testing
+
+- `php artisan test --filter=ItExerciseFlowTest`: passed.
+- `php artisan test --filter=ProfileTest`: passed.
+- `php artisan test`: passed.
+- `npm.cmd run build`: passed.
+- `vendor\bin\pint.bat --dirty --test`: passed.
+
+### Follow-up Notes
+
+- The old Breeze navigation Blade file remains in the project but is no longer included by the authenticated app layout.
+
+## 2026-05-19 - Refine calculation topic cards
+
+### Summary
+
+Improved the calculation exercise overview cards so they match the clarity and action treatment of the SQL exercise overview.
+
+### Changed Files
+
+- `resources/views/it/calculation-exercises/index.blade.php`
+- `tests/Feature/ItExerciseFlowTest.php`
+- `docs/progress.md`
+
+### Behavior Changes
+
+- Calculation topic cards now include short German descriptions for each topic.
+- `Neue Aufgabe erzeugen` is now styled as a clear button-like action within each clickable topic card.
+- The calculation overview header now uses `Rechenaufgabe` and `Themenauswahl` badges.
+- Existing routes, form actions, AI generation, and calculation evaluation were left unchanged.
+
+### Testing
+
+- `php artisan test --filter=ItExerciseFlowTest`: passed.
+- `npm.cmd run build`: passed.
+- `vendor\bin\pint.bat --dirty --test`: passed.
+
+### Follow-up Notes
+
+- None.
+
+## 2026-05-19 - Refine SQL exercise selection UI
+
+### Summary
+
+Refined the existing exercise navigation and SQL difficulty selection cards without changing backend behavior.
+
+### Changed Files
+
+- `resources/views/it/partials/exercise-sidebar.blade.php`
+- `resources/views/it/sql-exercise/select-difficulty.blade.php`
+- `tests/Feature/ItExerciseFlowTest.php`
+- `docs/progress.md`
+
+### Behavior Changes
+
+- The left exercise navigation now uses the same exercise order as the top navigation: SQL, Rechenaufgaben, UML.
+- SQL difficulty cards now include learner-friendly descriptions for `Einfach`, `Mittel`, and `Schwer`.
+- The card action now presents `Aufgabe erzeugen` as a clear button-like element while keeping the full card clickable.
+- The SQL selection header now uses `Übungsstufe` and `Beispieldatenbank`.
+- Existing routes, form actions, AI generation, SQL execution, and controller logic were left unchanged.
+
+### Testing
+
+- `php artisan test --filter=ItExerciseFlowTest`: passed.
+- `npm.cmd run build`: passed.
+- `vendor\bin\pint.bat --dirty --test`: passed.
+
+### Follow-up Notes
+
+- None.
+
+## 2026-05-19 - Refresh exercise page UI
+
+### Summary
+
+Improved the exercise area with a shared layout, left sidebar navigation, consistent cards, badges, typography, and styled SQL/table displays.
+
+### Changed Files
+
+- `app/Http/Controllers/CalculationExerciseController.php`
+- `app/Http/Controllers/SqlExerciseController.php`
+- `resources/css/app.css`
+- `resources/views/components/exercise-layout.blade.php`
+- `resources/views/it/partials/exercise-sidebar.blade.php`
+- `resources/views/it/sql-exercise/index.blade.php`
+- `resources/views/it/sql-exercise/select-difficulty.blade.php`
+- `resources/views/it/calculation-exercises/index.blade.php`
+- `resources/views/it/uml-exercise/index.blade.php`
+- `resources/views/layouts/app.blade.php`
+- `resources/views/layouts/navigation.blade.php`
+- `tailwind.config.js`
+- `tests/Feature/ItExerciseFlowTest.php`
+- `docs/progress.md`
+
+### Behavior Changes
+
+- Exercise pages now share a professional two-column layout with a left sidebar for SQL, UML, and calculation exercises.
+- The active exercise section is highlighted in the sidebar and main navigation.
+- SQL tables, query results, SQL input, and solution code now use consistent learning-oriented styling.
+- Calculation exercises now separate the task, answer input, feedback, expected result, and sample solution into distinct cards.
+- Fixture-backed exercises now display `Beispielaufgabe`; generated exercises display `KI-generiert`.
+- Existing routes, form actions, request methods, AI generation, SQL execution, and calculation checking were left unchanged.
+
+### Testing
+
+- `php artisan test --filter=ItExerciseFlowTest`: passed.
+- `php artisan test`: passed.
+- `npm.cmd run build`: passed.
+- `vendor\bin\pint.bat --dirty --test`: passed after formatting dirty PHP files with Pint.
+
+### Follow-up Notes
+
+- No Aufgabenverlauf route currently exists, so no history link is shown in the sidebar.
+
+## 2026-05-19 - Add exercise source badges
+
+### Summary
+
+Added persisted source tracking for SQL and calculation exercises and displayed a German source badge on exercise pages.
+
+### Changed Files
+
+- `app/Models/Exercise.php`
+- `app/Services/AI/AiResponseProvider.php`
+- `app/Services/SqlExerciseGenerator.php`
+- `app/Http/Controllers/SqlExerciseController.php`
+- `app/Http/Controllers/CalculationExerciseController.php`
+- `database/migrations/2026_05_19_000004_add_source_to_exercises_table.php`
+- `resources/views/it/sql-exercise/index.blade.php`
+- `resources/views/it/calculation-exercises/index.blade.php`
+- `tests/Feature/ItExerciseFlowTest.php`
+- `docs/progress.md`
+
+### Behavior Changes
+
+- New exercises now store `source` as `generated` for AI gateway responses or `fixture` for prepared fixture responses.
+- SQL exercises display `KI-generierte Aufgabe` or `Vorbereitete Aufgabe`.
+- Calculation exercises display `KI-generierte Aufgabe` or `Vorbereitete Aufgabe`.
+- Existing routes, authentication, difficulty selection, and UML behavior were left unchanged.
+
+### Testing
+
+- `php artisan test --filter=ItExerciseFlowTest`: passed.
+- `php artisan test --filter=SqlExerciseGeneratorTest`: passed.
+- `php artisan test --filter=AiResponseProviderTest`: passed.
+
+### Follow-up Notes
+
+- Run `php artisan migrate` locally to add the nullable `source` column before using the new badge data outside the test database.
+
+## 2026-05-19 - Add SQL difficulty selection and exercise fixtures
+
+### Summary
+
+Changed the SQL exercise entry point so it opens a difficulty selection page before generating an exercise. Added difficulty-aware SQL generation, fixture fallback lookup, and broader SQL and calculation fixture collections for tests, demos, and local development.
+
+### Changed Files
+
+- `routes/web.php`
+- `app/Http/Controllers/SqlExerciseController.php`
+- `app/Http/Controllers/CalculationExerciseController.php`
+- `app/Models/Exercise.php`
+- `app/Services/AI/AiFixtureService.php`
+- `app/Services/AI/AiResponseProvider.php`
+- `app/Services/SqlExerciseGenerator.php`
+- `database/migrations/2026_05_19_000003_add_difficulty_to_exercises_table.php`
+- `resources/views/it/sql-exercise/select-difficulty.blade.php`
+- `resources/views/it/sql-exercise/index.blade.php`
+- `resources/views/layouts/navigation.blade.php`
+- `resources/ai-fixtures/sql.json`
+- `resources/ai-fixtures/calculation.json`
+- `ai-gateway/app/schemas/sql.py`
+- `ai-gateway/app/services/sql_service.py`
+- `ai-gateway/prompts/sql/sql_v1.txt`
+- `ai-gateway/tests/test_sql_service.py`
+- `tests/Unit/AiFixtureServiceTest.php`
+- `tests/Unit/AiResponseProviderTest.php`
+- `tests/Unit/SqlExerciseGeneratorTest.php`
+- `tests/Feature/ItExerciseFlowTest.php`
+- `docs/progress.md`
+
+### Behavior Changes
+
+- Opening `SQL-Aufgaben` now shows `Einfach`, `Mittel`, and `Schwer` instead of generating immediately.
+- SQL generation now accepts only `easy`, `medium`, or `hard`; invalid values return 404.
+- SQL exercise prompts and AI gateway prompts now include explicit difficulty rules.
+- Generated SQL exercises store and display the selected difficulty with German labels.
+- SQL fixtures now include at least three exercises per difficulty and are used for matching fallback.
+- Calculation fixtures now include at least two exercises per supported topic and can be used as fallback by topic and difficulty.
+- Calculation AI failures now fall back to matching fixtures without showing raw gateway errors.
+- UML behavior was not changed.
+
+### Testing
+
+- `php artisan test --filter=AiFixtureServiceTest`: passed.
+- `php artisan test --filter=AiResponseProviderTest`: passed.
+- `php artisan test --filter=SqlExerciseGeneratorTest`: passed.
+- `php artisan test --filter=ItExerciseFlowTest`: passed.
+- `php artisan test`: passed.
+- `php artisan route:list --path=it`: verified SQL, calculation, and UML routes.
+- `C:\Users\hicha\AppData\Local\Programs\Python\Python313\python.exe -m unittest discover -s ai-gateway\tests` with `PYTHONPATH` including `ai-gateway` and `.venv\Lib\site-packages`: passed.
+- `C:\Users\hicha\AppData\Local\Programs\Python\Python313\python.exe -m compileall ai-gateway\app`: passed.
+
+### Follow-up Notes
+
+- The existing `ai-gateway\.venv\Scripts\python.exe` launcher points to an inaccessible WindowsApps Python shim in this environment, so gateway tests were run with the installed Python executable and the venv site-packages on `PYTHONPATH`.
+- Run `php artisan migrate` locally to add the nullable `difficulty` column before using stored difficulties outside the test database.
+
+## 2026-05-19 - Harden calculation exercise generation
+
+### Summary
+
+Improved calculation exercise generation quality by requiring richer AI output and validating generated exercises before returning them to Laravel.
+
+### Changed Files
+
+- `ai-gateway/prompts/calculation/calculation_v1.txt`
+- `ai-gateway/app/schemas/calculation.py`
+- `ai-gateway/app/services/calculation_service.py`
+- `ai-gateway/app/api/routes.py`
+- `ai-gateway/tests/test_calculation_service.py`
+- `app/Http/Controllers/CalculationExerciseController.php`
+- `app/Services/AI/AiResponseProvider.php`
+- `app/Models/Exercise.php`
+- `database/migrations/2026_05_19_000002_add_calculation_metadata_to_exercises_table.php`
+- `resources/ai-fixtures/calculation.json`
+- `resources/views/it/calculation-exercises/index.blade.php`
+- `tests/Feature/ItExerciseFlowTest.php`
+- `docs/progress.md`
+
+### Behavior Changes
+
+- Calculation AI responses now include `title`, `task`, `expected_result`, `expected_unit`, and `sample_solution`.
+- The AI gateway rejects vague, too-short, under-specified, or non-numeric calculation outputs with HTTP 422.
+- The AI gateway retries calculation generation up to three times and records the successful attempt in metadata.
+- Calculation exercises now display a German title and expected unit in the UI.
+- The expected result remains numeric internally, while the unit is displayed separately.
+- SQL and UML flows were left unchanged.
+
+### Testing
+
+- `ai-gateway\.venv\Scripts\python.exe -m unittest discover -s tests`: passed.
+- `ai-gateway\.venv\Scripts\python.exe -m compileall ai-gateway\app`: passed.
+- `php artisan migrate`: passed.
+- `php artisan test --filter=ItExerciseFlowTest`: passed.
+- `php artisan test`: passed.
+- `php artisan route:list --path=it`: verified calculation, SQL, and UML routes.
+
+### Follow-up Notes
+
+- The live model can still fail all three attempts if it repeatedly ignores the schema, but the user will no longer receive vague or incomplete calculation exercises from those invalid generations.
+
+## 2026-05-19 - Improve Ollama connection errors
+
+### Summary
+
+Converted unavailable Ollama connections in the AI gateway into clear HTTP errors.
+
+### Changed Files
+
+- `ai-gateway/app/clients/ollama_client.py`
+- `docs/progress.md`
+
+### Behavior Changes
+
+- If Ollama is not reachable, the gateway now returns HTTP 503 with a clear message instead of logging a full unhandled traceback.
+- Ollama timeouts now return HTTP 504 with the configured timeout value.
+- Other Ollama request failures still return HTTP 502.
+
+### Testing
+
+- `ai-gateway\.venv\Scripts\python.exe -m compileall ai-gateway\app`: passed.
+- `Invoke-RestMethod http://127.0.0.1:11434/api/tags`: initially failed while Ollama was unavailable, then passed after `ollama list` woke the local service.
+
+### Follow-up Notes
+
+- A direct `deepseek-r1:7b` test generation exceeded 30 seconds during local probing; keep `OLLAMA_TIMEOUT_SEC` high enough for cold model starts.
+
+## 2026-05-19 - Refactor Scan exercises into calculation exercises
+
+### Summary
+
+Replaced the Scan exercise flow with a calculation exercise feature named "Rechenaufgaben" in the UI.
+
+### Changed Files
+
+- `app/Http/Controllers/CalculationExerciseController.php`
+- `app/Services/CalculationExerciseTopicCatalog.php`
+- `app/Services/AI/AiGatewayClient.php`
+- `app/Services/AI/AiResponseProvider.php`
+- `app/Services/SolutionEvaluator.php`
+- `app/Models/Exercise.php`
+- `routes/web.php`
+- `resources/views/it/calculation-exercises/index.blade.php`
+- `resources/views/layouts/navigation.blade.php`
+- `resources/ai-fixtures/calculation.json`
+- `database/migrations/2026_05_19_000000_add_sample_solution_to_exercises_table.php`
+- `database/migrations/2026_05_19_000001_rename_scan_category_to_calculation.php`
+- `database/seeders/CategorySeeder.php`
+- `ai-gateway/app/api/routes.py`
+- `ai-gateway/app/schemas/calculation.py`
+- `ai-gateway/app/services/calculation_service.py`
+- `ai-gateway/prompts/calculation/calculation_v1.txt`
+- `tests/Feature/ItExerciseFlowTest.php`
+
+### Behavior Changes
+
+- The navigation now links to "Rechenaufgaben" instead of "Scan".
+- The calculation exercise overview shows selectable topic buttons for Prozentrechnung, Dreisatz, Multiplikation, Division, Speichergrößen, Stromverbrauch and Hardwarekosten.
+- Selecting a topic generates one calculation exercise for that topic through the local AI gateway abstraction.
+- Calculation exercises now store the expected result separately from a step-by-step German sample solution.
+- Unknown calculation topics return a clean 404 response.
+- The old Scan controller, route, view, fixture and gateway endpoint were replaced by calculation exercise naming.
+
+### Testing
+
+- `php artisan migrate`: passed.
+- `php artisan test --filter=ItExerciseFlowTest`: passed.
+- `php artisan test`: passed.
+- `ai-gateway\.venv\Scripts\python.exe -m compileall ai-gateway\app`: passed.
+
+### Follow-up Notes
+
+- Live Ollama quality still depends on the local model following the requested topic and numeric `expected_result` format.
+
 ## 2026-05-18 - Regenerate invalid SQL exercises automatically
 
 ### Summary
@@ -165,4 +520,4 @@ Tightened the SQL exercise prompt and enabled Ollama JSON mode for SQL generatio
 
 ## Remaining Note
 
-- Python bytecode compilation for the AI gateway could not be run in this environment because the Windows Python launcher is blocked by an access-denied error. The FastAPI changes were reviewed in code, but not executed locally here.
+- The Windows Python launcher is still blocked by an access-denied error, but AI gateway bytecode compilation now works through the project virtualenv at `ai-gateway\.venv\Scripts\python.exe`.
