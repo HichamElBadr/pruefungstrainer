@@ -21,8 +21,29 @@ class OllamaClient:
             body["format"] = response_format
 
         async with httpx.AsyncClient(timeout=self.timeout_sec) as client:
-            resp = await client.post(url, json=body)
+            try:
+                resp = await client.post(url, json=body)
+            except httpx.ConnectError as exc:
+                raise HTTPException(
+                    status_code=503,
+                    detail=(
+                        f"Ollama is not reachable at {self.base_url}. "
+                        "Start Ollama or update OLLAMA_BASE_URL."
+                    ),
+                ) from exc
+            except httpx.TimeoutException as exc:
+                raise HTTPException(
+                    status_code=504,
+                    detail=f"Ollama did not respond within {self.timeout_sec} seconds.",
+                ) from exc
+            except httpx.RequestError as exc:
+                raise HTTPException(
+                    status_code=502,
+                    detail=f"Ollama request failed: {exc}",
+                ) from exc
+
             if resp.status_code != 200:
-                raise HTTPException(status_code=502, detail=f"Ollama error: {resp.text}")
+                raise HTTPException(status_code=502, detail=f"Ollama error ({resp.status_code}): {resp.text}")
+
             data = resp.json()
             return data.get("response", "")

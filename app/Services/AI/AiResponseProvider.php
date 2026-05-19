@@ -21,12 +21,12 @@ class AiResponseProvider
         );
     }
 
-    public function getScan(array $payload, string $fixtureKey = 'scan'): array
+    public function getCalculation(array $payload, string $fixtureKey = 'calculation'): array
     {
         return $this->getValidatedResponse(
             fixtureKey: $fixtureKey,
-            liveResolver: fn () => $this->gateway->generateScan($payload),
-            requiredFields: ['task', 'solution'],
+            liveResolver: fn () => $this->gateway->generateCalculation($payload),
+            requiredFields: ['title', 'task', 'expected_result', 'expected_unit', 'sample_solution'],
         );
     }
 

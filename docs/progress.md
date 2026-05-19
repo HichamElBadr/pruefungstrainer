@@ -1,5 +1,122 @@
 # Progress Update
 
+## 2026-05-19 - Harden calculation exercise generation
+
+### Summary
+
+Improved calculation exercise generation quality by requiring richer AI output and validating generated exercises before returning them to Laravel.
+
+### Changed Files
+
+- `ai-gateway/prompts/calculation/calculation_v1.txt`
+- `ai-gateway/app/schemas/calculation.py`
+- `ai-gateway/app/services/calculation_service.py`
+- `ai-gateway/app/api/routes.py`
+- `ai-gateway/tests/test_calculation_service.py`
+- `app/Http/Controllers/CalculationExerciseController.php`
+- `app/Services/AI/AiResponseProvider.php`
+- `app/Models/Exercise.php`
+- `database/migrations/2026_05_19_000002_add_calculation_metadata_to_exercises_table.php`
+- `resources/ai-fixtures/calculation.json`
+- `resources/views/it/calculation-exercises/index.blade.php`
+- `tests/Feature/ItExerciseFlowTest.php`
+- `docs/progress.md`
+
+### Behavior Changes
+
+- Calculation AI responses now include `title`, `task`, `expected_result`, `expected_unit`, and `sample_solution`.
+- The AI gateway rejects vague, too-short, under-specified, or non-numeric calculation outputs with HTTP 422.
+- The AI gateway retries calculation generation up to three times and records the successful attempt in metadata.
+- Calculation exercises now display a German title and expected unit in the UI.
+- The expected result remains numeric internally, while the unit is displayed separately.
+- SQL and UML flows were left unchanged.
+
+### Testing
+
+- `ai-gateway\.venv\Scripts\python.exe -m unittest discover -s tests`: passed.
+- `ai-gateway\.venv\Scripts\python.exe -m compileall ai-gateway\app`: passed.
+- `php artisan migrate`: passed.
+- `php artisan test --filter=ItExerciseFlowTest`: passed.
+- `php artisan test`: passed.
+- `php artisan route:list --path=it`: verified calculation, SQL, and UML routes.
+
+### Follow-up Notes
+
+- The live model can still fail all three attempts if it repeatedly ignores the schema, but the user will no longer receive vague or incomplete calculation exercises from those invalid generations.
+
+## 2026-05-19 - Improve Ollama connection errors
+
+### Summary
+
+Converted unavailable Ollama connections in the AI gateway into clear HTTP errors.
+
+### Changed Files
+
+- `ai-gateway/app/clients/ollama_client.py`
+- `docs/progress.md`
+
+### Behavior Changes
+
+- If Ollama is not reachable, the gateway now returns HTTP 503 with a clear message instead of logging a full unhandled traceback.
+- Ollama timeouts now return HTTP 504 with the configured timeout value.
+- Other Ollama request failures still return HTTP 502.
+
+### Testing
+
+- `ai-gateway\.venv\Scripts\python.exe -m compileall ai-gateway\app`: passed.
+- `Invoke-RestMethod http://127.0.0.1:11434/api/tags`: initially failed while Ollama was unavailable, then passed after `ollama list` woke the local service.
+
+### Follow-up Notes
+
+- A direct `deepseek-r1:7b` test generation exceeded 30 seconds during local probing; keep `OLLAMA_TIMEOUT_SEC` high enough for cold model starts.
+
+## 2026-05-19 - Refactor Scan exercises into calculation exercises
+
+### Summary
+
+Replaced the Scan exercise flow with a calculation exercise feature named "Rechenaufgaben" in the UI.
+
+### Changed Files
+
+- `app/Http/Controllers/CalculationExerciseController.php`
+- `app/Services/CalculationExerciseTopicCatalog.php`
+- `app/Services/AI/AiGatewayClient.php`
+- `app/Services/AI/AiResponseProvider.php`
+- `app/Services/SolutionEvaluator.php`
+- `app/Models/Exercise.php`
+- `routes/web.php`
+- `resources/views/it/calculation-exercises/index.blade.php`
+- `resources/views/layouts/navigation.blade.php`
+- `resources/ai-fixtures/calculation.json`
+- `database/migrations/2026_05_19_000000_add_sample_solution_to_exercises_table.php`
+- `database/migrations/2026_05_19_000001_rename_scan_category_to_calculation.php`
+- `database/seeders/CategorySeeder.php`
+- `ai-gateway/app/api/routes.py`
+- `ai-gateway/app/schemas/calculation.py`
+- `ai-gateway/app/services/calculation_service.py`
+- `ai-gateway/prompts/calculation/calculation_v1.txt`
+- `tests/Feature/ItExerciseFlowTest.php`
+
+### Behavior Changes
+
+- The navigation now links to "Rechenaufgaben" instead of "Scan".
+- The calculation exercise overview shows selectable topic buttons for Prozentrechnung, Dreisatz, Multiplikation, Division, Speichergrößen, Stromverbrauch and Hardwarekosten.
+- Selecting a topic generates one calculation exercise for that topic through the local AI gateway abstraction.
+- Calculation exercises now store the expected result separately from a step-by-step German sample solution.
+- Unknown calculation topics return a clean 404 response.
+- The old Scan controller, route, view, fixture and gateway endpoint were replaced by calculation exercise naming.
+
+### Testing
+
+- `php artisan migrate`: passed.
+- `php artisan test --filter=ItExerciseFlowTest`: passed.
+- `php artisan test`: passed.
+- `ai-gateway\.venv\Scripts\python.exe -m compileall ai-gateway\app`: passed.
+
+### Follow-up Notes
+
+- Live Ollama quality still depends on the local model following the requested topic and numeric `expected_result` format.
+
 ## 2026-05-18 - Regenerate invalid SQL exercises automatically
 
 ### Summary
@@ -165,4 +282,4 @@ Tightened the SQL exercise prompt and enabled Ollama JSON mode for SQL generatio
 
 ## Remaining Note
 
-- Python bytecode compilation for the AI gateway could not be run in this environment because the Windows Python launcher is blocked by an access-denied error. The FastAPI changes were reviewed in code, but not executed locally here.
+- The Windows Python launcher is still blocked by an access-denied error, but AI gateway bytecode compilation now works through the project virtualenv at `ai-gateway\.venv\Scripts\python.exe`.

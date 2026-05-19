@@ -11,10 +11,28 @@ class SolutionEvaluator
 
     public function compareNumeric(mixed $userValue, mixed $expected, float $tolerance = 0.01): bool
     {
-        if (!is_numeric($userValue) || !is_numeric($expected)) {
+        $normalizedUserValue = $this->normalizeNumericValue($userValue);
+        $normalizedExpected = $this->normalizeNumericValue($expected);
+
+        if ($normalizedUserValue === null || $normalizedExpected === null) {
             return false;
         }
 
-        return abs((float) $userValue - (float) $expected) <= $tolerance;
+        return abs($normalizedUserValue - $normalizedExpected) <= $tolerance;
+    }
+
+    private function normalizeNumericValue(mixed $value): ?float
+    {
+        if (is_int($value) || is_float($value)) {
+            return (float) $value;
+        }
+
+        $normalized = str_replace([' ', "\u{00A0}", ','], ['', '', '.'], trim((string) $value));
+
+        if (!is_numeric($normalized)) {
+            return null;
+        }
+
+        return (float) $normalized;
     }
 }

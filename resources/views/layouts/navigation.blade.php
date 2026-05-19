@@ -22,8 +22,8 @@
                     </x-nav-link>
                 </div>
                 <div class="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex">
-                    <x-nav-link :href="route('scan-uebung')" :active="request()->routeIs('scan-uebung')">
-                        {{ __('Scan') }}
+                    <x-nav-link :href="route('calculation-exercises.index')" :active="request()->routeIs('calculation-exercises.*')">
+                        {{ __('Rechenaufgaben') }}
                     </x-nav-link>
                 </div>
                 <div class="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex">
@@ -88,8 +88,8 @@
             <x-responsive-nav-link :href="route('sql-uebung')" :active="request()->routeIs('sql-uebung')">
                 {{ __('Sql') }}
             </x-responsive-nav-link>
-            <x-responsive-nav-link :href="route('scan-uebung')" :active="request()->routeIs('scan-uebung')">
-                {{ __('Scan') }}
+            <x-responsive-nav-link :href="route('calculation-exercises.index')" :active="request()->routeIs('calculation-exercises.*')">
+                {{ __('Rechenaufgaben') }}
             </x-responsive-nav-link>
             <x-responsive-nav-link :href="route('uml.form')" :active="request()->routeIs('uml.*')">
                 {{ __('UML') }}

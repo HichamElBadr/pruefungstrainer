@@ -19,7 +19,7 @@ class CategorySeeder extends Seeder
             ['name' => 'ER-Modell'],
             ['name' => 'Programmierung'],
             ['name' => 'Netzwerktechnik'],
-            ['name' => 'Scan'],
+            ['name' => 'Calculation'],
             ['name' => 'WISO'],
             ['name' => 'Sonstiges'],
             ['name' => 'IT-Sicherheit']

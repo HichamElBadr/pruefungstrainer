@@ -26,8 +26,24 @@ class ItExerciseFlowTest extends TestCase
     public function test_guest_users_are_redirected_from_it_exercises(): void
     {
         $this->get(route('sql-uebung'))->assertRedirect(route('login'));
-        $this->get(route('scan-uebung'))->assertRedirect(route('login'));
+        $this->get(route('calculation-exercises.index'))->assertRedirect(route('login'));
         $this->get(route('uml.form'))->assertRedirect(route('login'));
+    }
+
+    public function test_rechenaufgaben_navigation_link_is_visible_and_works(): void
+    {
+        $user = User::factory()->create();
+
+        $this->actingAs($user)
+            ->get(route('dashboard'))
+            ->assertOk()
+            ->assertSeeText('Rechenaufgaben')
+            ->assertSee(route('calculation-exercises.index'), false);
+
+        $this->actingAs($user)
+            ->get(route('calculation-exercises.index'))
+            ->assertOk()
+            ->assertSeeText('Thema auswählen');
     }
 
     public function test_sql_exercise_uses_fixture_and_keeps_current_exercise_in_session(): void
@@ -68,26 +84,62 @@ class ItExerciseFlowTest extends TestCase
             ->assertSeeText('1');
     }
 
-    public function test_scan_exercise_uses_fixture_and_checks_current_solution(): void
+    public function test_calculation_exercise_topic_overview_is_visible(): void
     {
-        Category::create(['name' => 'Scan']);
         $user = User::factory()->create();
 
-        $response = $this->actingAs($user)->get(route('scan-uebung'));
+        $this->actingAs($user)
+            ->get(route('calculation-exercises.index'))
+            ->assertOk()
+            ->assertSeeText('Prozentrechnung')
+            ->assertSeeText('Dreisatz')
+            ->assertSeeText('Multiplikation')
+            ->assertSeeText('Division')
+            ->assertSeeText('Speichergrößen')
+            ->assertSeeText('Stromverbrauch')
+            ->assertSeeText('Hardwarekosten');
+    }
+
+    public function test_clicking_calculation_topic_generates_exercise_and_checks_current_solution(): void
+    {
+        $user = User::factory()->create();
+
+        $response = $this->actingAs($user)
+            ->post(route('calculation-exercises.generate', 'prozentrechnung'));
 
         $exercise = Exercise::firstOrFail();
 
         $response
             ->assertOk()
-            ->assertSeeText('Rechne 5+5')
-            ->assertSessionHas('scan_exercise_id', $exercise->id);
+            ->assertSeeText('Prozentrechnung: Rabatt berechnen')
+            ->assertSeeText('Ein Monitor kostet 125 Euro. Im Angebot gibt es 20 % Rabatt.')
+            ->assertSeeText('Einheit: Euro')
+            ->assertSessionHas('calculation_exercise_id', $exercise->id);
 
         $this->assertSame($user->id, $exercise->user_id);
+        $this->assertSame('Prozentrechnung: Rabatt berechnen', $exercise->title);
+        $this->assertSame('25', $exercise->solution);
+        $this->assertSame('Euro', $exercise->expected_unit);
+        $this->assertStringContainsString('20 % bedeutet 20 von 100.', $exercise->sample_solution);
+        $this->assertDatabaseHas('categories', ['name' => 'Calculation']);
+        $this->assertStringContainsString('"topic":"Prozentrechnung"', $exercise->prompt);
 
         $this->actingAs($user)
-            ->post(route('scan-uebung'), ['user_solution' => '10'])
+            ->post(route('calculation-exercises.check'), ['user_solution' => '25'])
             ->assertOk()
-            ->assertSeeText('Deine Lösung ist korrekt!');
+            ->assertSeeText('Deine Lösung ist korrekt.')
+            ->assertSeeText('Erwartetes Ergebnis')
+            ->assertSeeText('25 Euro')
+            ->assertSeeText('Musterlösung');
+    }
+
+    public function test_invalid_calculation_topics_are_rejected_cleanly(): void
+    {
+        $user = User::factory()->create();
+
+        $this->actingAs($user)
+            ->post(route('calculation-exercises.generate', 'unbekanntes-thema'))
+            ->assertNotFound();
     }
 
     public function test_uml_exercise_renders_simplified_input(): void

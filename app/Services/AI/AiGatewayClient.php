@@ -13,9 +13,9 @@ class AiGatewayClient
         return $this->post('/generate/sql', $payload);
     }
 
-    public function generateScan(array $payload): array
+    public function generateCalculation(array $payload): array
     {
-        return $this->post('/generate/scan', $payload);
+        return $this->post('/generate/calculation', $payload);
     }
 
     private function post(string $path, array $payload): array
