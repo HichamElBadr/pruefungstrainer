@@ -1,5 +1,98 @@
 # Progress Update
 
+## 2026-05-18 - Regenerate invalid SQL exercises automatically
+
+### Summary
+
+Added bounded regeneration for AI-generated SQL exercises when MariaDB rejects the generated setup SQL.
+
+### Changed Files
+
+- `app/Services/SqlExerciseGenerator.php`
+- `app/Services/DatabaseManager.php`
+- `app/Http/Controllers/SqlExerciseController.php`
+- `config/exercises.php`
+- `.env.example`
+- `tests/Unit/SqlExerciseGeneratorTest.php`
+- `docs/progress.md`
+
+### Behavior Changes
+
+- SQL exercise generation now retries up to a configurable number of attempts when generated setup SQL is invalid.
+- Failed generated attempts are rejected before the learner sees them, logged, and their temporary databases are dropped immediately.
+- Retry prompts now include the previous MariaDB error and rejected SQL so the model can correct the failed setup instead of repeating it unchanged.
+- If all live attempts fail, the app now falls back to the local SQL fixture so the exercise page still opens instead of returning an error.
+- The retry limit can be configured with `SQL_EXERCISE_GENERATION_ATTEMPTS`.
+
+### Testing
+
+- `php artisan test --filter=SqlExerciseGeneratorTest`: passed.
+- `php artisan test --filter=ItExerciseFlowTest`: passed.
+- `php artisan test --filter=QueryHandlerTest`: passed.
+- Live SQL route check with Ollama running: invalid live generations were rejected and the page still loaded successfully through the fixture fallback.
+
+### Follow-up Notes
+
+- The retry path only handles generated SQL execution failures; unrelated gateway or application errors still surface normally.
+
+## 2026-05-18 - Add SQL exercise error protocol
+
+### Summary
+
+Added a dedicated SQL exercise error log so generated SQL failures and learner-query execution failures can be reviewed after they occur.
+
+### Changed Files
+
+- `config/logging.php`
+- `app/Http/Controllers/SqlExerciseController.php`
+- `app/Services/DatabaseManager.php`
+- `app/Services/QueryHandler.php`
+- `docs/progress.md`
+
+### Behavior Changes
+
+- SQL exercise failures are now written to `storage/logs/sql-exercise.log`.
+- Failed generated SQL statements are logged with the failing statement number and SQL text.
+- SQL exercise flow failures are logged with request context, and learner-query execution exceptions are logged separately.
+
+### Testing
+
+- `php artisan test --filter=ItExerciseFlowTest`: passed.
+- `php artisan test --filter=QueryHandlerTest`: passed.
+- Live SQL route failure test: confirmed the generated SQL error was written to `storage/logs/sql-exercise.log`.
+
+### Follow-up Notes
+
+- The protocol is intended for troubleshooting the SQL exercise flow and does not change UML, Scan, auth, or UI behavior.
+
+## 2026-05-18 - Harden SQL AI JSON generation
+
+### Summary
+
+Tightened the SQL exercise prompt and enabled Ollama JSON mode for SQL generation to prevent malformed AI JSON responses in the SQL exercise flow.
+
+### Changed Files
+
+- `ai-gateway/prompts/sql/sql_v1.txt`
+- `ai-gateway/app/clients/ollama_client.py`
+- `ai-gateway/app/services/sql_service.py`
+- `docs/progress.md`
+
+### Behavior Changes
+
+- SQL generation now instructs the local model to return exactly one plain JSON object with the existing `task`, `mysqlstatement`, and `solution` string fields.
+- SQL generation now requests Ollama JSON mode while keeping non-SQL AI flows unchanged.
+
+### Testing
+
+- `php artisan test --filter=ItExerciseFlowTest`: passed.
+- Manual POST to the local AI gateway `/generate/sql` endpoint with Ollama running: returned a valid JSON response with the expected SQL fields.
+- Authenticated local SQL navigation flow through the Laravel app: `/it/sql-uebung` loaded successfully without an `AI-Gateway error`.
+
+### Follow-up Notes
+
+- A later live SQL-page retry exposed a separate model-generated foreign-key issue in the SQL content; that is unrelated to malformed JSON formatting and was not changed here.
+
 ## Completed Improvements
 
 ### Exercise ownership and route protection

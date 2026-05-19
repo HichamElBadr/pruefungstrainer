@@ -2,8 +2,10 @@
 
 namespace App\Services;
 
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use PDO;
+use Throwable;
 
 class DatabaseManager
 {
@@ -52,6 +54,17 @@ class DatabaseManager
         return $dbName;
     }
 
+    public function dropTemporaryDatabase(string $dbName): void
+    {
+        $prefix = preg_quote($this->config['database_prefix'], '/');
+
+        if (!preg_match('/^' . $prefix . '\d{10}_[a-z0-9]+$/i', $dbName)) {
+            throw new \InvalidArgumentException('Invalid temporary SQL database name.');
+        }
+
+        $this->pdoRoot->exec("DROP DATABASE IF EXISTS `{$dbName}`");
+    }
+
     public function connectToDatabase(string $dbName): PDO
     {
         return $this->makePdo($dbName, 'runtime');
@@ -75,8 +88,20 @@ class DatabaseManager
         $pdo = $this->makePdo($dbName, 'admin');
         $statements = array_filter(array_map('trim', explode(';', $mysqlstatement)));
 
-        foreach ($statements as $stmt) {
-            $pdo->exec($stmt);
+        foreach (array_values($statements) as $index => $stmt) {
+            try {
+                $pdo->exec($stmt);
+            } catch (Throwable $e) {
+                Log::channel('sql_exercise')->error('Generated SQL statement failed.', [
+                    'database' => $dbName,
+                    'statement_number' => $index + 1,
+                    'statement' => $stmt,
+                    'exception' => $e::class,
+                    'error' => $e->getMessage(),
+                ]);
+
+                throw $e;
+            }
         }
     }
 

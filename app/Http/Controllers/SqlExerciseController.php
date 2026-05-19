@@ -7,20 +7,23 @@ use App\Models\Exercise;
 use App\Services\AI\AiResponseProvider;
 use App\Services\DatabaseManager;
 use App\Services\QueryHandler;
+use App\Services\SqlExerciseGenerator;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
+use Throwable;
 
 class SqlExerciseController extends Controller
 {
     private ?string $dbName = null;
 
-    public function __construct(private readonly DatabaseManager $dbManager) {}
+    public function __construct(
+        private readonly DatabaseManager $dbManager,
+        private readonly SqlExerciseGenerator $sqlExerciseGenerator,
+    ) {}
 
     public function index(AiResponseProvider $ai)
     {
-        $this->dbName = $this->dbManager->createTemporaryDatabase();
-        session(['sql_temp_db' => $this->dbName]);
-
         $payload = [
             'request_id' => (string) Str::uuid(),
             'difficulty' => request()->get('difficulty', 'medium'),
@@ -34,29 +37,46 @@ class SqlExerciseController extends Controller
             ]),
         ];
 
-        $data = $ai->getSql($payload, 'sql');
+        $mysqlstatement = null;
 
-        $task = (string) $data['task'];
-        $mysqlstatement = (string) $data['mysqlstatement'];
-        $solution = (string) $data['solution'];
+        try {
+            $generated = $this->sqlExerciseGenerator->generate($ai, $payload, 'sql');
 
-        $this->dbManager->createMySqlExercise($mysqlstatement, $this->dbName);
+            $this->dbName = $generated['database'];
+            session(['sql_temp_db' => $this->dbName]);
 
-        $category = Category::where('name', 'SQL')->firstOrFail();
+            $task = $generated['task'];
+            $mysqlstatement = $generated['mysqlstatement'];
+            $solution = $generated['solution'];
 
-        $exercise = Exercise::create([
-            'user_id' => auth()->id(),
-            'category_id' => $category->id,
-            'prompt' => json_encode($payload, JSON_UNESCAPED_UNICODE),
-            'generated_task' => $task,
-            'solution' => $solution,
-        ]);
+            $category = Category::where('name', 'SQL')->firstOrFail();
 
-        session(['sql_exercise_id' => $exercise->id]);
+            $exercise = Exercise::create([
+                'user_id' => auth()->id(),
+                'category_id' => $category->id,
+                'prompt' => json_encode($generated['payload'], JSON_UNESCAPED_UNICODE),
+                'generated_task' => $task,
+                'solution' => $solution,
+            ]);
 
-        $tables = $this->getAllTables();
+            session(['sql_exercise_id' => $exercise->id]);
 
-        return view('it.sql-exercise.index', compact('tables', 'task', 'solution', 'mysqlstatement'));
+            $tables = $this->getAllTables();
+
+            return view('it.sql-exercise.index', compact('tables', 'task', 'solution', 'mysqlstatement'));
+        } catch (Throwable $e) {
+            Log::channel('sql_exercise')->error('SQL exercise flow failed.', [
+                'user_id' => auth()->id(),
+                'request_id' => $payload['request_id'],
+                'database' => $this->dbName,
+                'difficulty' => $payload['difficulty'],
+                'generated_sql' => $mysqlstatement,
+                'exception' => $e::class,
+                'error' => $e->getMessage(),
+            ]);
+
+            throw $e;
+        }
     }
 
     private function getAllTables(): array
