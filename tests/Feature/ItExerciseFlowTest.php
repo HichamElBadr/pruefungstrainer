@@ -38,6 +38,12 @@ class ItExerciseFlowTest extends TestCase
         $this->actingAs($user)
             ->get(route('dashboard'))
             ->assertOk()
+            ->assertSeeText('Prüfungstrainer')
+            ->assertSeeText('IT-Aufgaben üben')
+            ->assertSeeText($user->name)
+            ->assertSeeText('Profil')
+            ->assertSeeText('Abmelden')
+            ->assertSee(route('profile.edit'), false)
             ->assertSeeText('Rechenaufgaben')
             ->assertSee(route('calculation-exercises.index'), false);
 
@@ -55,7 +61,10 @@ class ItExerciseFlowTest extends TestCase
             ->get(route('sql-uebung'))
             ->assertOk()
             ->assertSeeText('SQL-Aufgaben')
-            ->assertSeeText('Schwierigkeit auswählen')
+            ->assertSeeText('Übungsstufe auswählen')
+            ->assertSeeText('Grundlagen mit SELECT, WHERE und ORDER BY.')
+            ->assertSeeText('Abfragen mit JOINs, mehreren Tabellen und Bedingungen.')
+            ->assertSeeText('Komplexere Aufgaben mit GROUP BY, HAVING und Aggregationen.')
             ->assertSeeText('Einfach')
             ->assertSeeText('Mittel')
             ->assertSeeText('Schwer')
@@ -178,12 +187,19 @@ class ItExerciseFlowTest extends TestCase
             ->get(route('calculation-exercises.index'))
             ->assertOk()
             ->assertSeeText('Prozentrechnung')
+            ->assertSeeText('Rabatte, Preisänderungen und Prozentwerte berechnen.')
             ->assertSeeText('Dreisatz')
+            ->assertSeeText('Verhältnisse und proportionale Zusammenhänge lösen.')
             ->assertSeeText('Multiplikation')
+            ->assertSeeText('Zahlen sicher multiplizieren und typische IT-Rechenwege üben.')
             ->assertSeeText('Division')
+            ->assertSeeText('Teilungen, Anteile und einfache Verteilungen berechnen.')
             ->assertSeeText('Speichergrößen')
+            ->assertSeeText('Byte, KB, MB, GB und TB sicher umrechnen.')
             ->assertSeeText('Stromverbrauch')
-            ->assertSeeText('Hardwarekosten');
+            ->assertSeeText('Leistung, Laufzeit, Energieverbrauch und Kosten berechnen.')
+            ->assertSeeText('Hardwarekosten')
+            ->assertSeeText('Komponentenpreise, Gesamtkosten und Budgets berechnen.');
     }
 
     public function test_clicking_calculation_topic_generates_exercise_and_checks_current_solution(): void

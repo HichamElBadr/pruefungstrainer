@@ -4,11 +4,23 @@
 >
     <x-slot name="badges">
         <span class="exercise-badge">Rechenaufgabe</span>
-        <span class="exercise-badge">Übungsaufgabe</span>
+        <span class="exercise-badge">Themenauswahl</span>
         @if(!empty($sourceLabel))
             <span class="exercise-badge">{{ $sourceLabel }}</span>
         @endif
     </x-slot>
+
+    @php
+        $topicDescriptions = [
+            'prozentrechnung' => 'Rabatte, Preisänderungen und Prozentwerte berechnen.',
+            'dreisatz' => 'Verhältnisse und proportionale Zusammenhänge lösen.',
+            'multiplikation' => 'Zahlen sicher multiplizieren und typische IT-Rechenwege üben.',
+            'division' => 'Teilungen, Anteile und einfache Verteilungen berechnen.',
+            'speichergroessen' => 'Byte, KB, MB, GB und TB sicher umrechnen.',
+            'stromverbrauch' => 'Leistung, Laufzeit, Energieverbrauch und Kosten berechnen.',
+            'hardwarekosten' => 'Komponentenpreise, Gesamtkosten und Budgets berechnen.',
+        ];
+    @endphp
 
     @if(!empty($generated_task))
         <section class="exercise-card">
@@ -125,10 +137,17 @@
                         @csrf
                         <button
                             type="submit"
-                            class="group flex min-h-28 w-full flex-col justify-between rounded-lg border border-slate-200 bg-white p-4 text-left shadow-sm transition hover:border-slate-400 hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2"
+                            class="group flex min-h-40 w-full flex-col justify-between rounded-lg border border-slate-200 bg-white p-4 text-left shadow-sm transition hover:border-slate-400 hover:bg-slate-50 hover:shadow focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2"
                         >
-                            <span class="font-heading text-base font-semibold text-slate-950">{{ $topic['label'] }}</span>
-                            <span class="mt-3 text-sm text-slate-600">Neue Aufgabe erzeugen</span>
+                            <span>
+                                <span class="font-heading block text-base font-semibold text-slate-950">{{ $topic['label'] }}</span>
+                                <span class="mt-3 block text-sm leading-6 text-slate-600">
+                                    {{ $topicDescriptions[$topic['slug']] ?? 'Neue Rechenaufgabe zu diesem Thema starten.' }}
+                                </span>
+                            </span>
+                            <span class="mt-5 inline-flex w-fit items-center rounded-md bg-indigo-600 px-3 py-2 font-heading text-sm font-semibold text-white transition group-hover:bg-indigo-700">
+                                Neue Aufgabe erzeugen
+                            </span>
                         </button>
                     </form>
                 @endforeach

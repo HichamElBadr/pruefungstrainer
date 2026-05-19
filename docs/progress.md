@@ -1,5 +1,106 @@
 # Progress Update
 
+## 2026-05-19 - Move app navigation into sidebar
+
+### Summary
+
+Removed the redundant authenticated top navigation and made the existing left sidebar the primary navigation for dashboard and exercise pages.
+
+### Changed Files
+
+- `resources/views/layouts/app.blade.php`
+- `resources/views/components/exercise-layout.blade.php`
+- `resources/views/it/partials/exercise-sidebar.blade.php`
+- `resources/views/components/primary-button.blade.php`
+- `resources/views/dashboard.blade.php`
+- `resources/views/profile/edit.blade.php`
+- `resources/views/it/sql-exercise/select-difficulty.blade.php`
+- `resources/views/it/calculation-exercises/index.blade.php`
+- `resources/css/app.css`
+- `tests/Feature/ItExerciseFlowTest.php`
+- `docs/progress.md`
+
+### Behavior Changes
+
+- Authenticated pages no longer render the Breeze top navigation bar or Laravel logo.
+- The sidebar now contains the app identity, Dashboard, SQL-Aufgaben, Rechenaufgaben, UML-Aufgaben, and the authenticated user area.
+- Profile and logout actions are available from the sidebar, with logout still submitted through the existing POST route.
+- Dashboard and profile pages now use the same sidebar-based shell as the exercise pages.
+- Primary action buttons now use an indigo style instead of the previous dark slate style.
+- Existing routes, controllers, AI generation, SQL execution, and calculation evaluation were left unchanged.
+
+### Testing
+
+- `php artisan test --filter=ItExerciseFlowTest`: passed.
+- `php artisan test --filter=ProfileTest`: passed.
+- `php artisan test`: passed.
+- `npm.cmd run build`: passed.
+- `vendor\bin\pint.bat --dirty --test`: passed.
+
+### Follow-up Notes
+
+- The old Breeze navigation Blade file remains in the project but is no longer included by the authenticated app layout.
+
+## 2026-05-19 - Refine calculation topic cards
+
+### Summary
+
+Improved the calculation exercise overview cards so they match the clarity and action treatment of the SQL exercise overview.
+
+### Changed Files
+
+- `resources/views/it/calculation-exercises/index.blade.php`
+- `tests/Feature/ItExerciseFlowTest.php`
+- `docs/progress.md`
+
+### Behavior Changes
+
+- Calculation topic cards now include short German descriptions for each topic.
+- `Neue Aufgabe erzeugen` is now styled as a clear button-like action within each clickable topic card.
+- The calculation overview header now uses `Rechenaufgabe` and `Themenauswahl` badges.
+- Existing routes, form actions, AI generation, and calculation evaluation were left unchanged.
+
+### Testing
+
+- `php artisan test --filter=ItExerciseFlowTest`: passed.
+- `npm.cmd run build`: passed.
+- `vendor\bin\pint.bat --dirty --test`: passed.
+
+### Follow-up Notes
+
+- None.
+
+## 2026-05-19 - Refine SQL exercise selection UI
+
+### Summary
+
+Refined the existing exercise navigation and SQL difficulty selection cards without changing backend behavior.
+
+### Changed Files
+
+- `resources/views/it/partials/exercise-sidebar.blade.php`
+- `resources/views/it/sql-exercise/select-difficulty.blade.php`
+- `tests/Feature/ItExerciseFlowTest.php`
+- `docs/progress.md`
+
+### Behavior Changes
+
+- The left exercise navigation now uses the same exercise order as the top navigation: SQL, Rechenaufgaben, UML.
+- SQL difficulty cards now include learner-friendly descriptions for `Einfach`, `Mittel`, and `Schwer`.
+- The card action now presents `Aufgabe erzeugen` as a clear button-like element while keeping the full card clickable.
+- The SQL selection header now uses `Übungsstufe` and `Beispieldatenbank`.
+- Existing routes, form actions, AI generation, SQL execution, and controller logic were left unchanged.
+
+### Testing
+
+- `php artisan test --filter=ItExerciseFlowTest`: passed.
+- `npm.cmd run build`: passed.
+- `vendor\bin\pint.bat --dirty --test`: passed.
+
+### Follow-up Notes
+
+- None.
+
 ## 2026-05-19 - Refresh exercise page UI
 
 ### Summary

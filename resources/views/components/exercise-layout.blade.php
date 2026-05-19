@@ -4,8 +4,8 @@
 ])
 
 <x-app-layout>
-    <div class="min-h-[calc(100vh-4rem)] bg-slate-50">
-        <div class="mx-auto grid max-w-7xl gap-6 px-4 py-6 sm:px-6 lg:grid-cols-[16rem_minmax(0,1fr)] lg:px-8">
+    <div class="min-h-screen bg-slate-50">
+        <div class="mx-auto grid max-w-7xl gap-6 px-4 py-6 sm:px-6 lg:grid-cols-[17rem_minmax(0,1fr)] lg:px-8">
             @include('it.partials.exercise-sidebar')
 
             <div class="min-w-0 space-y-6">
