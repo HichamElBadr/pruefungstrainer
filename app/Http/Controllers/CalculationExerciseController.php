@@ -34,6 +34,7 @@ class CalculationExerciseController extends Controller
             'request_id' => (string) Str::uuid(),
             'difficulty' => request()->get('difficulty', 'medium'),
             'language' => 'de',
+            'topic_slug' => $selectedTopic['slug'],
             'topic' => $selectedTopic['label'],
             'extra_context' => 'Erzeuge genau eine Rechenaufgabe zum angegebenen Thema. Aufgabe, erwartetes Ergebnis und Musterlösung müssen zum Thema passen.',
         ];
@@ -44,6 +45,7 @@ class CalculationExerciseController extends Controller
         $expectedResult = (string) $data['expected_result'];
         $expectedUnit = (string) $data['expected_unit'];
         $sampleSolution = (string) $data['sample_solution'];
+        $source = (string) ($data['source'] ?? 'generated');
 
         $category = Category::firstOrCreate(['name' => 'Calculation']);
 
@@ -51,6 +53,8 @@ class CalculationExerciseController extends Controller
             'user_id' => auth()->id(),
             'category_id' => $category->id,
             'title' => $title,
+            'difficulty' => $payload['difficulty'],
+            'source' => $source,
             'prompt' => json_encode($payload, JSON_UNESCAPED_UNICODE),
             'generated_task' => $task,
             'solution' => $expectedResult,
@@ -66,6 +70,7 @@ class CalculationExerciseController extends Controller
             'title' => $title,
             'generated_task' => $task,
             'expected_unit' => $expectedUnit,
+            'sourceLabel' => $this->sourceLabel($source),
         ]);
     }
 
@@ -90,6 +95,7 @@ class CalculationExerciseController extends Controller
             'sample_solution' => $exercise->sample_solution,
             'generated_task' => $exercise->generated_task,
             'selectedTopic' => $this->selectedTopicFromExercise($exercise),
+            'sourceLabel' => $this->sourceLabel($exercise->source),
         ]);
     }
 
@@ -120,5 +126,14 @@ class CalculationExerciseController extends Controller
         }
 
         return null;
+    }
+
+    private function sourceLabel(?string $source): ?string
+    {
+        return match ($source) {
+            'generated' => 'KI-generierte Aufgabe',
+            'fixture' => 'Vorbereitete Aufgabe',
+            default => null,
+        };
     }
 }

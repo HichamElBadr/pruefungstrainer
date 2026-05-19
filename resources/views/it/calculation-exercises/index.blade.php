@@ -31,6 +31,12 @@
                         <p class="mb-2 text-sm font-medium text-gray-600">{{ $selectedTopic['label'] }}</p>
                     @endif
 
+                    @if(!empty($sourceLabel))
+                        <span class="mb-3 inline-flex rounded border border-gray-200 bg-gray-100 px-2 py-1 text-xs font-semibold text-gray-700">
+                            {{ $sourceLabel }}
+                        </span>
+                    @endif
+
                     @if(!empty($title))
                         <h3 class="mb-4 text-xl font-semibold text-gray-900">{{ $title }}</h3>
                     @endif

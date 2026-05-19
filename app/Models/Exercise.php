@@ -10,6 +10,8 @@ class Exercise extends Model
         'user_id',
         'category_id',
         'title',
+        'difficulty',
+        'source',
         'prompt',
         'generated_task',
         'solution',

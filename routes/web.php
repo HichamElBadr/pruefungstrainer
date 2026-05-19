@@ -24,6 +24,8 @@ Route::middleware('auth')->group(function () {
 Route::middleware(['auth', 'verified'])->prefix('it')->group(function () {
     Route::get('sql-uebung', [SqlExerciseController::class, 'index'])
         ->name('sql-uebung');
+    Route::post('sql-uebung/{difficulty}', [SqlExerciseController::class, 'generate'])
+        ->name('sql-uebung.generate');
     Route::post('sql-uebung', [SqlExerciseController::class, 'executeUserQuery']);
 
     Route::get('calculation-exercises', [CalculationExerciseController::class, 'overview'])

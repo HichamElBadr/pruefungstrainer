@@ -8,6 +8,11 @@ from app.services.json_extractor import extract_json_best_effort
 
 
 PROMPT_PATH = Path(__file__).resolve().parents[2] / "prompts" / "sql" / "sql_v1.txt"
+DIFFICULTY_RULES = {
+    "easy": "simple SELECT queries, WHERE, ORDER BY, and basic filtering. Avoid JOIN, GROUP BY, HAVING, and subqueries.",
+    "medium": "JOINs, GROUP BY, and aggregate functions. Use two or three related tables.",
+    "hard": "multiple JOINs, HAVING, subqueries, and more complex conditions. Use at least three related tables.",
+}
 
 
 def load_prompt_template() -> str:
@@ -20,6 +25,7 @@ def build_sql_prompt(payload: GenerateSqlRequest) -> str:
     tpl = load_prompt_template()
     return tpl.format(
         difficulty=payload.difficulty,
+        difficulty_rules=DIFFICULTY_RULES[payload.difficulty],
         topic=payload.topic or "",
         extra_context=payload.extra_context or "",
         language=payload.language,

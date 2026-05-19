@@ -1,12 +1,20 @@
 <x-app-layout>
     <x-slot name="header">
         <h2 style="font-weight: bold; font-size: 1.5rem; color: #333;">
-            Dashboard
+            SQL-Aufgaben
         </h2>
     </x-slot>
 
     <div style="margin: 20px 0;">
         <h2 style="margin-bottom: 10px; color: #222;">SQL-Übungsaufgabe</h2>
+        @if(!empty($sourceLabel))
+            <span style="display: inline-block; margin-bottom: 10px; padding: 4px 8px; border: 1px solid #ddd; background: #f5f5f5; color: #444; font-size: 0.85rem; font-weight: 600;">
+                {{ $sourceLabel }}
+            </span>
+        @endif
+        @if(!empty($difficultyLabel))
+            <p style="margin-bottom: 10px; color: #555;">Schwierigkeit: {{ $difficultyLabel }}</p>
+        @endif
         <p style="background: #f5f5f5; padding: 10px; border-left: 4px solid #007BFF;">{{ $task }}</p>
     </div>
 

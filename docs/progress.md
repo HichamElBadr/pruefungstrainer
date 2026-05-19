@@ -1,5 +1,99 @@
 # Progress Update
 
+## 2026-05-19 - Add exercise source badges
+
+### Summary
+
+Added persisted source tracking for SQL and calculation exercises and displayed a German source badge on exercise pages.
+
+### Changed Files
+
+- `app/Models/Exercise.php`
+- `app/Services/AI/AiResponseProvider.php`
+- `app/Services/SqlExerciseGenerator.php`
+- `app/Http/Controllers/SqlExerciseController.php`
+- `app/Http/Controllers/CalculationExerciseController.php`
+- `database/migrations/2026_05_19_000004_add_source_to_exercises_table.php`
+- `resources/views/it/sql-exercise/index.blade.php`
+- `resources/views/it/calculation-exercises/index.blade.php`
+- `tests/Feature/ItExerciseFlowTest.php`
+- `docs/progress.md`
+
+### Behavior Changes
+
+- New exercises now store `source` as `generated` for AI gateway responses or `fixture` for prepared fixture responses.
+- SQL exercises display `KI-generierte Aufgabe` or `Vorbereitete Aufgabe`.
+- Calculation exercises display `KI-generierte Aufgabe` or `Vorbereitete Aufgabe`.
+- Existing routes, authentication, difficulty selection, and UML behavior were left unchanged.
+
+### Testing
+
+- `php artisan test --filter=ItExerciseFlowTest`: passed.
+- `php artisan test --filter=SqlExerciseGeneratorTest`: passed.
+- `php artisan test --filter=AiResponseProviderTest`: passed.
+
+### Follow-up Notes
+
+- Run `php artisan migrate` locally to add the nullable `source` column before using the new badge data outside the test database.
+
+## 2026-05-19 - Add SQL difficulty selection and exercise fixtures
+
+### Summary
+
+Changed the SQL exercise entry point so it opens a difficulty selection page before generating an exercise. Added difficulty-aware SQL generation, fixture fallback lookup, and broader SQL and calculation fixture collections for tests, demos, and local development.
+
+### Changed Files
+
+- `routes/web.php`
+- `app/Http/Controllers/SqlExerciseController.php`
+- `app/Http/Controllers/CalculationExerciseController.php`
+- `app/Models/Exercise.php`
+- `app/Services/AI/AiFixtureService.php`
+- `app/Services/AI/AiResponseProvider.php`
+- `app/Services/SqlExerciseGenerator.php`
+- `database/migrations/2026_05_19_000003_add_difficulty_to_exercises_table.php`
+- `resources/views/it/sql-exercise/select-difficulty.blade.php`
+- `resources/views/it/sql-exercise/index.blade.php`
+- `resources/views/layouts/navigation.blade.php`
+- `resources/ai-fixtures/sql.json`
+- `resources/ai-fixtures/calculation.json`
+- `ai-gateway/app/schemas/sql.py`
+- `ai-gateway/app/services/sql_service.py`
+- `ai-gateway/prompts/sql/sql_v1.txt`
+- `ai-gateway/tests/test_sql_service.py`
+- `tests/Unit/AiFixtureServiceTest.php`
+- `tests/Unit/AiResponseProviderTest.php`
+- `tests/Unit/SqlExerciseGeneratorTest.php`
+- `tests/Feature/ItExerciseFlowTest.php`
+- `docs/progress.md`
+
+### Behavior Changes
+
+- Opening `SQL-Aufgaben` now shows `Einfach`, `Mittel`, and `Schwer` instead of generating immediately.
+- SQL generation now accepts only `easy`, `medium`, or `hard`; invalid values return 404.
+- SQL exercise prompts and AI gateway prompts now include explicit difficulty rules.
+- Generated SQL exercises store and display the selected difficulty with German labels.
+- SQL fixtures now include at least three exercises per difficulty and are used for matching fallback.
+- Calculation fixtures now include at least two exercises per supported topic and can be used as fallback by topic and difficulty.
+- Calculation AI failures now fall back to matching fixtures without showing raw gateway errors.
+- UML behavior was not changed.
+
+### Testing
+
+- `php artisan test --filter=AiFixtureServiceTest`: passed.
+- `php artisan test --filter=AiResponseProviderTest`: passed.
+- `php artisan test --filter=SqlExerciseGeneratorTest`: passed.
+- `php artisan test --filter=ItExerciseFlowTest`: passed.
+- `php artisan test`: passed.
+- `php artisan route:list --path=it`: verified SQL, calculation, and UML routes.
+- `C:\Users\hicha\AppData\Local\Programs\Python\Python313\python.exe -m unittest discover -s ai-gateway\tests` with `PYTHONPATH` including `ai-gateway` and `.venv\Lib\site-packages`: passed.
+- `C:\Users\hicha\AppData\Local\Programs\Python\Python313\python.exe -m compileall ai-gateway\app`: passed.
+
+### Follow-up Notes
+
+- The existing `ai-gateway\.venv\Scripts\python.exe` launcher points to an inaccessible WindowsApps Python shim in this environment, so gateway tests were run with the installed Python executable and the venv site-packages on `PYTHONPATH`.
+- Run `php artisan migrate` locally to add the nullable `difficulty` column before using stored difficulties outside the test database.
+
 ## 2026-05-19 - Harden calculation exercise generation
 
 ### Summary
