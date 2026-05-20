@@ -1,5 +1,56 @@
 # Progress Update
 
+## 2026-05-20 - Repair local MariaDB privilege tables
+
+### Summary
+
+Repaired corrupted local MariaDB privilege tables that prevented SQL exercise temporary database grants from being created.
+
+### Changed Files
+
+- `.gitignore`
+- `docs/progress.md`
+
+### Behavior Changes
+
+- Local SQL exercise database creation can grant `SELECT` access to the runtime SQL user again.
+- Local MariaDB table backups under `storage/db-backups` are ignored by Git.
+- No application code was changed.
+
+### Testing
+
+- `CHECK TABLE` for MariaDB privilege tables: passed.
+- Temporary `CREATE DATABASE`, `GRANT SELECT`, `REVOKE`, and `DROP DATABASE` probe: passed.
+- Laravel `DatabaseManager` create/drop temporary database probe: passed.
+
+### Follow-up Notes
+
+- Local backups of the repaired MariaDB table files were saved under `storage/db-backups`.
+
+## 2026-05-20 - Guard SQL temporary database cleanup
+
+### Summary
+
+Prevented SQL exercise generation from passing a missing temporary database name into the cleanup routine after early PDO failures.
+
+### Changed Files
+
+- `app/Services/SqlExerciseGenerator.php`
+- `docs/progress.md`
+
+### Behavior Changes
+
+- SQL generation retries no longer fail with a type error when a PDO exception occurs before a temporary database name has been assigned.
+- Temporary databases are still dropped after failed generated SQL setup attempts when a database was successfully created.
+
+### Testing
+
+- `php artisan test --filter=SqlExerciseGeneratorTest`: passed.
+
+### Follow-up Notes
+
+- None.
+
 ## 2026-05-19 - Move app navigation into sidebar
 
 ### Summary

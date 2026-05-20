@@ -68,7 +68,9 @@ class SqlExerciseGenerator
                     'error' => $e->getMessage(),
                 ]);
 
-                $this->dbManager->dropTemporaryDatabase($dbName);
+                if ($dbName !== null) {
+                    $this->dbManager->dropTemporaryDatabase($dbName);
+                }
             } catch (Throwable $e) {
                 $lastFailure = $e;
 
