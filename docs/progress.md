@@ -1,5 +1,31 @@
 # Progress Update
 
+## 2026-05-21 - Preserve submitted calculation answer
+
+### Summary
+
+Kept the learner's submitted calculation answer visible after checking the solution.
+
+### Changed Files
+
+- `app/Http/Controllers/CalculationExerciseController.php`
+- `resources/views/it/calculation-exercises/index.blade.php`
+- `tests/Feature/ItExerciseFlowTest.php`
+- `docs/progress.md`
+
+### Behavior Changes
+
+- After clicking "Lösung prüfen", the submitted answer remains in the answer input.
+- Learners can compare their own answer directly with the expected result and sample solution.
+
+### Testing
+
+- `php artisan test --filter=ItExerciseFlowTest`: passed.
+
+### Follow-up Notes
+
+- None.
+
 ## 2026-05-21 - Increase Laravel execution timeout
 
 ### Summary

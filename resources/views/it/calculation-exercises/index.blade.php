@@ -60,7 +60,7 @@
                             id="user_solution"
                             name="user_solution"
                             type="text"
-                            value="{{ old('user_solution') }}"
+                            value="{{ old('user_solution', $user_solution ?? '') }}"
                             class="block w-full rounded-lg border-slate-300 shadow-sm focus:border-slate-500 focus:ring-slate-500"
                             placeholder="Dein Ergebnis"
                         >

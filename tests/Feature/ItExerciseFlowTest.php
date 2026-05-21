@@ -290,6 +290,7 @@ class ItExerciseFlowTest extends TestCase
             ->assertOk()
             ->assertSeeText('Beispielaufgabe')
             ->assertSeeText('Deine Lösung ist korrekt.')
+            ->assertSee('value="182.40"', false)
             ->assertSeeText('Erwartetes Ergebnis')
             ->assertSeeText('182.40 Euro')
             ->assertSeeText('Musterlösung');

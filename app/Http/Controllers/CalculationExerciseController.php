@@ -93,6 +93,7 @@ class CalculationExerciseController extends Controller
             'solution' => $exercise->solution,
             'expected_unit' => $exercise->expected_unit,
             'sample_solution' => $exercise->sample_solution,
+            'user_solution' => $validated['user_solution'],
             'generated_task' => $exercise->generated_task,
             'selectedTopic' => $this->selectedTopicFromExercise($exercise),
             'sourceLabel' => $this->sourceLabel($exercise->source),
