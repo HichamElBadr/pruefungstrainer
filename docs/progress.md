@@ -1,5 +1,35 @@
 # Progress Update
 
+## 2026-05-21 - Stabilize AI gateway environment loading
+
+### Summary
+
+Updated the AI gateway settings so it loads environment variables from the Laravel project `.env` and then allows `ai-gateway/.env` to override them.
+
+### Changed Files
+
+- `ai-gateway/app/core/settings.py`
+- `ai-gateway/tests/test_settings.py`
+- `docs/progress.md`
+
+### Behavior Changes
+
+- The gateway now resolves `OLLAMA_MODEL` consistently regardless of whether it is started from the Laravel root or the `ai-gateway` directory.
+- Local gateway startup now uses the existing project-level `OLLAMA_MODEL=deepseek-r1:32b` when `ai-gateway/.env` is empty, avoiding the previous fallback to the missing `deepseek-r1:7b` model.
+- Extra Laravel `.env` keys are ignored by the Python settings loader.
+
+### Testing
+
+- `ai-gateway\.venv\Scripts\python.exe -m unittest discover -s ai-gateway\tests`: failed from the Laravel root because the gateway package was not on `PYTHONPATH`.
+- `ai-gateway\.venv\Scripts\python.exe -m unittest discover -s tests` from `ai-gateway`: passed.
+- `ai-gateway\.venv\Scripts\python.exe -m compileall app` from `ai-gateway`: passed.
+- Manual POST to `http://127.0.0.1:8001/generate/sql`: passed with `deepseek-r1:32b`.
+- Manual POST to `http://127.0.0.1:8001/generate/calculation`: passed with `deepseek-r1:32b`.
+
+### Follow-up Notes
+
+- None.
+
 ## 2026-05-20 - Repair local MariaDB privilege tables
 
 ### Summary
