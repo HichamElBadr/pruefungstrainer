@@ -21,6 +21,23 @@ class QueryHandlerTest extends TestCase
         $this->assertNull($result['error']);
     }
 
+    public function test_it_keeps_column_names_for_empty_select_results(): void
+    {
+        $pdo = new PDO('sqlite::memory:');
+        $pdo->exec('CREATE TABLE products (product_name TEXT, price REAL)');
+        $pdo->exec("INSERT INTO products VALUES ('Monitor', 189.00)");
+
+        $result = QueryHandler::executeUserQuery(
+            $pdo,
+            'SELECT product_name, price FROM products WHERE price BETWEEN 50 AND 100 ORDER BY product_name ASC;',
+        );
+
+        $this->assertSame(['product_name', 'price'], $result['columns']);
+        $this->assertSame([], $result['rows']);
+        $this->assertSame('Keine Ergebnisse gefunden.', $result['message']);
+        $this->assertNull($result['error']);
+    }
+
     public function test_it_rejects_non_select_queries(): void
     {
         $pdo = new PDO('sqlite::memory:');

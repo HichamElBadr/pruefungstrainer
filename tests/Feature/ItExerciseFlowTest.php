@@ -179,6 +179,61 @@ class ItExerciseFlowTest extends TestCase
             ->assertSeeText('Maus');
     }
 
+    public function test_sql_submission_renders_user_and_expected_result_tables(): void
+    {
+        $category = Category::create(['name' => 'SQL']);
+        $user = User::factory()->create();
+        $dbName = 'sql_exercise_products';
+        $query = 'SELECT product_name, price FROM products WHERE price >= 50 AND price <= 100 ORDER BY product_name ASC;';
+
+        $exercise = Exercise::create([
+            'user_id' => $user->id,
+            'category_id' => $category->id,
+            'title' => 'Produktpreise abfragen',
+            'difficulty' => 'easy',
+            'source' => 'fixture',
+            'prompt' => '{}',
+            'generated_task' => 'Liste alle Produkte mit einem Preis zwischen 50 und 100 Euro alphabetisch auf.',
+            'solution' => $query,
+        ]);
+
+        $pdo = new PDO('sqlite::memory:');
+        $pdo->exec('CREATE TABLE products (product_name TEXT, price REAL)');
+        $pdo->exec("INSERT INTO products VALUES ('Cable', 50.00)");
+        $pdo->exec("INSERT INTO products VALUES ('Monitor', 189.00)");
+        $pdo->exec("INSERT INTO products VALUES ('Router', 75.00)");
+
+        $dbManager = Mockery::mock(DatabaseManager::class);
+        $dbManager->shouldReceive('getTables')->once()->with($dbName)->andReturn([
+            'products' => [
+                ['product_name' => 'Cable', 'price' => 50.00],
+                ['product_name' => 'Monitor', 'price' => 189.00],
+                ['product_name' => 'Router', 'price' => 75.00],
+            ],
+        ]);
+        $dbManager->shouldReceive('connectToDatabase')->once()->with($dbName)->andReturn($pdo);
+        $this->app->instance(DatabaseManager::class, $dbManager);
+
+        $this->actingAs($user)
+            ->withSession([
+                'sql_temp_db' => $dbName,
+                'sql_exercise_id' => $exercise->id,
+            ])
+            ->post(route('sql-uebung'), ['sql_input' => $query])
+            ->assertOk()
+            ->assertSeeTextInOrder([
+                'Deine Ausgabe',
+                'product_name',
+                'Cable',
+                'Router',
+                'Erwartete Ausgabe',
+                'product_name',
+                'Cable',
+                'Router',
+                'Musterlösung (SQL) anzeigen',
+            ]);
+    }
+
     public function test_calculation_exercise_topic_overview_is_visible(): void
     {
         $user = User::factory()->create();

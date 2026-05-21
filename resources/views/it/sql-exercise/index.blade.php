@@ -94,39 +94,23 @@
             <div class="exercise-card-body">
                 <h2 class="font-heading text-xl font-semibold text-slate-950">Ergebnis</h2>
 
-                <div class="mt-4">
-                    @if($result['error'])
-                        <div class="exercise-alert exercise-alert-error">
-                            <p class="font-heading font-semibold">Hinweis zur Abfrage</p>
-                            <p class="mt-1">{{ $result['error'] }}</p>
-                            <p class="mt-2 text-red-700">Prüfe Syntax, Tabellen- und Spaltennamen und versuche es erneut.</p>
+                <div class="mt-4 space-y-6">
+                    <div>
+                        <h3 class="mb-3 font-heading text-base font-semibold text-slate-900">Deine Ausgabe</h3>
+                        @include('it.sql-exercise.partials.query-result-table', [
+                            'queryResult' => $result,
+                            'errorHint' => 'Prüfe Syntax, Tabellen- und Spaltennamen und versuche es erneut.',
+                        ])
+                    </div>
+
+                    @isset($solutionResult)
+                        <div>
+                            <h3 class="mb-3 font-heading text-base font-semibold text-slate-900">Erwartete Ausgabe</h3>
+                            @include('it.sql-exercise.partials.query-result-table', [
+                                'queryResult' => $solutionResult,
+                            ])
                         </div>
-                    @elseif($result['message'])
-                        <div class="exercise-alert exercise-alert-info">
-                            {{ $result['message'] }}
-                        </div>
-                    @else
-                        <div class="exercise-table-wrap">
-                            <table class="exercise-table">
-                                <thead>
-                                    <tr>
-                                        @foreach($result['columns'] as $column)
-                                            <th scope="col">{{ $column }}</th>
-                                        @endforeach
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @foreach($result['rows'] as $row)
-                                        <tr>
-                                            @foreach($result['columns'] as $column)
-                                                <td>{{ $row[$column] ?? '' }}</td>
-                                            @endforeach
-                                        </tr>
-                                    @endforeach
-                                </tbody>
-                            </table>
-                        </div>
-                    @endif
+                    @endisset
                 </div>
             </div>
         </section>
@@ -135,7 +119,7 @@
     <section class="exercise-card">
         <div class="exercise-card-body">
             <details>
-                <summary class="cursor-pointer font-heading text-base font-semibold text-slate-950">Musterlösung anzeigen</summary>
+                <summary class="cursor-pointer font-heading text-base font-semibold text-slate-950">Musterlösung (SQL) anzeigen</summary>
                 <pre class="exercise-code mt-4 overflow-x-auto"><code>{{ $solution }}</code></pre>
             </details>
         </div>

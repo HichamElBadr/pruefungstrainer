@@ -54,6 +54,8 @@ return [
 
     'url' => env('APP_URL', 'http://localhost'),
 
+    'max_execution_time' => (int) env('APP_MAX_EXECUTION_TIME', 180),
+
     /*
     |--------------------------------------------------------------------------
     | Application Timezone

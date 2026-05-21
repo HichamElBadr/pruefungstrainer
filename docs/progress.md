@@ -1,5 +1,65 @@
 # Progress Update
 
+## 2026-05-21 - Increase Laravel execution timeout
+
+### Summary
+
+Increased the Laravel request execution timeout to support slower local AI generation requests.
+
+### Changed Files
+
+- `.env`
+- `.env.example`
+- `app/Providers/AppServiceProvider.php`
+- `config/app.php`
+- `docs/progress.md`
+
+### Behavior Changes
+
+- Laravel now reads `APP_MAX_EXECUTION_TIME` and applies it during application bootstrap.
+- Local requests can run for up to 180 seconds instead of being stopped by PHP after 60 seconds.
+
+### Testing
+
+- `php artisan config:clear`: passed.
+- `php artisan config:show app`: confirmed `max_execution_time` is `180`.
+- `php artisan test`: passed.
+
+### Follow-up Notes
+
+- If Apache/FastCGI has a separate timeout below 180 seconds, that server-level value may also need to be increased outside the project.
+
+## 2026-05-21 - Render SQL learner and expected result tables
+
+### Summary
+
+Improved SQL exercise submission rendering so learner query output and expected solution output are displayed after a submitted SELECT query.
+
+### Changed Files
+
+- `app/Http/Controllers/SqlExerciseController.php`
+- `app/Services/QueryHandler.php`
+- `resources/views/it/sql-exercise/index.blade.php`
+- `resources/views/it/sql-exercise/partials/query-result-table.blade.php`
+- `tests/Feature/ItExerciseFlowTest.php`
+- `tests/Unit/QueryHandlerTest.php`
+- `docs/progress.md`
+
+### Behavior Changes
+
+- Submitted SQL queries now render under a dedicated "Deine Ausgabe" section.
+- The stored sample solution query is executed safely through the same SELECT-only query handler and rendered under "Erwartete Ausgabe".
+- SELECT queries that return no rows now keep their column headers, allowing the result table shape to remain visible.
+
+### Testing
+
+- `php artisan test --filter=QueryHandlerTest`: passed.
+- `php artisan test --filter=ItExerciseFlowTest`: passed.
+
+### Follow-up Notes
+
+- None.
+
 ## 2026-05-21 - Stabilize AI gateway environment loading
 
 ### Summary

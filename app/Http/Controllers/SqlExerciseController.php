@@ -135,6 +135,7 @@ class SqlExerciseController extends Controller
         $sql = $validated['sql_input'];
         $result = QueryHandler::executeUserQuery($pdo, $sql);
         $exercise = $this->currentExercise();
+        $solutionResult = QueryHandler::executeUserQuery($pdo, (string) $exercise->solution);
 
         return view('it.sql-exercise.index', [
             'tables' => $tables,
@@ -143,6 +144,7 @@ class SqlExerciseController extends Controller
             'difficultyLabel' => $this->difficultyLabel($exercise->difficulty),
             'sourceLabel' => $this->sourceLabel($exercise->source),
             'result' => $result,
+            'solutionResult' => $solutionResult,
             'userSql' => $sql,
         ]);
     }
