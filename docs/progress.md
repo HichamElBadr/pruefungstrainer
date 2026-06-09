@@ -1,5 +1,172 @@
 # Progress Update
 
+## 2026-05-21 - Preserve submitted calculation answer
+
+### Summary
+
+Kept the learner's submitted calculation answer visible after checking the solution.
+
+### Changed Files
+
+- `app/Http/Controllers/CalculationExerciseController.php`
+- `resources/views/it/calculation-exercises/index.blade.php`
+- `tests/Feature/ItExerciseFlowTest.php`
+- `docs/progress.md`
+
+### Behavior Changes
+
+- After clicking "Lösung prüfen", the submitted answer remains in the answer input.
+- Learners can compare their own answer directly with the expected result and sample solution.
+
+### Testing
+
+- `php artisan test --filter=ItExerciseFlowTest`: passed.
+
+### Follow-up Notes
+
+- None.
+
+## 2026-05-21 - Increase Laravel execution timeout
+
+### Summary
+
+Increased the Laravel request execution timeout to support slower local AI generation requests.
+
+### Changed Files
+
+- `.env`
+- `.env.example`
+- `app/Providers/AppServiceProvider.php`
+- `config/app.php`
+- `docs/progress.md`
+
+### Behavior Changes
+
+- Laravel now reads `APP_MAX_EXECUTION_TIME` and applies it during application bootstrap.
+- Local requests can run for up to 180 seconds instead of being stopped by PHP after 60 seconds.
+
+### Testing
+
+- `php artisan config:clear`: passed.
+- `php artisan config:show app`: confirmed `max_execution_time` is `180`.
+- `php artisan test`: passed.
+
+### Follow-up Notes
+
+- If Apache/FastCGI has a separate timeout below 180 seconds, that server-level value may also need to be increased outside the project.
+
+## 2026-05-21 - Render SQL learner and expected result tables
+
+### Summary
+
+Improved SQL exercise submission rendering so learner query output and expected solution output are displayed after a submitted SELECT query.
+
+### Changed Files
+
+- `app/Http/Controllers/SqlExerciseController.php`
+- `app/Services/QueryHandler.php`
+- `resources/views/it/sql-exercise/index.blade.php`
+- `resources/views/it/sql-exercise/partials/query-result-table.blade.php`
+- `tests/Feature/ItExerciseFlowTest.php`
+- `tests/Unit/QueryHandlerTest.php`
+- `docs/progress.md`
+
+### Behavior Changes
+
+- Submitted SQL queries now render under a dedicated "Deine Ausgabe" section.
+- The stored sample solution query is executed safely through the same SELECT-only query handler and rendered under "Erwartete Ausgabe".
+- SELECT queries that return no rows now keep their column headers, allowing the result table shape to remain visible.
+
+### Testing
+
+- `php artisan test --filter=QueryHandlerTest`: passed.
+- `php artisan test --filter=ItExerciseFlowTest`: passed.
+
+### Follow-up Notes
+
+- None.
+
+## 2026-05-21 - Stabilize AI gateway environment loading
+
+### Summary
+
+Updated the AI gateway settings so it loads environment variables from the Laravel project `.env` and then allows `ai-gateway/.env` to override them.
+
+### Changed Files
+
+- `ai-gateway/app/core/settings.py`
+- `ai-gateway/tests/test_settings.py`
+- `docs/progress.md`
+
+### Behavior Changes
+
+- The gateway now resolves `OLLAMA_MODEL` consistently regardless of whether it is started from the Laravel root or the `ai-gateway` directory.
+- Local gateway startup now uses the existing project-level `OLLAMA_MODEL=deepseek-r1:32b` when `ai-gateway/.env` is empty, avoiding the previous fallback to the missing `deepseek-r1:7b` model.
+- Extra Laravel `.env` keys are ignored by the Python settings loader.
+
+### Testing
+
+- `ai-gateway\.venv\Scripts\python.exe -m unittest discover -s ai-gateway\tests`: failed from the Laravel root because the gateway package was not on `PYTHONPATH`.
+- `ai-gateway\.venv\Scripts\python.exe -m unittest discover -s tests` from `ai-gateway`: passed.
+- `ai-gateway\.venv\Scripts\python.exe -m compileall app` from `ai-gateway`: passed.
+- Manual POST to `http://127.0.0.1:8001/generate/sql`: passed with `deepseek-r1:32b`.
+- Manual POST to `http://127.0.0.1:8001/generate/calculation`: passed with `deepseek-r1:32b`.
+
+### Follow-up Notes
+
+- None.
+
+## 2026-05-20 - Repair local MariaDB privilege tables
+
+### Summary
+
+Repaired corrupted local MariaDB privilege tables that prevented SQL exercise temporary database grants from being created.
+
+### Changed Files
+
+- `.gitignore`
+- `docs/progress.md`
+
+### Behavior Changes
+
+- Local SQL exercise database creation can grant `SELECT` access to the runtime SQL user again.
+- Local MariaDB table backups under `storage/db-backups` are ignored by Git.
+- No application code was changed.
+
+### Testing
+
+- `CHECK TABLE` for MariaDB privilege tables: passed.
+- Temporary `CREATE DATABASE`, `GRANT SELECT`, `REVOKE`, and `DROP DATABASE` probe: passed.
+- Laravel `DatabaseManager` create/drop temporary database probe: passed.
+
+### Follow-up Notes
+
+- Local backups of the repaired MariaDB table files were saved under `storage/db-backups`.
+
+## 2026-05-20 - Guard SQL temporary database cleanup
+
+### Summary
+
+Prevented SQL exercise generation from passing a missing temporary database name into the cleanup routine after early PDO failures.
+
+### Changed Files
+
+- `app/Services/SqlExerciseGenerator.php`
+- `docs/progress.md`
+
+### Behavior Changes
+
+- SQL generation retries no longer fail with a type error when a PDO exception occurs before a temporary database name has been assigned.
+- Temporary databases are still dropped after failed generated SQL setup attempts when a database was successfully created.
+
+### Testing
+
+- `php artisan test --filter=SqlExerciseGeneratorTest`: passed.
+
+### Follow-up Notes
+
+- None.
+
 ## 2026-05-19 - Move app navigation into sidebar
 
 ### Summary

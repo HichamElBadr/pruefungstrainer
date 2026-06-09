@@ -4,6 +4,7 @@ namespace App\Services;
 
 use Illuminate\Support\Facades\Log;
 use PDO;
+use PDOStatement;
 
 class QueryHandler
 {
@@ -29,11 +30,21 @@ class QueryHandler
 
         try {
             $stmt = $pdo->query($sql);
+
+            if ($stmt === false) {
+                return self::error('Fehler: Die SQL-Abfrage konnte nicht ausgeführt werden.');
+            }
+
+            $columns = self::columnsFromStatement($stmt);
             $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+            if (empty($columns) && ! empty($rows)) {
+                $columns = array_keys($rows[0]);
+            }
 
             if (empty($rows)) {
                 return [
-                    'columns' => [],
+                    'columns' => $columns,
                     'rows' => [],
                     'message' => 'Keine Ergebnisse gefunden.',
                     'error' => null,
@@ -46,7 +57,7 @@ class QueryHandler
                 'message' => null,
                 'error' => null,
             ];
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             Log::channel('sql_exercise')->error('Learner SQL query failed.', [
                 'query' => $sql,
                 'exception' => $e::class,
@@ -65,5 +76,24 @@ class QueryHandler
             'message' => null,
             'error' => $message,
         ];
+    }
+
+    /**
+     * @return array<int,string>
+     */
+    private static function columnsFromStatement(PDOStatement $stmt): array
+    {
+        $columns = [];
+
+        for ($i = 0; $i < $stmt->columnCount(); $i++) {
+            $meta = $stmt->getColumnMeta($i);
+            $name = is_array($meta) ? ($meta['name'] ?? null) : null;
+
+            if (is_string($name) && $name !== '') {
+                $columns[] = $name;
+            }
+        }
+
+        return $columns;
     }
 }
