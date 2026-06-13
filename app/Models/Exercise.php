@@ -3,29 +3,41 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Exercise extends Model
 {
     protected $fillable = [
-        'user_id',
+        'external_id',
         'category_id',
-        'title',
+        'type',
+        'topic',
         'difficulty',
+        'title',
+        'task',
+        'explanation',
         'source',
-        'prompt',
-        'generated_task',
-        'solution',
-        'expected_unit',
-        'sample_solution',
+        'status',
     ];
 
-    public function category()
+    public function category(): BelongsTo
     {
         return $this->belongsTo(Category::class);
     }
 
-    public function user()
+    public function sqlDetail(): HasOne
     {
-        return $this->belongsTo(User::class);
+        return $this->hasOne(SqlExerciseDetail::class);
+    }
+
+    public function calculationDetail(): HasOne
+    {
+        return $this->hasOne(CalculationExerciseDetail::class);
+    }
+
+    public function umlDetail(): HasOne
+    {
+        return $this->hasOne(UmlExerciseDetail::class);
     }
 }

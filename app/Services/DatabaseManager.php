@@ -2,67 +2,120 @@
 
 namespace App\Services;
 
+use App\Services\Exercises\SqlSetupValidator;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use PDO;
+use PDOException;
 use Throwable;
 
 class DatabaseManager
 {
     private PDO $pdoRoot;
+
     private array $config;
 
     public function __construct()
     {
         $this->config = config('exercises.sql');
+        $this->assertSeparateRuntimeUser();
         $this->pdoRoot = $this->makePdo(null, 'admin');
     }
 
-    public function cleanOldDatabases(?int $maxAgeSeconds = null): int
+    /**
+     * @return array{databases: int, grants: int}
+     */
+    public function cleanOldDatabases(?int $maxAgeSeconds = null): array
     {
         $maxAgeSeconds ??= $this->config['max_age_seconds'];
         $prefix = $this->config['database_prefix'];
-        $like = $this->pdoRoot->quote($prefix . '%');
+        $like = $this->pdoRoot->quote($prefix.'%');
         $stmt = $this->pdoRoot->query("SELECT schema_name FROM information_schema.schemata WHERE schema_name LIKE {$like}");
         $dropped = 0;
 
-        foreach ($stmt as $row) {
-            $dbName = $row['schema_name'];
+        $remainingDatabases = $stmt->fetchAll(PDO::FETCH_COLUMN);
 
-            if (!preg_match('/^' . preg_quote($prefix, '/') . '(\d{10})_[a-z0-9]+$/i', $dbName, $matches)) {
+        foreach ($remainingDatabases as $key => $dbName) {
+            $timestamp = $this->temporaryDatabaseTimestamp($dbName);
+
+            if ($timestamp === null) {
                 continue;
             }
 
-            if ((time() - (int) $matches[1]) > $maxAgeSeconds) {
-                $this->pdoRoot->exec("DROP DATABASE `{$dbName}`");
+            if ((time() - $timestamp) > $maxAgeSeconds) {
+                $this->dropTemporaryDatabase($dbName);
+                unset($remainingDatabases[$key]);
                 $dropped++;
             }
         }
 
-        return $dropped;
+        $revokedGrants = $this->revokeOrphanedRuntimeAccess(array_values($remainingDatabases));
+
+        return [
+            'databases' => $dropped,
+            'grants' => $revokedGrants,
+        ];
     }
 
     public function createTemporaryDatabase(): string
     {
-        $dbName = $this->config['database_prefix'] . time() . '_' . Str::lower(Str::random(10));
+        $dbName = $this->config['database_prefix'].time().'_'.Str::lower(Str::random(10));
         $charset = $this->config['charset'];
         $collation = $this->config['collation'];
+        $created = false;
 
-        $this->pdoRoot->exec("CREATE DATABASE `{$dbName}` CHARACTER SET {$charset} COLLATE {$collation}");
-        $this->grantRuntimeAccess($dbName);
+        try {
+            $this->pdoRoot->exec("CREATE DATABASE `{$dbName}` CHARACTER SET {$charset} COLLATE {$collation}");
+            $created = true;
+            $this->grantRuntimeAccess($dbName);
 
-        return $dbName;
+            return $dbName;
+        } catch (Throwable $e) {
+            if ($created) {
+                try {
+                    $this->dropTemporaryDatabase($dbName);
+                } catch (Throwable $cleanupError) {
+                    Log::channel('sql_exercise')->warning('Failed to clean up partially created SQL database.', [
+                        'database' => $dbName,
+                        'error' => $cleanupError->getMessage(),
+                    ]);
+                }
+            }
+
+            throw $e;
+        }
     }
 
     public function dropTemporaryDatabase(string $dbName): void
     {
-        $prefix = preg_quote($this->config['database_prefix'], '/');
-
-        if (!preg_match('/^' . $prefix . '\d{10}_[a-z0-9]+$/i', $dbName)) {
+        if ($this->temporaryDatabaseTimestamp($dbName) === null) {
             throw new \InvalidArgumentException('Invalid temporary SQL database name.');
         }
 
-        $this->pdoRoot->exec("DROP DATABASE IF EXISTS `{$dbName}`");
+        $dropError = null;
+
+        try {
+            $this->pdoRoot->exec("DROP DATABASE IF EXISTS `{$dbName}`");
+        } catch (Throwable $e) {
+            $dropError = $e;
+        }
+
+        try {
+            $this->revokeAllRuntimeAccess($dbName);
+        } catch (Throwable $e) {
+            if ($dropError === null) {
+                throw $e;
+            }
+
+            Log::channel('sql_exercise')->warning('Failed to revoke SQL sandbox privileges after drop failure.', [
+                'database' => $dbName,
+                'error' => $e->getMessage(),
+            ]);
+        }
+
+        if ($dropError !== null) {
+            throw $dropError;
+        }
     }
 
     public function connectToDatabase(string $dbName): PDO
@@ -85,8 +138,9 @@ class DatabaseManager
 
     public function createMySqlExercise(string $mysqlstatement, string $dbName): void
     {
-        $pdo = $this->makePdo($dbName, 'admin');
-        $statements = array_filter(array_map('trim', explode(';', $mysqlstatement)));
+        $statements = SqlSetupValidator::statements($mysqlstatement);
+        $pdo = $this->makePdo($dbName, 'runtime');
+        $setupError = null;
 
         foreach (array_values($statements) as $index => $stmt) {
             try {
@@ -100,8 +154,26 @@ class DatabaseManager
                     'error' => $e->getMessage(),
                 ]);
 
+                $setupError = $e;
+                break;
+            }
+        }
+
+        try {
+            $this->restrictRuntimeAccessToSelect($dbName);
+        } catch (Throwable $e) {
+            if ($setupError !== null) {
+                Log::channel('sql_exercise')->warning('Failed to remove SQL setup privileges after setup failure.', [
+                    'database' => $dbName,
+                    'error' => $e->getMessage(),
+                ]);
+            } else {
                 throw $e;
             }
+        }
+
+        if ($setupError !== null) {
+            throw $setupError;
         }
     }
 
@@ -124,19 +196,95 @@ class DatabaseManager
 
     private function grantRuntimeAccess(string $dbName): void
     {
-        $admin = $this->config['admin'];
-        $runtime = $this->config['runtime'];
+        [$username, $host] = $this->escapedRuntimeAccount();
 
-        if (
-            $admin['username'] === $runtime['username']
-            && $admin['password'] === $runtime['password']
-        ) {
-            return;
+        $this->pdoRoot->exec(
+            "GRANT SELECT, CREATE, INSERT ON `{$dbName}`.* TO '{$username}'@'{$host}'",
+        );
+    }
+
+    private function restrictRuntimeAccessToSelect(string $dbName): void
+    {
+        [$username, $host] = $this->escapedRuntimeAccount();
+
+        $this->pdoRoot->exec(
+            "REVOKE CREATE, INSERT ON `{$dbName}`.* FROM '{$username}'@'{$host}'",
+        );
+    }
+
+    private function revokeAllRuntimeAccess(string $dbName): void
+    {
+        [$username, $host] = $this->escapedRuntimeAccount();
+
+        try {
+            $this->pdoRoot->exec(
+                "REVOKE ALL PRIVILEGES ON `{$dbName}`.* FROM '{$username}'@'{$host}'",
+            );
+        } catch (PDOException $e) {
+            if (($e->errorInfo[1] ?? null) !== 1141) {
+                throw $e;
+            }
+        }
+    }
+
+    /**
+     * @param  array<int, string>  $existingDatabases
+     */
+    private function revokeOrphanedRuntimeAccess(array $existingDatabases): int
+    {
+        $runtime = $this->config['runtime'];
+        $username = $this->pdoRoot->quote($runtime['username']);
+        $host = $this->pdoRoot->quote($runtime['grant_host']);
+        $prefix = $this->pdoRoot->quote($this->config['database_prefix'].'%');
+        $statement = $this->pdoRoot->query(
+            "SELECT Db FROM mysql.db WHERE User = {$username} AND Host = {$host} AND Db LIKE {$prefix}",
+        );
+
+        $revoked = 0;
+
+        foreach ($statement->fetchAll(PDO::FETCH_COLUMN) as $dbName) {
+            if (
+                $this->temporaryDatabaseTimestamp($dbName) !== null
+                && ! in_array($dbName, $existingDatabases, true)
+            ) {
+                $this->revokeAllRuntimeAccess($dbName);
+                $revoked++;
+            }
         }
 
-        $username = str_replace("'", "''", $runtime['username']);
-        $host = str_replace("'", "''", $runtime['grant_host']);
+        return $revoked;
+    }
 
-        $this->pdoRoot->exec("GRANT SELECT ON `{$dbName}`.* TO '{$username}'@'{$host}'");
+    /**
+     * @return array{0: string, 1: string}
+     */
+    private function escapedRuntimeAccount(): array
+    {
+        $runtime = $this->config['runtime'];
+
+        return [
+            str_replace("'", "''", $runtime['username']),
+            str_replace("'", "''", $runtime['grant_host']),
+        ];
+    }
+
+    private function assertSeparateRuntimeUser(): void
+    {
+        if ($this->config['admin']['username'] === $this->config['runtime']['username']) {
+            throw new \RuntimeException(
+                'SQL_EXERCISE_RUNTIME_USERNAME must differ from SQL_EXERCISE_ADMIN_USERNAME.',
+            );
+        }
+    }
+
+    private function temporaryDatabaseTimestamp(string $dbName): ?int
+    {
+        $prefix = preg_quote($this->config['database_prefix'], '/');
+
+        if (! preg_match('/^'.$prefix.'(?<timestamp>\d{10})(?:_[a-z0-9]{10})?$/i', $dbName, $matches)) {
+            return null;
+        }
+
+        return (int) $matches['timestamp'];
     }
 }

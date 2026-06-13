@@ -10,6 +10,13 @@ class JsonExerciseProvider implements ExerciseProvider
 {
     public function random(string $type, string $difficulty, array $criteria = []): array
     {
+        $matching = $this->all($type, $difficulty, $criteria);
+
+        return $matching[random_int(0, count($matching) - 1)];
+    }
+
+    public function all(string $type, string $difficulty, array $criteria = []): array
+    {
         $this->assertSupportedValue('Aufgabentyp', $type, config('exercises.types', []));
         $this->assertSupportedValue('Schwierigkeitsgrad', $difficulty, config('exercises.difficulties', []));
 
@@ -55,10 +62,12 @@ class JsonExerciseProvider implements ExerciseProvider
             );
         }
 
-        $exercise = $matching[random_int(0, count($matching) - 1)];
-        $exercise['source'] = 'json';
+        foreach ($matching as &$exercise) {
+            $exercise['source'] = 'json';
+        }
+        unset($exercise);
 
-        return $exercise;
+        return $matching;
     }
 
     private function exerciseDirectory(string $type, string $difficulty): string
@@ -167,6 +176,17 @@ class JsonExerciseProvider implements ExerciseProvider
             throw new ExerciseSourceException(
                 $this->fixtureLocation($file, $index)." enthaelt kein numerisches Feld 'expected_result'.",
             );
+        }
+
+        if ($type === 'sql') {
+            try {
+                SqlSetupValidator::statements($fixture['setup_sql']);
+            } catch (ExerciseSourceException $e) {
+                throw new ExerciseSourceException(
+                    $this->fixtureLocation($file, $index).': '.$e->getMessage(),
+                    previous: $e,
+                );
+            }
         }
     }
 

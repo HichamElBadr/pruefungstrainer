@@ -4,9 +4,12 @@ namespace App\Http\Controllers;
 
 use App\Contracts\ExerciseProvider;
 use App\Exceptions\ExerciseSourceException;
+use App\Models\Exercise;
 use App\Services\PlantUmlService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use InvalidArgumentException;
+use Throwable;
 
 class UmlExerciseController extends Controller
 {
@@ -26,7 +29,7 @@ class UmlExerciseController extends Controller
 
         try {
             $exercise = $this->exerciseProvider->random('uml', $difficulty);
-            session(['uml_exercise' => $exercise]);
+            session(['uml_exercise_id' => $exercise['database_id']]);
 
             return view('it.uml-exercise.index', $this->viewData($exercise, '', null, null));
         } catch (ExerciseSourceException $e) {
@@ -47,14 +50,14 @@ class UmlExerciseController extends Controller
         ]);
 
         $raw = $validated['uml_text'];
-        $exercise = session('uml_exercise');
+        $exercise = $this->currentExerciseData();
 
         if (! is_array($exercise)) {
             $difficulty = $this->validatedDifficulty($request->input('difficulty', 'medium'));
 
             try {
                 $exercise = $this->exerciseProvider->random('uml', $difficulty);
-                session(['uml_exercise' => $exercise]);
+                session(['uml_exercise_id' => $exercise['database_id']]);
             } catch (ExerciseSourceException $e) {
                 return view('it.uml-exercise.index', $this->viewData(
                     null,
@@ -73,12 +76,26 @@ class UmlExerciseController extends Controller
             @unlink($pngPath);
 
             return view('it.uml-exercise.index', $this->viewData($exercise, $raw, $dataUrl, null));
-        } catch (\Throwable $e) {
+        } catch (InvalidArgumentException $e) {
             return view('it.uml-exercise.index', $this->viewData(
                 $exercise,
                 $raw,
                 null,
-                'Rendering fehlgeschlagen: '.$e->getMessage(),
+                $e->getMessage(),
+            ));
+        } catch (Throwable $e) {
+            Log::warning('UML rendering failed.', [
+                'user_id' => auth()->id(),
+                'exercise_id' => $exercise['database_id'] ?? null,
+                'exception' => $e::class,
+                'error' => $e->getMessage(),
+            ]);
+
+            return view('it.uml-exercise.index', $this->viewData(
+                $exercise,
+                $raw,
+                null,
+                'Das UML-Diagramm konnte nicht gerendert werden. Bitte pruefe deine Eingabe oder versuche es erneut.',
             ));
         }
     }
@@ -117,6 +134,46 @@ class UmlExerciseController extends Controller
         abort_if(! array_key_exists($difficulty, self::DIFFICULTIES), 404, 'Unbekannter Schwierigkeitsgrad.');
 
         return $difficulty;
+    }
+
+    /**
+     * @return array<string, mixed>|null
+     */
+    private function currentExerciseData(): ?array
+    {
+        $exerciseId = session('uml_exercise_id');
+
+        if (! $exerciseId) {
+            return null;
+        }
+
+        $exercise = Exercise::query()
+            ->with('umlDetail')
+            ->whereKey($exerciseId)
+            ->where('type', 'uml')
+            ->where('status', 'published')
+            ->first();
+
+        if ($exercise === null || $exercise->umlDetail === null) {
+            session()->forget('uml_exercise_id');
+
+            return null;
+        }
+
+        return [
+            'database_id' => $exercise->id,
+            'id' => $exercise->external_id,
+            'type' => $exercise->type,
+            'difficulty' => $exercise->difficulty,
+            'topic' => $exercise->topic,
+            'title' => $exercise->title,
+            'task' => $exercise->task,
+            'explanation' => $exercise->explanation,
+            'source' => $exercise->source,
+            'diagram_type' => $exercise->umlDetail->diagram_type,
+            'starter_plantuml' => $exercise->umlDetail->starter_plantuml,
+            'solution_plantuml' => $exercise->umlDetail->solution_plantuml,
+        ];
     }
 
     private function normalizeToPlantUml(string $input): string

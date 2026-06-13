@@ -4,6 +4,7 @@ namespace Tests\Unit;
 
 use App\Contracts\ExerciseProvider;
 use App\Exceptions\ExerciseSourceException;
+use App\Services\Exercises\DatabaseExerciseProvider;
 use App\Services\Exercises\JsonExerciseProvider;
 use App\Services\QueryHandler;
 use Illuminate\Support\Facades\File;
@@ -28,10 +29,10 @@ class JsonExerciseProviderTest extends TestCase
         parent::tearDown();
     }
 
-    public function test_json_is_the_default_bound_exercise_source(): void
+    public function test_database_is_the_default_bound_exercise_source(): void
     {
-        $this->assertSame('json', config('exercises.source'));
-        $this->assertInstanceOf(JsonExerciseProvider::class, app(ExerciseProvider::class));
+        $this->assertSame('database', config('exercises.source'));
+        $this->assertInstanceOf(DatabaseExerciseProvider::class, app(ExerciseProvider::class));
     }
 
     public function test_fixture_collections_cover_every_type_and_difficulty(): void
@@ -92,7 +93,7 @@ class JsonExerciseProviderTest extends TestCase
 
                 $result = QueryHandler::executeUserQuery($pdo, $fixture['solution']);
 
-                $this->assertNull($result['error'], "SQL fixture failed: {$fixture['id']}");
+                $this->assertTrue($result['success'], "SQL fixture failed: {$fixture['id']}");
                 $this->assertNotEmpty($result['columns'], "SQL fixture returned no columns: {$fixture['id']}");
             }
         }
@@ -144,6 +145,21 @@ class JsonExerciseProviderTest extends TestCase
 
         $this->expectException(ExerciseSourceException::class);
         $this->expectExceptionMessage("fehlt das Pflichtfeld 'setup_sql'");
+
+        (new JsonExerciseProvider)->random('sql', 'easy');
+    }
+
+    public function test_unsafe_sql_setup_has_a_clear_error(): void
+    {
+        $directory = $this->temporaryRoot.'/sql/easy';
+        File::ensureDirectoryExists($directory);
+        $fixture = $this->validSqlFixture();
+        $fixture['setup_sql'] = 'DROP DATABASE pruefungstrainer;';
+        file_put_contents($directory.'/unsafe-setup.json', json_encode($fixture, JSON_THROW_ON_ERROR));
+        config(['exercises.path' => $this->temporaryRoot]);
+
+        $this->expectException(ExerciseSourceException::class);
+        $this->expectExceptionMessage('Erlaubt sind nur CREATE TABLE und INSERT INTO');
 
         (new JsonExerciseProvider)->random('sql', 'easy');
     }

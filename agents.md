@@ -4,7 +4,7 @@
 
 This project is a Laravel-based web application for an exam trainer for IT-related training and study contexts.
 
-The application provides browser-based SQL, UML and calculation exercises. Exercises and sample solutions are loaded from validated, version-controlled JSON fixtures.
+The application provides browser-based SQL, UML and calculation exercises. Version-controlled JSON fixtures are validated and imported into a reusable database catalog.
 
 The project is intended as a maintainable prototype and foundation for future extensions.
 
@@ -14,7 +14,8 @@ The project is intended as a maintainable prototype and foundation for future ex
 - PHP
 - Blade templates
 - MySQL
-- Local JSON exercise fixtures
+- Reusable database exercise catalog
+- Local JSON exercise fixtures as import source
 - PlantUML for UML diagram generation
 - Git and GitHub for version control
 - XAMPP/local development environment on Windows
@@ -46,10 +47,12 @@ The project is intended as a maintainable prototype and foundation for future ex
 - Do not use `dd()`, `dump()` or temporary debug output in final code.
 - Handle errors with user-friendly messages where possible.
 
-## JSON Exercise Source Rules
+## Exercise Catalog Rules
 
 - Use `App\Contracts\ExerciseProvider` for exercise loading.
+- Use `App\Services\Exercises\DatabaseExerciseProvider` during normal exercise flows.
 - Keep JSON source logic encapsulated in `App\Services\Exercises\JsonExerciseProvider`.
+- Import fixtures through `App\Services\Exercises\ExerciseFixtureImporter`.
 - Store fixtures under `resources/exercises/{type}/{difficulty}/*.json`.
 - Supported exercise types are `sql`, `uml` and `calculation`.
 - Supported difficulties are `easy`, `medium` and `hard`.
@@ -58,6 +61,11 @@ The project is intended as a maintainable prototype and foundation for future ex
 - Do not add live generation as an automatic fallback.
 - Keep user-facing exercise text in German where appropriate.
 - Add or update fixture coverage tests when changing exercise schemas or collections.
+- Run `php artisan exercises:validate` after changing exercise fixtures.
+- Run `php artisan exercises:import` after fixture validation.
+- Treat `exercises` as reusable catalog content, not user session data.
+- Store SQL, calculation, and UML fields in their dedicated one-to-one detail tables.
+- Never delete reusable exercises through temporary-data cleanup jobs.
 
 ## SQL Exercise Rules
 
@@ -66,9 +74,26 @@ The project is intended as a maintainable prototype and foundation for future ex
 - Do not allow destructive SQL commands unless explicitly required and safely isolated.
 - Prefer allowing only safe query types such as `SELECT` for learner input.
 - Return understandable error messages for invalid SQL.
-- Do not expose raw database errors unnecessarily to users.
+- Show only sanitized database exception messages to learners.
+- Never expose stack traces, file paths, credentials, or connection details.
 - Keep temporary exercise databases clearly separated from the main application database.
+- Create SQL sandboxes only for the current request and drop them in a `finally` path.
+- Do not store temporary SQL database names or selected SQL exercise IDs in session state.
+- Resolve SQL submissions from the exercise ID supplied by the execution route.
+- Keep scheduled stale-database cleanup only as a fallback for exceptional leftovers.
+- Keep fallback cleanup compatible with the current
+  `{prefix}{timestamp}_{random}` and legacy `{prefix}{timestamp}` database names.
+- Match temporary database names strictly before dropping any schema.
 - SQL fixtures must provide valid `setup_sql` and one safe solution query.
+- Allow fixture setup statements only for unqualified `CREATE TABLE` and
+  `INSERT INTO ... VALUES` operations.
+- Execute fixture setup through a dedicated runtime user with temporary write
+  permissions, then revoke write access before learner queries run.
+- Require separate SQL admin and runtime usernames.
+- Revoke all database-specific runtime grants when dropping a sandbox and
+  remove orphaned grants during fallback cleanup.
+- Preserve configured learner query timeouts and result-row limits.
+- Block delay, file, locking, system schema, and variable access constructs.
 
 ## PlantUML Rules
 
@@ -76,6 +101,8 @@ The project is intended as a maintainable prototype and foundation for future ex
 - Make Java and PlantUML paths configurable through `.env` or config files.
 - Do not hardcode local absolute paths in final code.
 - Handle missing Java, missing PlantUML JAR files and generation errors clearly.
+- Log PlantUML process details server-side and show only controlled rendering
+  errors to learners.
 
 ## Documentation Rules
 

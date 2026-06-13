@@ -1,5 +1,337 @@
 # Progress Update
 
+## 2026-06-13 - Harden SQL provisioning and internal error boundaries
+
+### Summary
+
+Closed the remaining SQL sandbox privilege leaks and removed administrative
+execution of fixture setup SQL. Added strict setup statement validation,
+recoverable catalog migration guards, and controlled UML rendering errors.
+
+### Changed Files
+
+- `README.md`
+- `agents.md`
+- `app/Http/Controllers/UmlExerciseController.php`
+- `app/Services/DatabaseManager.php`
+- `app/Services/Exercises/JsonExerciseProvider.php`
+- `app/Services/Exercises/SqlSetupValidator.php`
+- `config/exercises.php`
+- `database/migrations/2026_06_13_000000_create_reusable_exercise_catalog.php`
+- `routes/console.php`
+- `tests/Feature/ImportExercisesCommandTest.php`
+- `tests/Feature/ItExerciseFlowTest.php`
+- `tests/Unit/DatabaseManagerTest.php`
+- `tests/Unit/JsonExerciseProviderTest.php`
+- `tests/Unit/SqlSetupValidatorTest.php`
+- `docs/progress.md`
+
+### Behavior Changes
+
+- Fixture setup SQL is limited to unqualified `CREATE TABLE` and
+  `INSERT INTO ... VALUES` statements.
+- Setup SQL executes as the dedicated runtime user instead of the provisioning
+  account.
+- Runtime `CREATE` and `INSERT` permissions are revoked before learner queries.
+- Dropping a sandbox also revokes all database-specific runtime grants.
+- Fallback cleanup removes orphaned grants for databases that no longer exist
+  and reports both schema and grant cleanup counts.
+- SQL admin and runtime usernames must be different.
+- The catalog migration can resume when its new tables already exist after a
+  partial MySQL DDL failure.
+- Unexpected PlantUML process exceptions are logged but replaced with a generic
+  learner-facing error.
+
+### Testing
+
+- Focused security and exercise flow tests: passed, 50 tests and 448 assertions.
+- Real MariaDB fixture validation without PlantUML rendering: passed for all 39
+  exercises.
+- Fresh testing migration and seed: passed.
+- Runtime privilege probe: setup writes passed, learner-time writes were
+  rejected, SELECT remained available, and teardown removed both schema and
+  grant.
+- `php artisan sql-exercises:cleanup`: removed 28 stale schemas and 64 orphaned
+  runtime grants from the previous implementation.
+- `php artisan test`: passed, 83 tests and 557 assertions.
+- `php artisan exercises:validate`: passed for all 39 fixtures with SQL and
+  PlantUML checks enabled.
+- `php artisan view:cache`: passed.
+- Laravel Pint: passed for all changed PHP files.
+- Final MariaDB residue check: zero temporary SQL schemas and zero
+  database-specific runtime grants.
+
+### Follow-up Notes
+
+- None.
+
+## 2026-06-13 - Support legacy SQL sandbox cleanup
+
+### Summary
+
+Extended fallback cleanup to recognize both current and legacy temporary SQL
+database names while retaining strict schema-name validation. Expanded startup
+documentation for manual, local scheduler, Linux cron, and Windows Task
+Scheduler operation.
+
+### Changed Files
+
+- `README.md`
+- `agents.md`
+- `app/Services/DatabaseManager.php`
+- `tests/Unit/DatabaseManagerTest.php`
+- `docs/progress.md`
+
+### Behavior Changes
+
+- Stale cleanup accepts current
+  `{prefix}{timestamp}_{ten-character-random-suffix}` database names.
+- Stale cleanup also accepts legacy `{prefix}{timestamp}` database names.
+- Malformed or merely similar schema names are ignored.
+- Explicit temporary database drops use the same strict format validation.
+- Documentation now identifies scheduled cleanup as a fallback and explains
+  local and server execution.
+
+### Testing
+
+- `php artisan test --filter=DatabaseManagerTest`: passed, 2 tests and 9
+  assertions.
+- `php artisan test`: passed, 71 tests and 524 assertions.
+- `php artisan exercises:validate`: passed for all 39 fixtures with SQL and
+  PlantUML checks enabled.
+- `php artisan schedule:list`: confirmed hourly fallback cleanup registration.
+- Laravel Pint: passed for the changed PHP files.
+
+### Follow-up Notes
+
+- None.
+
+## 2026-06-13 - Make SQL sandboxes request-scoped
+
+### Summary
+
+Replaced session-owned SQL exercise databases with disposable request-scoped
+sandboxes. SQL submissions now identify the reusable catalog exercise in the
+route, rebuild its setup in a fresh database, and clean up that database before
+the response completes.
+
+### Changed Files
+
+- `README.md`
+- `agents.md`
+- `app/Http/Controllers/SqlExerciseController.php`
+- `app/Services/DatabaseManager.php`
+- `resources/views/it/sql-exercise/index.blade.php`
+- `routes/web.php`
+- `tests/Feature/ItExerciseFlowTest.php`
+- `docs/progress.md`
+
+### Behavior Changes
+
+- SQL exercise and temporary database identifiers are no longer stored as
+  session state.
+- The SQL form submits directly to the selected reusable catalog exercise.
+- Every learner query receives a fresh database with the exercise `setup_sql`.
+- Temporary databases are dropped from a `finally` path after successful and
+  failed learner queries.
+- Exercise previews also use a short-lived sandbox when reading sample tables.
+- Parallel browser tabs cannot replace each other's selected SQL exercise.
+- Partial database creation failures attempt immediate cleanup.
+- The hourly stale-database cleanup remains available only as a recovery
+  fallback.
+
+### Testing
+
+- `php artisan test --filter=ItExerciseFlowTest`: passed, 15 tests and 145
+  assertions.
+- `php artisan test`: passed, 69 tests and 515 assertions.
+- `php artisan exercises:validate`: passed for all 39 fixtures with SQL and
+  PlantUML checks enabled.
+- `php artisan view:cache`: passed.
+- Laravel Pint: passed for the changed PHP files.
+
+### Follow-up Notes
+
+- None.
+
+## 2026-06-13 - Introduce reusable database exercise catalog
+
+### Summary
+
+Replaced temporary per-user exercise copies with a reusable database catalog.
+Added type-specific detail tables and an idempotent importer that synchronizes
+validated JSON fixtures by their stable external IDs.
+
+### Changed Files
+
+- `.env`
+- `.env.example`
+- `README.md`
+- `agents.md`
+- `app/Console/Commands/ImportExercises.php`
+- `app/Http/Controllers/CalculationExerciseController.php`
+- `app/Http/Controllers/SqlExerciseController.php`
+- `app/Http/Controllers/UmlExerciseController.php`
+- `app/Models/CalculationExerciseDetail.php`
+- `app/Models/Category.php`
+- `app/Models/Exercise.php`
+- `app/Models/SqlExerciseDetail.php`
+- `app/Models/UmlExerciseDetail.php`
+- `app/Models/User.php`
+- `app/Providers/AppServiceProvider.php`
+- `app/Services/Exercises/DatabaseExerciseProvider.php`
+- `app/Services/Exercises/ExerciseCollectionValidator.php`
+- `app/Services/Exercises/ExerciseFixtureImporter.php`
+- `config/exercises.php`
+- `database/migrations/2026_06_13_000000_create_reusable_exercise_catalog.php`
+- `database/seeders/CategorySeeder.php`
+- `database/seeders/DatabaseSeeder.php`
+- `database/seeders/ExerciseCatalogSeeder.php`
+- `resources/views/it/calculation-exercises/index.blade.php`
+- `routes/console.php`
+- `tests/Feature/ImportExercisesCommandTest.php`
+- `tests/Feature/ItExerciseFlowTest.php`
+- `tests/Unit/JsonExerciseProviderTest.php`
+- `docs/progress.md`
+
+### Behavior Changes
+
+- Normal exercise loading now uses `DatabaseExerciseProvider`.
+- JSON fixtures remain the authoritative import and validation source.
+- `php artisan exercises:import` creates or updates catalog entries by
+  `external_id` without creating duplicates.
+- SQL, calculation, and UML data is stored in dedicated one-to-one detail
+  tables.
+- Opening an exercise stores only its reusable catalog ID in the session and no
+  longer inserts an exercise row.
+- The daily cleanup no longer deletes reusable exercises; only temporary SQL
+  databases remain scheduled for cleanup.
+- Existing exercise and category tables were preserved as `legacy_exercises`
+  and `legacy_categories`.
+- The local MySQL database now contains 39 catalog exercises while retaining all
+  139 historical exercise rows in the legacy table.
+
+### Testing
+
+- `php artisan test`: passed, 68 tests and 483 assertions.
+- `php artisan exercises:validate`: passed for all 39 fixtures with SQL and
+  PlantUML checks enabled.
+- `php artisan exercises:import`: passed twice; the second run updated 39 rows
+  and created no duplicates.
+- `php artisan view:cache`: passed.
+- Laravel Pint: passed for the changed catalog files.
+
+### Follow-up Notes
+
+- Legacy rows were intentionally not converted because most do not contain
+  complete reusable fixture data. Review `legacy_exercises` and
+  `legacy_categories` manually before deciding whether to archive or remove
+  them.
+- Removing a fixture from JSON does not automatically delete or archive its
+  existing catalog row.
+
+## 2026-06-13 - Improve learner-facing SQL error handling
+
+### Summary
+
+Refactored learner SQL execution to return structured success and error data.
+Added a controlled error display that preserves realistic database messages
+while removing framework traces, filesystem paths, credentials, and connection
+details.
+
+### Changed Files
+
+- `README.md`
+- `AGENTS.md`
+- `agents.md`
+- `app/Http/Controllers/SqlExerciseController.php`
+- `app/Services/Exercises/ExerciseCollectionValidator.php`
+- `app/Services/QueryHandler.php`
+- `resources/views/it/sql-exercise/index.blade.php`
+- `resources/views/it/sql-exercise/partials/query-result-table.blade.php`
+- `tests/Feature/ItExerciseFlowTest.php`
+- `tests/Unit/JsonExerciseProviderTest.php`
+- `tests/Unit/QueryHandlerTest.php`
+- `docs/progress.md`
+
+### Behavior Changes
+
+- Successful SQL queries return structured columns, rows, and an optional
+  informational message.
+- Failed SQL queries return a user-facing explanation, a sanitized database
+  exception message, and a context-specific learning hint.
+- SQL errors appear directly below the learner input and all error content is
+  escaped by Blade.
+- Submitted SQL remains in the textarea after an error.
+- Stack traces, local paths, credentials, connection details, and Laravel debug
+  output are not displayed.
+- The expected solution query and result table are shown only after a successful
+  learner query.
+
+### Testing
+
+- `php artisan test`: passed, 61 tests and 445 assertions.
+- `php artisan exercises:validate`: passed for 39 exercises with SQL and
+  PlantUML checks enabled.
+- `php artisan view:cache`: passed.
+- Laravel Pint: passed for all changed PHP files.
+
+### Follow-up Notes
+
+- None.
+
+## 2026-06-13 - Harden SQL execution and add fixture validation command
+
+### Summary
+
+Hardened learner SQL execution with configurable resource limits and additional
+query restrictions. Added an `exercises:validate` Artisan command for validating
+all JSON collections and their runtime behavior before deployment.
+
+### Changed Files
+
+- `.env`
+- `.env.example`
+- `README.md`
+- `agents.md`
+- `app/Console/Commands/ValidateExercises.php`
+- `app/Contracts/ExerciseProvider.php`
+- `app/Services/Exercises/ExerciseCollectionValidator.php`
+- `app/Services/Exercises/ExerciseValidationReport.php`
+- `app/Services/Exercises/JsonExerciseProvider.php`
+- `app/Services/QueryHandler.php`
+- `bootstrap/app.php`
+- `config/exercises.php`
+- `tests/Feature/ValidateExercisesCommandTest.php`
+- `tests/Unit/QueryHandlerTest.php`
+- `docs/progress.md`
+
+### Behavior Changes
+
+- Learner SQL results are limited to a configurable number of rows.
+- MariaDB and MySQL learner queries receive a configurable execution deadline.
+- Delay functions, file access, locking clauses, system schemas, executable
+  database comments, and server or session variables are rejected.
+- SQL exceptions are logged but replaced with a generic learner-facing message.
+- `php artisan exercises:validate` checks fixture directories, required fields,
+  minimum collection sizes, unique IDs, calculation topic coverage, safe and
+  executable SQL solutions, and PlantUML rendering.
+- The command returns a failing exit code when a collection is invalid and
+  supports explicit flags for skipping local service integration checks.
+
+### Testing
+
+- `php artisan test`: passed, 59 tests and 415 assertions.
+- `php artisan exercises:validate`: passed for 39 exercises with MariaDB and
+  PlantUML checks enabled.
+- `php artisan test --filter="QueryHandlerTest|ValidateExercisesCommandTest"`:
+  passed, 13 tests and 38 assertions.
+- MariaDB `SET STATEMENT max_statement_time` runtime-user probe: passed.
+
+### Follow-up Notes
+
+- None.
+
 ## 2026-06-13 - Align project documentation with JSON exercise sources
 
 ### Summary

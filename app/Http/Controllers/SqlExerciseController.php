@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Contracts\ExerciseProvider;
 use App\Exceptions\ExerciseSourceException;
-use App\Models\Category;
 use App\Models\Exercise;
 use App\Services\DatabaseManager;
 use App\Services\QueryHandler;
@@ -19,8 +18,6 @@ class SqlExerciseController extends Controller
         'medium' => 'Mittel',
         'hard' => 'Schwer',
     ];
-
-    private ?string $dbName = null;
 
     public function __construct(
         private readonly DatabaseManager $dbManager,
@@ -38,41 +35,19 @@ class SqlExerciseController extends Controller
     {
         abort_if(! array_key_exists($difficulty, self::DIFFICULTIES), 404, 'Unbekannter Schwierigkeitsgrad.');
 
-        $setupSql = null;
-        $persistedExerciseId = null;
-
         try {
             $data = $this->exerciseProvider->random('sql', $difficulty);
-            $setupSql = (string) $data['setup_sql'];
-            $this->dbName = $this->dbManager->createTemporaryDatabase();
-            $this->dbManager->createMySqlExercise($setupSql, $this->dbName);
-            session(['sql_temp_db' => $this->dbName]);
+            $exercise = $this->findSqlExercise((int) $data['database_id']);
+            $tables = $this->withTemporaryDatabase(
+                $exercise,
+                fn (string $dbName): array => $this->dbManager->getTables($dbName),
+            );
 
-            $category = Category::firstOrCreate(['name' => 'SQL']);
-            $exercise = Exercise::create([
-                'user_id' => auth()->id(),
-                'category_id' => $category->id,
-                'title' => $data['title'],
-                'difficulty' => $difficulty,
-                'source' => $data['source'],
-                'prompt' => json_encode($this->exerciseMetadata($data), JSON_UNESCAPED_UNICODE),
-                'generated_task' => $data['task'],
-                'solution' => $data['solution'],
-            ]);
-            $persistedExerciseId = $exercise->id;
-            session(['sql_exercise_id' => $exercise->id]);
-
-            return view('it.sql-exercise.index', [
-                'tables' => $this->getAllTables(),
-                'task' => $data['task'],
-                'solution' => $data['solution'],
-                'mysqlstatement' => $setupSql,
-                'difficultyLabel' => self::DIFFICULTIES[$difficulty],
-                'sourceLabel' => $this->sourceLabel($data['source']),
-                'explanation' => $data['explanation'],
-            ]);
+            return view('it.sql-exercise.index', $this->viewData($exercise, $tables, [
+                'userSql' => $exercise->sqlDetail->starter_sql,
+            ]));
         } catch (ExerciseSourceException $e) {
-            Log::warning('SQL exercise fixture could not be loaded.', [
+            Log::warning('SQL catalog exercise could not be loaded.', [
                 'user_id' => auth()->id(),
                 'difficulty' => $difficulty,
                 'error' => $e->getMessage(),
@@ -82,13 +57,9 @@ class SqlExerciseController extends Controller
                 ->route('sql-uebung')
                 ->withErrors(['exercise_source' => $e->getMessage()]);
         } catch (Throwable $e) {
-            $this->cleanupFailedExercise($persistedExerciseId);
-
-            Log::channel('sql_exercise')->error('SQL exercise flow failed.', [
+            Log::channel('sql_exercise')->error('SQL exercise preview failed.', [
                 'user_id' => auth()->id(),
-                'database' => $this->dbName,
                 'difficulty' => $difficulty,
-                'setup_sql' => $setupSql,
                 'exception' => $e::class,
                 'error' => $e->getMessage(),
             ]);
@@ -101,57 +72,120 @@ class SqlExerciseController extends Controller
         }
     }
 
-    public function executeUserQuery(Request $request)
+    public function executeUserQuery(Request $request, Exercise $exercise)
     {
         $validated = $request->validate([
             'sql_input' => ['required', 'string', 'max:5000'],
         ]);
-
-        $pdo = $this->dbManager->connectToDatabase($this->currentDatabaseName());
-        $tables = $this->getAllTables();
+        $exercise = $this->validateSqlExercise($exercise);
         $sql = $validated['sql_input'];
-        $result = QueryHandler::executeUserQuery($pdo, $sql);
-        $exercise = $this->currentExercise();
-        $solutionResult = QueryHandler::executeUserQuery($pdo, (string) $exercise->solution);
-        $metadata = json_decode($exercise->prompt, true);
 
-        return view('it.sql-exercise.index', [
+        try {
+            return $this->withTemporaryDatabase(
+                $exercise,
+                function (string $dbName) use ($exercise, $sql) {
+                    $pdo = $this->dbManager->connectToDatabase($dbName);
+                    $tables = $this->dbManager->getTables($dbName);
+                    $result = QueryHandler::executeUserQuery($pdo, $sql);
+                    $solutionResult = $result['success']
+                        ? QueryHandler::executeUserQuery($pdo, $exercise->sqlDetail->solution_sql)
+                        : null;
+
+                    return view('it.sql-exercise.index', $this->viewData($exercise, $tables, [
+                        'result' => $result,
+                        'solutionResult' => $solutionResult,
+                        'userSql' => $sql,
+                    ]));
+                },
+            );
+        } catch (Throwable $e) {
+            Log::channel('sql_exercise')->error('SQL exercise execution sandbox failed.', [
+                'user_id' => auth()->id(),
+                'exercise_id' => $exercise->id,
+                'exception' => $e::class,
+                'error' => $e->getMessage(),
+            ]);
+
+            return redirect()
+                ->route('sql-uebung')
+                ->withErrors([
+                    'exercise_source' => 'Die SQL-Ausführungsumgebung konnte nicht vorbereitet werden. Bitte versuche es erneut.',
+                ]);
+        }
+    }
+
+    /**
+     * @template T
+     *
+     * @param  callable(string): T  $callback
+     * @return T
+     */
+    private function withTemporaryDatabase(Exercise $exercise, callable $callback): mixed
+    {
+        $dbName = null;
+
+        try {
+            $dbName = $this->dbManager->createTemporaryDatabase();
+            $this->dbManager->createMySqlExercise($exercise->sqlDetail->setup_sql, $dbName);
+
+            return $callback($dbName);
+        } finally {
+            if ($dbName !== null) {
+                $this->dropTemporaryDatabase($dbName, $exercise->id);
+            }
+        }
+    }
+
+    private function dropTemporaryDatabase(string $dbName, int $exerciseId): void
+    {
+        try {
+            $this->dbManager->dropTemporaryDatabase($dbName);
+        } catch (Throwable $e) {
+            Log::channel('sql_exercise')->warning('Failed to clean up request-scoped SQL database.', [
+                'database' => $dbName,
+                'exercise_id' => $exerciseId,
+                'error' => $e->getMessage(),
+            ]);
+        }
+    }
+
+    private function findSqlExercise(int $exerciseId): Exercise
+    {
+        return $this->validateSqlExercise(
+            Exercise::query()->with('sqlDetail')->findOrFail($exerciseId),
+        );
+    }
+
+    private function validateSqlExercise(Exercise $exercise): Exercise
+    {
+        abort_unless($exercise->type === 'sql' && $exercise->status === 'published', 404);
+        $exercise->loadMissing('sqlDetail');
+
+        if ($exercise->sqlDetail === null) {
+            throw new ExerciseSourceException(
+                "SQL-Aufgabendetails fehlen fuer {$exercise->external_id}.",
+            );
+        }
+
+        return $exercise;
+    }
+
+    /**
+     * @param  array<string, array<int, array<string, mixed>>>  $tables
+     * @param  array<string, mixed>  $additional
+     * @return array<string, mixed>
+     */
+    private function viewData(Exercise $exercise, array $tables, array $additional = []): array
+    {
+        return array_merge([
+            'exerciseId' => $exercise->id,
             'tables' => $tables,
-            'task' => $exercise->generated_task,
-            'solution' => $exercise->solution,
+            'task' => $exercise->task,
+            'solution' => $exercise->sqlDetail->solution_sql,
             'difficultyLabel' => $this->difficultyLabel($exercise->difficulty),
             'sourceLabel' => $this->sourceLabel($exercise->source),
-            'result' => $result,
-            'solutionResult' => $solutionResult,
-            'userSql' => $sql,
-            'explanation' => is_array($metadata) ? ($metadata['explanation'] ?? null) : null,
-        ]);
-    }
-
-    private function getAllTables(): array
-    {
-        return $this->dbManager->getTables($this->currentDatabaseName());
-    }
-
-    private function currentDatabaseName(): string
-    {
-        $dbName = session('sql_temp_db');
-
-        abort_if(! $dbName, 409, 'Keine temporaere Datenbank in der Session gefunden. Bitte starte die SQL-Uebung neu.');
-
-        return $dbName;
-    }
-
-    private function currentExercise(): Exercise
-    {
-        $exerciseId = session('sql_exercise_id');
-
-        abort_if(! $exerciseId, 409, 'Keine SQL-Uebung in der Session gefunden. Bitte starte die SQL-Uebung neu.');
-
-        return Exercise::query()
-            ->whereKey($exerciseId)
-            ->where('user_id', auth()->id())
-            ->firstOrFail();
+            'explanation' => $exercise->explanation,
+        ], $additional);
     }
 
     private function difficultyOptions(): array
@@ -173,38 +207,5 @@ class SqlExerciseController extends Controller
             'fixture', 'json' => 'Beispielaufgabe',
             default => null,
         };
-    }
-
-    /**
-     * @param  array<string, mixed>  $exercise
-     * @return array<string, mixed>
-     */
-    private function exerciseMetadata(array $exercise): array
-    {
-        unset($exercise['setup_sql'], $exercise['solution']);
-
-        return $exercise;
-    }
-
-    private function cleanupFailedExercise(?int $exerciseId): void
-    {
-        session()->forget(['sql_temp_db', 'sql_exercise_id']);
-
-        if ($exerciseId !== null) {
-            Exercise::whereKey($exerciseId)->delete();
-        }
-
-        if ($this->dbName === null) {
-            return;
-        }
-
-        try {
-            $this->dbManager->dropTemporaryDatabase($this->dbName);
-        } catch (Throwable $e) {
-            Log::channel('sql_exercise')->warning('Failed to clean up SQL exercise database.', [
-                'database' => $this->dbName,
-                'error' => $e->getMessage(),
-            ]);
-        }
     }
 }

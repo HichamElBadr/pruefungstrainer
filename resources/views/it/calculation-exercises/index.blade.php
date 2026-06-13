@@ -32,7 +32,7 @@
         ];
     @endphp
 
-    @if(!empty($generated_task))
+    @if(!empty($task))
         <section class="exercise-card">
             <div class="exercise-card-body">
                 <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
@@ -52,7 +52,7 @@
                 </div>
 
                 <div class="exercise-muted-panel mt-5 whitespace-pre-line leading-7">
-                    {{ $generated_task }}
+                    {{ $task }}
                 </div>
             </div>
         </section>
@@ -75,9 +75,9 @@
                             placeholder="Dein Ergebnis"
                         >
 
-                        @if(!empty($expected_unit))
+                        @if(!empty($unit))
                             <div class="inline-flex min-h-10 items-center rounded-lg border border-slate-200 bg-slate-50 px-4 text-sm font-semibold text-slate-700">
-                                Einheit: {{ $expected_unit }}
+                                Einheit: {{ $unit }}
                             </div>
                         @endif
                     </div>
@@ -105,23 +105,23 @@
             </section>
         @endif
 
-        @if(!empty($solution))
+        @if(!empty($expected_value))
             <section class="exercise-card">
                 <div class="exercise-card-body">
                     <h2 class="font-heading text-xl font-semibold text-slate-950">Erwartetes Ergebnis</h2>
                     <div class="exercise-muted-panel mt-4 text-lg font-semibold">
-                        {{ $solution }}@if(!empty($expected_unit)) {{ $expected_unit }}@endif
+                        {{ $expected_value }}@if(!empty($unit)) {{ $unit }}@endif
                     </div>
                 </div>
             </section>
         @endif
 
-        @if(!empty($sample_solution))
+        @if(!empty($solution_steps))
             <section class="exercise-card">
                 <div class="exercise-card-body">
                     <h2 class="font-heading text-xl font-semibold text-slate-950">Musterlösung</h2>
                     <div class="exercise-muted-panel mt-4 whitespace-pre-line leading-7">
-                        {{ $sample_solution }}
+                        {{ $solution_steps }}
                     </div>
                 </div>
             </section>
@@ -132,7 +132,7 @@
         <div class="exercise-card-body">
             <div>
                 <h2 class="font-heading text-xl font-semibold text-slate-950">
-                    @if(!empty($generated_task))
+                    @if(!empty($task))
                         Weitere Aufgabe erzeugen
                     @else
                         Thema auswählen

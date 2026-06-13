@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Contracts\ExerciseProvider;
 use App\Exceptions\ExerciseSourceException;
-use App\Models\Category;
 use App\Models\Exercise;
 use App\Services\CalculationExerciseTopicCatalog;
 use App\Services\SolutionEvaluator;
@@ -44,7 +43,7 @@ class CalculationExerciseController extends Controller
                 'topic' => $selectedTopic['slug'],
             ]);
         } catch (ExerciseSourceException $e) {
-            Log::warning('Calculation exercise fixture could not be loaded.', [
+            Log::warning('Calculation catalog exercise could not be loaded.', [
                 'topic' => $selectedTopic['slug'],
                 'difficulty' => $difficulty,
                 'error' => $e->getMessage(),
@@ -55,30 +54,15 @@ class CalculationExerciseController extends Controller
                 ->withErrors(['exercise_source' => $e->getMessage()]);
         }
 
-        $sampleSolution = trim($data['solution_steps']."\n\n".$data['explanation']);
-        $category = Category::firstOrCreate(['name' => 'Calculation']);
-        $exercise = Exercise::create([
-            'user_id' => auth()->id(),
-            'category_id' => $category->id,
-            'title' => $data['title'],
-            'difficulty' => $difficulty,
-            'source' => $data['source'],
-            'prompt' => json_encode($data, JSON_UNESCAPED_UNICODE),
-            'generated_task' => $data['task'],
-            'solution' => $data['expected_result'],
-            'expected_unit' => $data['unit'],
-            'sample_solution' => $sampleSolution,
-        ]);
-
-        session(['calculation_exercise_id' => $exercise->id]);
+        session(['calculation_exercise_id' => $data['database_id']]);
 
         return view('it.calculation-exercises.index', array_merge(
             $this->baseViewData($difficulty),
             [
                 'selectedTopic' => $selectedTopic,
                 'title' => $data['title'],
-                'generated_task' => $data['task'],
-                'expected_unit' => $data['unit'],
+                'task' => $data['task'],
+                'unit' => $data['unit'],
                 'sourceLabel' => $this->sourceLabel($data['source']),
             ],
         ));
@@ -91,10 +75,17 @@ class CalculationExerciseController extends Controller
         ]);
 
         $exercise = $this->currentExercise();
+        $detail = $exercise->calculationDetail;
+        abort_if($detail === null, 500, 'Rechenaufgabendetails fehlen.');
         $difficulty = $exercise->difficulty ?? 'medium';
         $isCorrect = $this->solutionEvaluator->compareNumeric(
             $validated['user_solution'],
-            $exercise->solution,
+            $detail->expected_value,
+            (float) ($detail->tolerance ?? 0),
+        );
+        $sampleSolution = trim(
+            ($detail->solution_steps ?? '')
+            .($exercise->explanation ? "\n\n".$exercise->explanation : ''),
         );
 
         return view('it.calculation-exercises.index', array_merge(
@@ -102,11 +93,11 @@ class CalculationExerciseController extends Controller
             [
                 'is_correct' => $isCorrect,
                 'title' => $exercise->title,
-                'solution' => $exercise->solution,
-                'expected_unit' => $exercise->expected_unit,
-                'sample_solution' => $exercise->sample_solution,
+                'expected_value' => $this->displayDecimal($detail->expected_value),
+                'unit' => $detail->unit,
+                'solution_steps' => $sampleSolution,
                 'user_solution' => $validated['user_solution'],
-                'generated_task' => $exercise->generated_task,
+                'task' => $exercise->task,
                 'selectedTopic' => $this->selectedTopicFromExercise($exercise),
                 'sourceLabel' => $this->sourceLabel($exercise->source),
             ],
@@ -120,21 +111,21 @@ class CalculationExerciseController extends Controller
         abort_if(! $exerciseId, 409, 'Keine Rechenaufgabe in der Session gefunden. Bitte starte eine neue Aufgabe.');
 
         return Exercise::query()
+            ->with('calculationDetail')
             ->whereKey($exerciseId)
-            ->where('user_id', auth()->id())
+            ->where('type', 'calculation')
+            ->where('status', 'published')
             ->firstOrFail();
     }
 
     private function selectedTopicFromExercise(Exercise $exercise): ?array
     {
-        $payload = json_decode($exercise->prompt, true);
-
-        if (! is_array($payload) || ! isset($payload['topic'])) {
+        if ($exercise->topic === null) {
             return null;
         }
 
         foreach ($this->topics->all() as $topic) {
-            if ($topic['slug'] === $payload['topic'] || $topic['label'] === $payload['topic']) {
+            if ($topic['slug'] === $exercise->topic || $topic['label'] === $exercise->topic) {
                 return $topic;
             }
         }
@@ -148,6 +139,13 @@ class CalculationExerciseController extends Controller
             'fixture', 'json' => 'Beispielaufgabe',
             default => null,
         };
+    }
+
+    private function displayDecimal(mixed $value): string
+    {
+        $normalized = rtrim(rtrim((string) $value, '0'), '.');
+
+        return $normalized === '' ? '0' : $normalized;
     }
 
     private function validatedDifficulty(mixed $difficulty): string

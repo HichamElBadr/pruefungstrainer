@@ -68,7 +68,7 @@
 
     <section class="exercise-card">
         <div class="exercise-card-body">
-            <form method="POST" action="{{ route('sql-uebung') }}">
+            <form method="POST" action="{{ route('sql-uebung.execute', $exerciseId) }}">
                 @csrf
 
                 <label for="sql_input" class="font-heading block text-base font-semibold text-slate-950">Deine SQL-Abfrage</label>
@@ -81,6 +81,19 @@
                 >{{ $userSql ?? '' }}</textarea>
                 <x-input-error :messages="$errors->get('sql_input')" class="mt-2" />
 
+                @if(isset($result) && !$result['success'])
+                    <div class="exercise-alert exercise-alert-error mt-4">
+                        <p class="font-heading font-semibold">SQL-Fehler</p>
+                        <p class="mt-2">{{ $result['message'] }}</p>
+
+                        <p class="mt-4 text-sm font-semibold">Originale Datenbankmeldung:</p>
+                        <pre class="exercise-code mt-2 overflow-x-auto whitespace-pre-wrap"><code>{{ $result['technical_message'] }}</code></pre>
+
+                        <p class="mt-4 text-sm font-semibold">Hinweis:</p>
+                        <p class="mt-1">{{ $result['hint'] }}</p>
+                    </div>
+                @endif
+
                 <div class="mt-4 flex flex-wrap items-center gap-3">
                     <button type="submit" class="exercise-button">Ausführen</button>
                     <p class="text-sm text-slate-500">Erlaubt sind sichere SELECT-Abfragen.</p>
@@ -89,7 +102,7 @@
         </div>
     </section>
 
-    @if(isset($result))
+    @if(isset($result) && $result['success'])
         <section class="exercise-card">
             <div class="exercise-card-body">
                 <h2 class="font-heading text-xl font-semibold text-slate-950">Ergebnis</h2>
@@ -99,18 +112,17 @@
                         <h3 class="mb-3 font-heading text-base font-semibold text-slate-900">Deine Ausgabe</h3>
                         @include('it.sql-exercise.partials.query-result-table', [
                             'queryResult' => $result,
-                            'errorHint' => 'Prüfe Syntax, Tabellen- und Spaltennamen und versuche es erneut.',
                         ])
                     </div>
 
-                    @isset($solutionResult)
+                    @if(isset($solutionResult) && $solutionResult['success'])
                         <div>
                             <h3 class="mb-3 font-heading text-base font-semibold text-slate-900">Erwartete Ausgabe</h3>
                             @include('it.sql-exercise.partials.query-result-table', [
                                 'queryResult' => $solutionResult,
                             ])
                         </div>
-                    @endisset
+                    @endif
                 </div>
             </div>
         </section>

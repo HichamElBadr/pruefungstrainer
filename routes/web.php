@@ -20,13 +20,14 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 
-
 Route::middleware(['auth', 'verified'])->prefix('it')->group(function () {
     Route::get('sql-uebung', [SqlExerciseController::class, 'index'])
         ->name('sql-uebung');
     Route::post('sql-uebung/{difficulty}', [SqlExerciseController::class, 'generate'])
         ->name('sql-uebung.generate');
-    Route::post('sql-uebung', [SqlExerciseController::class, 'executeUserQuery']);
+    Route::post('sql-uebung/{exercise}/execute', [SqlExerciseController::class, 'executeUserQuery'])
+        ->whereNumber('exercise')
+        ->name('sql-uebung.execute');
 
     Route::get('calculation-exercises', [CalculationExerciseController::class, 'overview'])
         ->name('calculation-exercises.index');
@@ -40,5 +41,4 @@ Route::middleware(['auth', 'verified'])->prefix('it')->group(function () {
 
 Route::prefix('wiso')->group(function () {});
 
-
-require __DIR__ . '/auth.php';
+require __DIR__.'/auth.php';
