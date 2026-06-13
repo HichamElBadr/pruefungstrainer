@@ -1,345 +1,136 @@
-# Prüfungstrainer
+# Pruefungstrainer
 
-**Prüfungstrainer** is a modular, locally hosted AI-powered learning platform for technical education and IT exam preparation.
+Pruefungstrainer is a Laravel-based learning application for IT exam preparation.
+Exercises are loaded from version-controlled JSON files so normal operation is
+fast, deterministic, and self-contained.
 
-The platform combines a Laravel web application with a dedicated Python-based AI Gateway to generate structured learning tasks, execute selected exercises in the browser, and provide model-generated reference solutions for self-assessment.
+## Features
 
-The project focuses on privacy, reproducibility, maintainability, and extensibility.
+- SQL exercises with isolated temporary MySQL databases
+- Safe learner execution restricted to single `SELECT` queries
+- UML exercises with PlantUML rendering
+- Calculation exercises with automatic numeric result checking
+- Easy, medium, and hard difficulty levels
+- Random local exercise selection through a shared provider abstraction
+- Defensive JSON validation with user-facing source errors
 
----
+## Exercise Architecture
 
-## Overview
+Laravel resolves `App\Contracts\ExerciseProvider` to
+`App\Services\Exercises\JsonExerciseProvider`.
 
-Prüfungstrainer helps learners prepare for technical and IT-related exams by generating practice tasks for different exercise types, such as SQL, UML, and calculation tasks.
+The configured source is:
 
-Unlike static worksheets or fixed question banks, the system can generate new task variations dynamically through a locally running language model. The generated output is normalized and validated before it is used by the Laravel application.
+```env
+EXERCISE_SOURCE=json
+```
 
-The first version of the project was developed as a functional prototype for IT education and exam preparation.
-
----
-
-## Core Goals
-
-* Provide a browser-based learning environment for IT-related practice tasks
-* Generate realistic and structured exercises using a local AI model
-* Keep all AI processing local through Ollama
-* Validate AI output before using it in the application
-* Separate web application logic from AI orchestration
-* Support future extension with additional task types and models
-
----
-
-## Key Features
-
-* AI-generated exercises for technical education
-* SQL practice tasks with temporary exercise databases
-* In-browser SQL query execution
-* UML task support with PlantUML rendering
-* Calculation exercises for technical and business-related scenarios
-* Structured JSON-based AI responses
-* AI output validation and normalization
-* Local AI execution through Ollama
-* Laravel-based web interface
-* Python-based AI Gateway
-* Modular architecture for future task categories
-
----
-
-## Architecture
-
-The system is split into two main layers:
-
-### 1. Laravel Web Application
-
-The Laravel application is responsible for:
-
-* User interface
-* Routing and controllers
-* Exercise rendering
-* Database access
-* SQL exercise execution
-* Task category handling
-* Displaying tasks, user input, and reference solutions
-
-### 2. AI Gateway
-
-The AI Gateway is a separate Python service responsible for:
-
-* Prompt construction
-* Communication with local AI models
-* JSON validation
-* Response normalization
-* Schema enforcement
-* Future model routing
-* Future caching and benchmarking
-
-This separation keeps the Laravel application focused on web and business logic while the AI Gateway handles AI-specific concerns.
-
----
-
-## High-Level Data Flow
+Fixtures are stored by type and difficulty:
 
 ```text
-User
-  ↓
-Laravel Web Application
-  ↓
-AI Gateway
-  ↓
-Ollama / Local LLM
-  ↓
-AI Gateway validates and normalizes JSON
-  ↓
-Laravel stores and renders the task
-  ↓
-User solves the exercise in the browser
-  ↓
-Laravel displays result and reference solution
+resources/exercises/
+  sql/{easy,medium,hard}/*.json
+  uml/{easy,medium,hard}/*.json
+  calculation/{easy,medium,hard}/*.json
 ```
 
----
+Each JSON file may contain one exercise object or a list of exercise objects.
+The provider validates all files in the selected directory before choosing a
+random matching exercise.
 
-## Example AI Response
+SQL fixtures contain `setup_sql` and `solution`. The setup SQL is applied to the
+existing temporary exercise database, while learner input continues to use the
+restricted SQL execution path.
 
-The AI Gateway expects structured JSON responses. A normalized SQL exercise response can look like this:
+UML fixtures contain a task and `solution_plantuml`. Learner input is still
+rendered locally with Java and PlantUML.
 
-```json
-{
-  "task": "Write a SQL query that lists all customers with orders above 1000€.",
-  "mysqlstatement": "CREATE TABLE customers (...); INSERT INTO customers (...);",
-  "solution": "SELECT ... FROM customers JOIN orders ON ...;"
-}
-```
-
-The response is validated before being forwarded to the Laravel application.
-
----
-
-## Technology Stack
-
-### Web Application
-
-* Laravel
-* PHP 8.2+
-* MySQL
-* Blade
-* Composer
-* Vite
-
-### AI Gateway
-
-* Python
-* FastAPI
-* Ollama
-* Local language models
-* JSON schema validation
-
-### Diagram Rendering
-
-* PlantUML
-* Java Runtime Environment
-
-### Development Tools
-
-* Git
-* GitHub
-* Visual Studio Code
-* XAMPP or comparable local development environment
-
----
-
-## Repository Structure
-
-```text
-app/                Laravel application code
-routes/             Laravel route definitions
-database/           Migrations, seeders, and database structure
-resources/views/    Blade templates
-docs/               Project and technical documentation
-ai-gateway/         Python-based AI Gateway
-tests/              Automated tests
-```
-
----
-
-## Screenshots
-
-### Login Interface
-
-![Login interface](docs/image_login.png)
-
-### Dashboard
-
-![Dashboard](docs/image_dashboard.png)
-
-### SQL Practice Interface
-
-![SQL practice interface](docs/image_sqltask.png)
-
----
+Calculation fixtures contain `expected_result`, `unit`, `solution_steps`, and an
+explanation. Existing topic selection and numeric checking remain in Laravel.
 
 ## Requirements
 
-The project requires the following components:
-
-* PHP 8.2 or higher
-* Composer
-* Node.js and npm
-* MySQL
-* Python 3.10 or higher
-* Ollama
-* Java Runtime Environment
-* PlantUML
-
----
+- PHP 8.2 or newer
+- Composer
+- Node.js and npm
+- MySQL or MariaDB
+- Java Runtime Environment and a PlantUML JAR for UML rendering
+- XAMPP or a comparable local PHP/MySQL environment
 
 ## Installation
-
-Detailed installation steps should be documented in:
-
-```text
-docs/INSTALLATION.md
-```
-
-A typical local setup requires two running services:
-
-1. Laravel web application
-2. Python AI Gateway
-
-Ollama must also be running locally and must provide the configured model.
-
----
-
-## Local Development
-
-### Start the Laravel application
 
 ```bash
 composer install
 npm install
+copy .env.example .env
+php artisan key:generate
 php artisan migrate
-npm run dev
+npm run build
+```
+
+Configure the main application database and the isolated SQL exercise accounts
+in `.env`. The default exercise source should remain:
+
+```env
+EXERCISE_SOURCE=json
+```
+
+PlantUML paths are environment-specific:
+
+```env
+PLANTUML_JAVA_PATH=java
+PLANTUML_JAR_PATH=C:\path\to\plantuml.jar
+```
+
+Do not commit local credentials or machine-specific paths.
+
+## Local Development
+
+Start Laravel:
+
+```bash
 php artisan serve
 ```
 
-### Start the AI Gateway
+Start Vite in a second terminal when working on frontend assets:
 
 ```bash
-cd ai-gateway
-python -m venv .venv
-.venv\Scripts\activate
-pip install -r requirements.txt
-uvicorn app.main:app --reload --port 8001
+npm run dev
 ```
 
-### Start Ollama
+No separate exercise generation service needs to be started.
+
+## Testing
 
 ```bash
-ollama serve
+php artisan test
 ```
 
-Pull the required model if it is not installed yet:
+The test suite verifies fixture coverage, JSON validation errors, SQL fixture
+execution, controller flows, PlantUML integration, and that normal exercise
+loading sends no HTTP requests.
 
-```bash
-ollama pull mistral:7b
+## Security Notes
+
+- Learner SQL is treated as untrusted input.
+- Only one `SELECT` statement is accepted per submission.
+- SQL exercises use temporary databases separate from the application database.
+- JSON fixtures are validated before use.
+- PlantUML paths are configured through environment variables.
+- Raw internal database errors should not be exposed to learners.
+
+## Repository Structure
+
+```text
+app/Contracts/             Exercise provider contract
+app/Services/Exercises/    JSON exercise provider
+resources/exercises/       Local exercise collections
+resources/views/           Blade templates
+database/                  Migrations and seeders
+tests/                     Unit and feature tests
+docs/                      Project progress documentation
 ```
-
----
-
-## Environment Configuration
-
-Configuration values should be stored in the Laravel `.env` file and the AI Gateway environment configuration.
-
-Example values:
-
-```env
-OLLAMA_MODEL=mistral:7b
-AI_GATEWAY_URL=http://127.0.0.1:8001
-```
-
-Database credentials and other secrets must not be committed to the repository.
-
----
-
-## Security Considerations
-
-* AI execution is fully local through Ollama
-* No external AI API is required
-* Generated SQL tasks are executed in isolated temporary databases
-* User-submitted SQL should be restricted to safe query types
-* AI responses are validated before further processing
-* Sensitive configuration is stored in environment files
-* Temporary databases should be cleaned up automatically
-* Error messages should be user-friendly and avoid exposing internal details
-
----
-
-## Current Limitations
-
-* The current version is a functional prototype
-* Automated grading for open-ended UML or text-based tasks is not implemented
-* UML solutions are mainly compared through reference output
-* Advanced role and permission management is not part of the first version
-* Mobile optimization is not the main focus
-* AI output quality depends on the configured local model and prompt design
-
----
-
-## Extensibility
-
-The platform is designed to support future extensions, including:
-
-* Additional exercise categories
-* Difficulty-based task generation
-* Fixture-based tasks
-* Model routing
-* Prompt versioning
-* AI response caching
-* Multi-model benchmarking
-* Learning progress tracking
-* RAG-based context integration
-* Docker-based deployment
-* Role-based permission system
-* Integration with learning platforms such as Moodle
-
----
-
-## Roadmap
-
-* Add difficulty levels for exercises
-* Improve prompt templates for SQL, UML, and calculation tasks
-* Add more predefined fixture tasks
-* Implement structured prompt versioning
-* Add automated tests for the AI Gateway
-* Add Docker support
-* Improve SQL sandbox security
-* Add model routing for different task types
-* Add response caching
-* Improve monitoring and logging
-* Extend the system with additional IT-related exercise types
-
----
-
-## Contribution Guidelines
-
-* Use feature branches
-* Keep pull requests focused and reviewable
-* Do not commit secrets or local environment files
-* Document new modules and services
-* Keep AI responses schema-compliant
-* Add or update tests when changing core logic
-* Prefer small, maintainable changes over large unstructured commits
-
----
 
 ## License
 
 This project is licensed under the GNU General Public License v3.0.
-
-See the `LICENSE` file for details.
-
----
-
-## Author
-
-Hicham El Badr

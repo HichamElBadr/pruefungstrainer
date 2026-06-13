@@ -8,7 +8,17 @@
         @if(!empty($sourceLabel))
             <span class="exercise-badge">{{ $sourceLabel }}</span>
         @endif
+        @if(!empty($difficultyLabel))
+            <span class="exercise-badge">Schwierigkeit: {{ $difficultyLabel }}</span>
+        @endif
     </x-slot>
+
+    @if($errors->has('exercise_source'))
+        <div class="exercise-alert exercise-alert-error">
+            <p class="font-heading font-semibold">Aufgabe konnte nicht geladen werden</p>
+            <p class="mt-1">{{ $errors->first('exercise_source') }}</p>
+        </div>
+    @endif
 
     @php
         $topicDescriptions = [
@@ -131,10 +141,22 @@
                 <p class="mt-2 text-sm text-slate-600">Wähle ein Thema, um eine neue Rechenaufgabe zu starten.</p>
             </div>
 
+            <div class="mt-5 flex flex-wrap gap-2">
+                @foreach($difficulties as $difficulty)
+                    <a
+                        href="{{ route('calculation-exercises.index', ['difficulty' => $difficulty['value']]) }}"
+                        class="{{ $selectedDifficulty === $difficulty['value'] ? 'exercise-button' : 'exercise-button-secondary' }}"
+                    >
+                        {{ $difficulty['label'] }}
+                    </a>
+                @endforeach
+            </div>
+
             <div class="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
                 @foreach($topics as $topic)
                     <form method="POST" action="{{ route('calculation-exercises.generate', $topic['slug']) }}">
                         @csrf
+                        <input type="hidden" name="difficulty" value="{{ $selectedDifficulty }}">
                         <button
                             type="submit"
                             class="group flex min-h-40 w-full flex-col justify-between rounded-lg border border-slate-200 bg-white p-4 text-left shadow-sm transition hover:border-slate-400 hover:bg-slate-50 hover:shadow focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2"

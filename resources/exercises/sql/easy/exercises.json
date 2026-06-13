@@ -1,0 +1,38 @@
+[
+  {
+    "id": "sql-easy-001",
+    "type": "sql",
+    "difficulty": "easy",
+    "topic": "select-where",
+    "title": "Produkte unter 100 Euro",
+    "task": "Gib den Namen und den Preis aller Produkte unter 100 Euro aus. Sortiere das Ergebnis nach dem Preis aufsteigend.",
+    "setup_sql": "CREATE TABLE products (id INT PRIMARY KEY, name VARCHAR(80), price DECIMAL(10,2), stock INT);\nINSERT INTO products VALUES (1, 'Tastatur', 49.90, 24), (2, 'Monitor', 189.00, 8), (3, 'Maus', 24.50, 35), (4, 'Dockingstation', 129.00, 12);",
+    "solution": "SELECT name, price FROM products WHERE price < 100 ORDER BY price ASC;",
+    "explanation": "WHERE begrenzt die Ergebnismenge auf Produkte unter 100 Euro. ORDER BY sortiert die Treffer aufsteigend.",
+    "tags": ["SQL", "SELECT", "WHERE", "ORDER BY", "AP2"]
+  },
+  {
+    "id": "sql-easy-002",
+    "type": "sql",
+    "difficulty": "easy",
+    "topic": "select-filter",
+    "title": "Offene Support-Tickets",
+    "task": "Gib Betreff und Prioritaet aller offenen Tickets aus. Sortiere die Tickets alphabetisch nach dem Betreff.",
+    "setup_sql": "CREATE TABLE tickets (id INT PRIMARY KEY, subject VARCHAR(100), status VARCHAR(30), priority VARCHAR(30));\nINSERT INTO tickets VALUES (1, 'Drucker offline', 'offen', 'hoch'), (2, 'Monitor bestellen', 'geschlossen', 'mittel'), (3, 'Passwort vergessen', 'offen', 'niedrig'), (4, 'VPN stoert', 'offen', 'hoch');",
+    "solution": "SELECT subject, priority FROM tickets WHERE status = 'offen' ORDER BY subject ASC;",
+    "explanation": "Die WHERE-Bedingung waehlt nur offene Tickets aus. Die Sortierung erfolgt ueber die Spalte subject.",
+    "tags": ["SQL", "SELECT", "WHERE", "Support", "AP2"]
+  },
+  {
+    "id": "sql-easy-003",
+    "type": "sql",
+    "difficulty": "easy",
+    "topic": "select-and",
+    "title": "Verfuegbare Notebooks",
+    "task": "Gib Hersteller, Modell und Preis aller Notebooks aus, die verfuegbar sind und hoechstens 900 Euro kosten.",
+    "setup_sql": "CREATE TABLE notebooks (id INT PRIMARY KEY, manufacturer VARCHAR(60), model VARCHAR(80), price DECIMAL(10,2), available VARCHAR(10));\nINSERT INTO notebooks VALUES (1, 'Auron', 'Work 14', 849.00, 'ja'), (2, 'Bex', 'Pro 15', 1099.00, 'ja'), (3, 'Auron', 'Lite 13', 699.00, 'nein'), (4, 'Cora', 'Office 15', 899.00, 'ja');",
+    "solution": "SELECT manufacturer, model, price FROM notebooks WHERE available = 'ja' AND price <= 900;",
+    "explanation": "Mit AND muessen beide Bedingungen gleichzeitig erfuellt sein: verfuegbar und maximal 900 Euro teuer.",
+    "tags": ["SQL", "SELECT", "WHERE", "AND", "AP2"]
+  }
+]

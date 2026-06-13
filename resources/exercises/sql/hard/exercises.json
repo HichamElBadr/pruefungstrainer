@@ -1,0 +1,38 @@
+[
+  {
+    "id": "sql-hard-001",
+    "type": "sql",
+    "difficulty": "hard",
+    "topic": "having-subquery",
+    "title": "Kunden ueber dem Umsatzdurchschnitt",
+    "task": "Gib Kunden aus, deren Bestellsumme ueber der durchschnittlichen Bestellsumme pro Kunde liegt. Zeige Name und Bestellsumme absteigend sortiert.",
+    "setup_sql": "CREATE TABLE customers (id INT PRIMARY KEY, name VARCHAR(80));\nINSERT INTO customers VALUES (1, 'Julia Fischer'), (2, 'Marco Neumann'), (3, 'Sofia Wagner'), (4, 'David Klein');\nCREATE TABLE orders (id INT PRIMARY KEY, customer_id INT, amount DECIMAL(10,2));\nINSERT INTO orders VALUES (1, 1, 300.00), (2, 1, 250.00), (3, 2, 120.00), (4, 3, 480.00), (5, 4, 90.00);",
+    "solution": "SELECT c.name, SUM(o.amount) AS order_total FROM customers c JOIN orders o ON o.customer_id = c.id GROUP BY c.id, c.name HAVING SUM(o.amount) > (SELECT AVG(customer_total) FROM (SELECT SUM(amount) AS customer_total FROM orders GROUP BY customer_id) totals) ORDER BY order_total DESC;",
+    "explanation": "Die innere Abfrage berechnet jede Kundensumme. Die aeussere Unterabfrage bildet daraus den Durchschnitt, den HAVING mit jeder gruppierten Summe vergleicht.",
+    "tags": ["SQL", "HAVING", "Subquery", "SUM", "AP2"]
+  },
+  {
+    "id": "sql-hard-002",
+    "type": "sql",
+    "difficulty": "hard",
+    "topic": "multiple-joins-having",
+    "title": "Aufwendige Projekte",
+    "task": "Gib Projekte mit mehr als 30 erfassten Stunden aus. Zeige Projektname, Anzahl unterschiedlicher Mitarbeiter und Gesamtstunden.",
+    "setup_sql": "CREATE TABLE projects (id INT PRIMARY KEY, name VARCHAR(80));\nINSERT INTO projects VALUES (1, 'Intranet Relaunch'), (2, 'Backup Konzept'), (3, 'Ticketportal');\nCREATE TABLE employees (id INT PRIMARY KEY, name VARCHAR(80));\nINSERT INTO employees VALUES (1, 'Nora Seidel'), (2, 'Felix Hartmann'), (3, 'Ibrahim Kaya');\nCREATE TABLE time_entries (id INT PRIMARY KEY, project_id INT, employee_id INT, hours DECIMAL(6,2));\nINSERT INTO time_entries VALUES (1, 1, 1, 18.00), (2, 1, 2, 20.00), (3, 2, 2, 12.00), (4, 3, 1, 25.00), (5, 3, 2, 16.00), (6, 3, 3, 10.00);",
+    "solution": "SELECT p.name AS project, COUNT(DISTINCT e.id) AS employee_count, SUM(t.hours) AS total_hours FROM projects p JOIN time_entries t ON t.project_id = p.id JOIN employees e ON e.id = t.employee_id GROUP BY p.id, p.name HAVING SUM(t.hours) > 30 ORDER BY total_hours DESC;",
+    "explanation": "Zwei JOINs verbinden Projekte, Zeiten und Mitarbeiter. HAVING filtert erst nach der Gruppierung auf Projekte mit mehr als 30 Stunden.",
+    "tags": ["SQL", "Multiple JOIN", "HAVING", "DISTINCT", "AP2"]
+  },
+  {
+    "id": "sql-hard-003",
+    "type": "sql",
+    "difficulty": "hard",
+    "topic": "not-exists",
+    "title": "Artikel ohne Verkauf",
+    "task": "Gib alle Artikel aus, die noch nie verkauft wurden. Zeige Artikelnummer und Name und sortiere nach der Artikelnummer.",
+    "setup_sql": "CREATE TABLE products (id INT PRIMARY KEY, sku VARCHAR(20), name VARCHAR(80));\nINSERT INTO products VALUES (1, 'P-100', 'Router'), (2, 'P-200', 'Switch'), (3, 'P-300', 'Patchpanel'), (4, 'P-400', 'Access Point');\nCREATE TABLE sales (id INT PRIMARY KEY, product_id INT, quantity INT);\nINSERT INTO sales VALUES (1, 1, 3), (2, 2, 5), (3, 1, 2);",
+    "solution": "SELECT p.sku, p.name FROM products p WHERE NOT EXISTS (SELECT 1 FROM sales s WHERE s.product_id = p.id) ORDER BY p.sku ASC;",
+    "explanation": "NOT EXISTS prueft fuer jeden Artikel, ob keine passende Verkaufszeile vorhanden ist.",
+    "tags": ["SQL", "NOT EXISTS", "Subquery", "AP2"]
+  }
+]

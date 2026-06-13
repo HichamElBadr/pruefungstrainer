@@ -2,9 +2,9 @@
 
 ## Project Overview
 
-This project is a Laravel-based web application for an AI-supported exam trainer for IT-related training and study contexts.
+This project is a Laravel-based web application for an exam trainer for IT-related training and study contexts.
 
-The application provides browser-based exercises such as SQL exercises, UML exercises and calculation-style tasks. Exercises and sample solutions are generated through a locally running AI service.
+The application provides browser-based SQL, UML and calculation exercises. Exercises and sample solutions are loaded from validated, version-controlled JSON fixtures.
 
 The project is intended as a maintainable prototype and foundation for future extensions.
 
@@ -14,7 +14,7 @@ The project is intended as a maintainable prototype and foundation for future ex
 - PHP
 - Blade templates
 - MySQL
-- Local AI gateway / Ollama integration
+- Local JSON exercise fixtures
 - PlantUML for UML diagram generation
 - Git and GitHub for version control
 - XAMPP/local development environment on Windows
@@ -27,8 +27,8 @@ The project is intended as a maintainable prototype and foundation for future ex
 - Do not change the architecture without explaining why.
 - Preserve existing behavior unless the task explicitly asks for a behavior change.
 - Prefer small, focused changes over large refactorings.
-- Do not use external AI APIs.
-- Keep AI processing local unless explicitly requested otherwise.
+- Do not add live exercise generation or external AI APIs unless explicitly requested.
+- Keep the normal exercise flow independent from external or local generation services.
 - Do not add complex role or permission systems unless explicitly requested.
 - Do not add mobile optimization or full redesigns unless explicitly requested.
 - Do not introduce unnecessary frontend frameworks.
@@ -46,16 +46,18 @@ The project is intended as a maintainable prototype and foundation for future ex
 - Do not use `dd()`, `dump()` or temporary debug output in final code.
 - Handle errors with user-friendly messages where possible.
 
-## AI Gateway and Ollama Rules
+## JSON Exercise Source Rules
 
-- The Laravel application may call a local AI gateway or local Ollama service.
-- Keep AI-related HTTP calls encapsulated in service classes.
-- Use clear timeouts and error handling for AI requests.
-- Validate and sanitize AI responses before using them.
-- If the AI returns JSON, parse it defensively and handle invalid JSON gracefully.
-- Do not assume that AI output is always valid, safe or complete.
-- Keep prompts explicit and structured.
-- Prefer English developer/system prompts while keeping user-facing exercise text in German when appropriate.
+- Use `App\Contracts\ExerciseProvider` for exercise loading.
+- Keep JSON source logic encapsulated in `App\Services\Exercises\JsonExerciseProvider`.
+- Store fixtures under `resources/exercises/{type}/{difficulty}/*.json`.
+- Supported exercise types are `sql`, `uml` and `calculation`.
+- Supported difficulties are `easy`, `medium` and `hard`.
+- Validate JSON syntax, required fields, exercise type and difficulty before use.
+- Provide understandable errors for missing directories, empty directories, invalid JSON and missing fields.
+- Do not add live generation as an automatic fallback.
+- Keep user-facing exercise text in German where appropriate.
+- Add or update fixture coverage tests when changing exercise schemas or collections.
 
 ## SQL Exercise Rules
 
@@ -66,6 +68,7 @@ The project is intended as a maintainable prototype and foundation for future ex
 - Return understandable error messages for invalid SQL.
 - Do not expose raw database errors unnecessarily to users.
 - Keep temporary exercise databases clearly separated from the main application database.
+- SQL fixtures must provide valid `setup_sql` and one safe solution query.
 
 ## PlantUML Rules
 
@@ -103,29 +106,29 @@ Skip progress entries for:
 ### Example Progress Entry
 
 ```md
-## 2026-05-18 – Improve AI gateway error handling
+## 2026-05-18 - Improve JSON exercise validation
 
 ### Summary
 
-Improved handling for unavailable AI gateway responses.
+Improved validation and error handling for local JSON exercises.
 
 ### Changed Files
 
-- `app/Services/AiGatewayService.php`
-- `app/Http/Controllers/SqlExerciseController.php`
-- `resources/views/sql/index.blade.php`
+- `app/Services/Exercises/JsonExerciseProvider.php`
+- `resources/exercises/sql/easy/exercises.json`
+- `tests/Unit/JsonExerciseProviderTest.php`
 
 ### Behavior Changes
 
-- Users now see a clear error message if the AI gateway is unavailable.
-- Raw cURL exceptions are no longer shown in the browser.
+- Invalid JSON fixtures now produce a clear source error.
+- Missing required SQL fields are rejected before database setup.
 
 ### Testing
 
-- Manual test with gateway running: passed.
-- Manual test with gateway stopped: passed.
-- `php artisan test`: not run.
+- `php artisan test --filter=JsonExerciseProviderTest`: passed.
+- `php artisan test`: passed.
 
 ### Follow-up Notes
 
-- A future improvement could add a health check endpoint for the AI gateway.
+- None.
+```

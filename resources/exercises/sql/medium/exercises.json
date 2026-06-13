@@ -1,0 +1,38 @@
+[
+  {
+    "id": "sql-medium-001",
+    "type": "sql",
+    "difficulty": "medium",
+    "topic": "join-sum",
+    "title": "Bestellsumme je Kunde",
+    "task": "Gib fuer jeden Kunden den Namen und die Summe seiner Bestellungen aus. Sortiere nach der Bestellsumme absteigend.",
+    "setup_sql": "CREATE TABLE customers (id INT PRIMARY KEY, name VARCHAR(80));\nINSERT INTO customers VALUES (1, 'Anna Meyer'), (2, 'Ben Schulz'), (3, 'Clara Fischer');\nCREATE TABLE orders (id INT PRIMARY KEY, customer_id INT, amount DECIMAL(10,2));\nINSERT INTO orders VALUES (1, 1, 250.00), (2, 1, 80.00), (3, 2, 120.00), (4, 3, 450.00), (5, 3, 50.00);",
+    "solution": "SELECT c.name, SUM(o.amount) AS order_total FROM customers c JOIN orders o ON o.customer_id = c.id GROUP BY c.id, c.name ORDER BY order_total DESC;",
+    "explanation": "JOIN verbindet Kunden und Bestellungen. SUM bildet die Bestellsumme je Kunde, GROUP BY erzeugt eine Ergebniszeile pro Kunde.",
+    "tags": ["SQL", "JOIN", "SUM", "GROUP BY", "AP2"]
+  },
+  {
+    "id": "sql-medium-002",
+    "type": "sql",
+    "difficulty": "medium",
+    "topic": "join-count",
+    "title": "Teilnahmen je Kurs",
+    "task": "Gib fuer jeden Kurs den Titel und die Anzahl seiner Teilnahmen aus. Sortiere nach der Anzahl absteigend.",
+    "setup_sql": "CREATE TABLE courses (id INT PRIMARY KEY, title VARCHAR(100));\nINSERT INTO courses VALUES (1, 'SQL Grundlagen'), (2, 'Netzwerktechnik'), (3, 'IT-Sicherheit');\nCREATE TABLE enrollments (id INT PRIMARY KEY, course_id INT, participant VARCHAR(80));\nINSERT INTO enrollments VALUES (1, 1, 'Lena Hoffmann'), (2, 1, 'Tim Bauer'), (3, 2, 'Sara Klein'), (4, 3, 'Noah Wolf'), (5, 3, 'Mira Vogt'), (6, 3, 'Ali Demir');",
+    "solution": "SELECT c.title, COUNT(e.id) AS enrollment_count FROM courses c JOIN enrollments e ON e.course_id = c.id GROUP BY c.id, c.title ORDER BY enrollment_count DESC;",
+    "explanation": "COUNT zaehlt die verknuepften Teilnahmen. GROUP BY fasst alle Teilnahmen desselben Kurses zusammen.",
+    "tags": ["SQL", "JOIN", "COUNT", "GROUP BY", "AP2"]
+  },
+  {
+    "id": "sql-medium-003",
+    "type": "sql",
+    "difficulty": "medium",
+    "topic": "join-average",
+    "title": "Durchschnittsgehalt je Abteilung",
+    "task": "Gib den Abteilungsnamen und das durchschnittliche Gehalt aus. Sortiere nach dem Durchschnittsgehalt absteigend.",
+    "setup_sql": "CREATE TABLE departments (id INT PRIMARY KEY, name VARCHAR(80));\nINSERT INTO departments VALUES (1, 'Entwicklung'), (2, 'Support'), (3, 'Vertrieb');\nCREATE TABLE employees (id INT PRIMARY KEY, department_id INT, name VARCHAR(80), salary DECIMAL(10,2));\nINSERT INTO employees VALUES (1, 1, 'Eva Lang', 4200.00), (2, 1, 'Tom Becker', 3900.00), (3, 2, 'Nina Kraus', 3400.00), (4, 2, 'Paul Vogel', 3200.00), (5, 3, 'Rosa Brandt', 3600.00);",
+    "solution": "SELECT d.name AS department, AVG(e.salary) AS average_salary FROM departments d JOIN employees e ON e.department_id = d.id GROUP BY d.id, d.name ORDER BY average_salary DESC;",
+    "explanation": "AVG berechnet das mittlere Gehalt der Mitarbeiter jeder Abteilung. Der JOIN liefert den lesbaren Abteilungsnamen.",
+    "tags": ["SQL", "JOIN", "AVG", "GROUP BY", "AP2"]
+  }
+]

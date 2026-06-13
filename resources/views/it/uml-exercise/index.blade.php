@@ -4,22 +4,50 @@
 >
     <x-slot name="badges">
         <span class="exercise-badge">UML</span>
+        @if(!empty($sourceLabel))
+            <span class="exercise-badge">{{ $sourceLabel }}</span>
+        @endif
+        @if(!empty($difficultyLabel))
+            <span class="exercise-badge">Schwierigkeit: {{ $difficultyLabel }}</span>
+        @endif
         <span class="exercise-badge">Übungsaufgabe</span>
     </x-slot>
 
     @if(!empty($error))
         <div class="exercise-alert exercise-alert-error">
-            <p class="font-heading font-semibold">Rendering fehlgeschlagen</p>
+            <p class="font-heading font-semibold">Aufgabe konnte nicht verarbeitet werden</p>
             <p class="mt-1">{{ $error }}</p>
         </div>
     @endif
 
     <section class="exercise-card">
         <div class="exercise-card-body">
-            <h2 class="font-heading text-xl font-semibold text-slate-950">UML-Eingabe</h2>
+            <h2 class="font-heading text-xl font-semibold text-slate-950">
+                {{ $exercise['title'] ?? 'UML-Aufgabe' }}
+            </h2>
+
+            @if(!empty($exercise['task']))
+                <div class="exercise-muted-panel mt-4 whitespace-pre-line leading-7">
+                    {{ $exercise['task'] }}
+                </div>
+            @endif
+
+            <div class="mt-5 flex flex-wrap gap-2">
+                @foreach($difficulties as $difficulty)
+                    <a
+                        href="{{ route('uml.form', ['difficulty' => $difficulty['value']]) }}"
+                        class="{{ $selectedDifficulty === $difficulty['value'] ? 'exercise-button' : 'exercise-button-secondary' }}"
+                    >
+                        {{ $difficulty['label'] }}
+                    </a>
+                @endforeach
+            </div>
+
+            <h3 class="mt-7 font-heading text-lg font-semibold text-slate-950">UML-Eingabe</h3>
 
             <form action="{{ route('uml.render') }}" method="POST" class="mt-4 space-y-4">
                 @csrf
+                <input type="hidden" name="difficulty" value="{{ $selectedDifficulty }}">
 
                 <div>
                     <label for="uml_text" class="font-heading block text-sm font-semibold text-slate-800">Vereinfachter UML-Text</label>
@@ -45,6 +73,22 @@
                 <div class="mt-4 overflow-x-auto rounded-lg border border-slate-200 bg-slate-50 p-4">
                     <img src="{{ $imageDataUrl }}" alt="UML-Diagramm" class="max-w-full rounded-md border border-slate-200 bg-white">
                 </div>
+            </div>
+        </section>
+    @endif
+
+    @if(!empty($exercise['solution_plantuml']))
+        <section class="exercise-card">
+            <div class="exercise-card-body">
+                <details>
+                    <summary class="cursor-pointer font-heading text-base font-semibold text-slate-950">Musterloesung anzeigen</summary>
+                    <pre class="exercise-code mt-4 overflow-x-auto"><code>{{ $exercise['solution_plantuml'] }}</code></pre>
+                    @if(!empty($exercise['explanation']))
+                        <div class="exercise-muted-panel mt-4 whitespace-pre-line leading-7">
+                            {{ $exercise['explanation'] }}
+                        </div>
+                    @endif
+                </details>
             </div>
         </section>
     @endif

@@ -7,6 +7,13 @@
         <span class="exercise-badge">Übungsaufgabe</span>
     </x-slot>
 
+    @if($errors->has('exercise_source'))
+        <div class="exercise-alert exercise-alert-error">
+            <p class="font-heading font-semibold">Aufgabe konnte nicht geladen werden</p>
+            <p class="mt-1">{{ $errors->first('exercise_source') }}</p>
+        </div>
+    @endif
+
     @php
         $difficultyDescriptions = [
             'easy' => 'Grundlagen mit SELECT, WHERE und ORDER BY.',

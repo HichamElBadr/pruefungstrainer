@@ -2,76 +2,86 @@
 
 namespace App\Http\Controllers;
 
+use App\Contracts\ExerciseProvider;
+use App\Exceptions\ExerciseSourceException;
 use App\Models\Category;
 use App\Models\Exercise;
-use App\Services\AI\AiResponseProvider;
 use App\Services\CalculationExerciseTopicCatalog;
 use App\Services\SolutionEvaluator;
 use Illuminate\Http\Request;
-use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Log;
 
 class CalculationExerciseController extends Controller
 {
+    private const DIFFICULTIES = [
+        'easy' => 'Einfach',
+        'medium' => 'Mittel',
+        'hard' => 'Schwer',
+    ];
+
     public function __construct(
         private readonly CalculationExerciseTopicCatalog $topics,
         private readonly SolutionEvaluator $solutionEvaluator,
+        private readonly ExerciseProvider $exerciseProvider,
     ) {}
 
-    public function overview()
+    public function overview(Request $request)
     {
-        return view('it.calculation-exercises.index', [
-            'topics' => $this->topics->all(),
-        ]);
+        $difficulty = $this->validatedDifficulty($request->query('difficulty', 'medium'));
+
+        return view('it.calculation-exercises.index', $this->baseViewData($difficulty));
     }
 
-    public function generate(string $topic, AiResponseProvider $ai)
+    public function generate(Request $request, string $topic)
     {
         $selectedTopic = $this->topics->find($topic);
-
         abort_if(! $selectedTopic, 404, 'Unbekanntes Rechenthema.');
 
-        $payload = [
-            'request_id' => (string) Str::uuid(),
-            'difficulty' => request()->get('difficulty', 'medium'),
-            'language' => 'de',
-            'topic_slug' => $selectedTopic['slug'],
-            'topic' => $selectedTopic['label'],
-            'extra_context' => 'Erzeuge genau eine Rechenaufgabe zum angegebenen Thema. Aufgabe, erwartetes Ergebnis und Musterlösung müssen zum Thema passen.',
-        ];
+        $difficulty = $this->validatedDifficulty($request->input('difficulty', 'medium'));
 
-        $data = $ai->getCalculation($payload, 'calculation');
-        $title = (string) $data['title'];
-        $task = (string) $data['task'];
-        $expectedResult = (string) $data['expected_result'];
-        $expectedUnit = (string) $data['expected_unit'];
-        $sampleSolution = (string) $data['sample_solution'];
-        $source = (string) ($data['source'] ?? 'generated');
+        try {
+            $data = $this->exerciseProvider->random('calculation', $difficulty, [
+                'topic' => $selectedTopic['slug'],
+            ]);
+        } catch (ExerciseSourceException $e) {
+            Log::warning('Calculation exercise fixture could not be loaded.', [
+                'topic' => $selectedTopic['slug'],
+                'difficulty' => $difficulty,
+                'error' => $e->getMessage(),
+            ]);
 
+            return redirect()
+                ->route('calculation-exercises.index', ['difficulty' => $difficulty])
+                ->withErrors(['exercise_source' => $e->getMessage()]);
+        }
+
+        $sampleSolution = trim($data['solution_steps']."\n\n".$data['explanation']);
         $category = Category::firstOrCreate(['name' => 'Calculation']);
-
         $exercise = Exercise::create([
             'user_id' => auth()->id(),
             'category_id' => $category->id,
-            'title' => $title,
-            'difficulty' => $payload['difficulty'],
-            'source' => $source,
-            'prompt' => json_encode($payload, JSON_UNESCAPED_UNICODE),
-            'generated_task' => $task,
-            'solution' => $expectedResult,
-            'expected_unit' => $expectedUnit,
+            'title' => $data['title'],
+            'difficulty' => $difficulty,
+            'source' => $data['source'],
+            'prompt' => json_encode($data, JSON_UNESCAPED_UNICODE),
+            'generated_task' => $data['task'],
+            'solution' => $data['expected_result'],
+            'expected_unit' => $data['unit'],
             'sample_solution' => $sampleSolution,
         ]);
 
         session(['calculation_exercise_id' => $exercise->id]);
 
-        return view('it.calculation-exercises.index', [
-            'topics' => $this->topics->all(),
-            'selectedTopic' => $selectedTopic,
-            'title' => $title,
-            'generated_task' => $task,
-            'expected_unit' => $expectedUnit,
-            'sourceLabel' => $this->sourceLabel($source),
-        ]);
+        return view('it.calculation-exercises.index', array_merge(
+            $this->baseViewData($difficulty),
+            [
+                'selectedTopic' => $selectedTopic,
+                'title' => $data['title'],
+                'generated_task' => $data['task'],
+                'expected_unit' => $data['unit'],
+                'sourceLabel' => $this->sourceLabel($data['source']),
+            ],
+        ));
     }
 
     public function check(Request $request)
@@ -81,23 +91,26 @@ class CalculationExerciseController extends Controller
         ]);
 
         $exercise = $this->currentExercise();
+        $difficulty = $exercise->difficulty ?? 'medium';
         $isCorrect = $this->solutionEvaluator->compareNumeric(
             $validated['user_solution'],
             $exercise->solution,
         );
 
-        return view('it.calculation-exercises.index', [
-            'topics' => $this->topics->all(),
-            'is_correct' => $isCorrect,
-            'title' => $exercise->title,
-            'solution' => $exercise->solution,
-            'expected_unit' => $exercise->expected_unit,
-            'sample_solution' => $exercise->sample_solution,
-            'user_solution' => $validated['user_solution'],
-            'generated_task' => $exercise->generated_task,
-            'selectedTopic' => $this->selectedTopicFromExercise($exercise),
-            'sourceLabel' => $this->sourceLabel($exercise->source),
-        ]);
+        return view('it.calculation-exercises.index', array_merge(
+            $this->baseViewData($difficulty),
+            [
+                'is_correct' => $isCorrect,
+                'title' => $exercise->title,
+                'solution' => $exercise->solution,
+                'expected_unit' => $exercise->expected_unit,
+                'sample_solution' => $exercise->sample_solution,
+                'user_solution' => $validated['user_solution'],
+                'generated_task' => $exercise->generated_task,
+                'selectedTopic' => $this->selectedTopicFromExercise($exercise),
+                'sourceLabel' => $this->sourceLabel($exercise->source),
+            ],
+        ));
     }
 
     private function currentExercise(): Exercise
@@ -121,7 +134,7 @@ class CalculationExerciseController extends Controller
         }
 
         foreach ($this->topics->all() as $topic) {
-            if ($topic['label'] === $payload['topic']) {
+            if ($topic['slug'] === $payload['topic'] || $topic['label'] === $payload['topic']) {
                 return $topic;
             }
         }
@@ -132,9 +145,32 @@ class CalculationExerciseController extends Controller
     private function sourceLabel(?string $source): ?string
     {
         return match ($source) {
-            'generated' => 'KI-generiert',
-            'fixture' => 'Beispielaufgabe',
+            'fixture', 'json' => 'Beispielaufgabe',
             default => null,
         };
+    }
+
+    private function validatedDifficulty(mixed $difficulty): string
+    {
+        $difficulty = (string) $difficulty;
+        abort_if(! array_key_exists($difficulty, self::DIFFICULTIES), 404, 'Unbekannter Schwierigkeitsgrad.');
+
+        return $difficulty;
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function baseViewData(string $difficulty): array
+    {
+        return [
+            'topics' => $this->topics->all(),
+            'difficulties' => collect(self::DIFFICULTIES)
+                ->map(fn (string $label, string $value): array => compact('value', 'label'))
+                ->values()
+                ->all(),
+            'selectedDifficulty' => $difficulty,
+            'difficultyLabel' => self::DIFFICULTIES[$difficulty],
+        ];
     }
 }

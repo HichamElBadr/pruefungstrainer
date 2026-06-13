@@ -121,6 +121,11 @@
             <details>
                 <summary class="cursor-pointer font-heading text-base font-semibold text-slate-950">Musterlösung (SQL) anzeigen</summary>
                 <pre class="exercise-code mt-4 overflow-x-auto"><code>{{ $solution }}</code></pre>
+                @if(!empty($explanation))
+                    <div class="exercise-muted-panel mt-4 whitespace-pre-line leading-7">
+                        {{ $explanation }}
+                    </div>
+                @endif
             </details>
         </div>
     </section>

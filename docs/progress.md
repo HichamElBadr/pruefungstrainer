@@ -1,5 +1,106 @@
 # Progress Update
 
+## 2026-06-13 - Align project documentation with JSON exercise sources
+
+### Summary
+
+Updated the project README and agent instructions to describe the current
+JSON-only exercise architecture instead of the retired gateway workflow.
+
+### Changed Files
+
+- `README.md`
+- `agents.md`
+- `docs/progress.md`
+
+### Behavior Changes
+
+- Development instructions no longer mention a Python gateway, Ollama, or the
+  historical gateway directory.
+- Agent guidance now requires the shared exercise provider, validated JSON
+  fixtures, supported types and difficulties, and no live-generation fallback.
+
+### Testing
+
+- Documentation reference scan for gateway and Ollama terms: passed.
+
+### Follow-up Notes
+
+- None.
+
+## 2026-06-13 - Replace live exercise generation with JSON sources
+
+### Summary
+
+Introduced a reusable exercise provider abstraction and migrated SQL, UML, and
+calculation exercises to validated local JSON collections. Removed the Laravel
+AI gateway clients, live response provider, SQL generation retry service, and
+legacy AI fixture path from the normal application.
+
+### Changed Files
+
+- `.env`
+- `.env.example`
+- `README.md`
+- `app/Contracts/ExerciseProvider.php`
+- `app/Exceptions/ExerciseSourceException.php`
+- `app/Services/Exercises/JsonExerciseProvider.php`
+- `app/Providers/AppServiceProvider.php`
+- `app/Http/Controllers/SqlExerciseController.php`
+- `app/Http/Controllers/UmlExerciseController.php`
+- `app/Http/Controllers/CalculationExerciseController.php`
+- `config/exercises.php`
+- `config/filesystems.php`
+- `config/services.php`
+- `resources/exercises/sql/{easy,medium,hard}/exercises.json`
+- `resources/exercises/uml/{easy,medium,hard}/exercises.json`
+- `resources/exercises/calculation/{easy,medium,hard}/exercises.json`
+- `resources/views/it/sql-exercise/index.blade.php`
+- `resources/views/it/sql-exercise/select-difficulty.blade.php`
+- `resources/views/it/uml-exercise/index.blade.php`
+- `resources/views/it/calculation-exercises/index.blade.php`
+- `tests/Feature/ItExerciseFlowTest.php`
+- `tests/Unit/JsonExerciseProviderTest.php`
+- Removed `app/Services/AI/*`, `app/Services/SqlExerciseGenerator.php`,
+  `resources/ai-fixtures/*`, and their obsolete unit tests.
+- `docs/progress.md`
+
+### Behavior Changes
+
+- `EXERCISE_SOURCE=json` is now the default and only configured exercise source.
+- SQL, UML, and calculation exercises load randomly from
+  `resources/exercises/{type}/{difficulty}/*.json`.
+- Every exercise type has multiple easy, medium, and hard fixtures.
+- Every existing calculation topic has a fixture at each difficulty.
+- SQL fixtures still create isolated temporary databases through `setup_sql`,
+  and learner queries still use the existing SELECT-only execution flow.
+- UML tasks now come from JSON while learner diagrams still render through
+  PlantUML.
+- Calculation exercises retain topic selection, numeric checking, solution
+  steps, and explanations.
+- Missing directories, empty directories, invalid JSON, missing fields, and
+  unmatched criteria produce clear source errors without a live fallback.
+- Normal exercise loading performs no HTTP request and requires no Python or
+  Ollama process.
+- The README now documents Laravel-only startup and the JSON fixture structure.
+
+### Testing
+
+- `php artisan test`: passed, 49 tests and 385 assertions.
+- `php artisan test --filter="JsonExerciseProviderTest|ItExerciseFlowTest"`:
+  passed, 21 tests and 316 assertions.
+- `php artisan view:cache`: passed.
+- Targeted `vendor/bin/pint --test` for all changed PHP files: passed.
+- Repository-wide `vendor/bin/pint --test`: still reports pre-existing style and
+  line-ending issues in unrelated files.
+- JSON parsing check for all nine exercise collection files: passed.
+
+### Follow-up Notes
+
+- The historical `ai-gateway/` directory remains in the repository but is not
+  referenced or required by the Laravel exercise flow. It can be archived or
+  removed in a separate cleanup task.
+
 ## 2026-05-21 - Preserve submitted calculation answer
 
 ### Summary
