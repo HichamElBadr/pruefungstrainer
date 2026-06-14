@@ -5,24 +5,58 @@
     "diagram_type": "class",
     "difficulty": "hard",
     "topic": "inheritance-composition",
-    "title": "Zahlungssystem",
-    "scenario": "Ein Bestellsystem unterstützt unterschiedliche Zahlungsarten und zusammengesetzte Bestellungen.",
+    "title": "Zahlungssystem für Bestellungen",
+    "scenario": "Ein Online-Shop möchte sein Bestell- und Zahlungssystem objektorientiert modellieren. Bestellungen bestehen aus mehreren Positionen und können über unterschiedliche Zahlungsarten bezahlt werden. Die Zahlungsarten besitzen gemeinsame Eigenschaften, unterscheiden sich aber in einzelnen fachlichen Daten.",
     "requirements": [
-      "Zahlung besitzt betrag und ausführen().",
-      "Kreditkartenzahlung und Überweisung werden von Zahlung abgeleitet.",
-      "Eine Bestellung besteht aus Bestellpositionen.",
-      "Eine Bestellung verweist auf eine Zahlung."
+      "Modellieren Sie eine abstrakte Klasse Zahlung mit dem Attribut betrag und der Methode ausfuehren().",
+      "Kreditkartenzahlung und Ueberweisung sind spezialisierte Zahlungsarten.",
+      "Eine Kreditkartenzahlung speichert das Kartenende und den Kartenanbieter.",
+      "Eine Ueberweisung speichert die IBAN und den Namen des Kontoinhabers.",
+      "Eine Bestellung besitzt eine Bestellnummer, ein Bestelldatum und einen Status.",
+      "Eine Bestellung besteht aus mindestens einer Bestellposition.",
+      "Eine Bestellposition enthält Menge und Einzelpreis.",
+      "Jede Bestellposition verweist auf genau ein Produkt.",
+      "Ein Produkt besitzt Artikelnummer, Bezeichnung und Verkaufspreis.",
+      "Eine Bestellung verweist auf genau eine Zahlung."
     ],
-    "task": "Erstelle ein Klassendiagramm mit Vererbung und Komposition.",
-    "starter_plantuml": null,
-    "solution_plantuml": "@startuml\nclass Zahlung {\n  - betrag : Decimal\n  + ausfuehren() : Boolean\n}\nclass Kreditkartenzahlung {\n  - kartenende : String\n}\nclass Ueberweisung {\n  - iban : String\n}\nclass Bestellung {\n  - nummer : String\n}\nclass Bestellposition {\n  - menge : Integer\n}\nZahlung <|-- Kreditkartenzahlung\nZahlung <|-- Ueberweisung\nBestellung *-- Bestellposition\nBestellung -> Zahlung : bezahlt mit\n@enduml",
-    "explanation": "Spezialisierte Zahlungsarten erben von Zahlung. Die Komposition bindet Bestellpositionen an den Lebenszyklus ihrer Bestellung.",
+    "task": "Erstellen Sie ein UML-Klassendiagramm für das beschriebene Zahlungssystem. Berücksichtigen Sie Vererbung, Komposition, sinnvolle Attribute, Methoden und Multiplizitäten.",
+    "starter_plantuml": "@startuml\nabstract class Zahlung {\n}\n\nclass Bestellung {\n}\n@enduml",
+    "solution_plantuml": "@startuml\nabstract class Zahlung {\n  - betrag : Decimal\n  + ausfuehren() : Boolean\n}\n\nclass Kreditkartenzahlung {\n  - kartenende : String\n  - kartenanbieter : String\n}\n\nclass Ueberweisung {\n  - iban : String\n  - kontoinhaber : String\n}\n\nclass Bestellung {\n  - nummer : String\n  - bestelldatum : Date\n  - status : String\n}\n\nclass Bestellposition {\n  - menge : Integer\n  - einzelpreis : Decimal\n}\n\nclass Produkt {\n  - artikelnummer : String\n  - bezeichnung : String\n  - verkaufspreis : Decimal\n}\n\nZahlung <|-- Kreditkartenzahlung\nZahlung <|-- Ueberweisung\nBestellung \"1\" *-- \"1..*\" Bestellposition : besteht aus\nBestellposition \"0..*\" --> \"1\" Produkt : bezieht sich auf\nBestellung \"1\" --> \"1\" Zahlung : bezahlt mit\n@enduml",
+    "explanation": "Zahlung wird als abstrakte Oberklasse modelliert, weil die konkreten Zahlungsarten gemeinsame Eigenschaften besitzen. Kreditkartenzahlung und Ueberweisung erben von Zahlung. Die Bestellpositionen sind per Komposition an die Bestellung gebunden, da sie fachlich ohne die Bestellung nicht sinnvoll existieren. Das Produkt wird nur referenziert, weil es unabhängig von einer konkreten Bestellung existieren kann.",
     "expected_elements": [
-      "Zahlungshierarchie",
-      "Komposition von Bestellung und Bestellposition",
-      "Beziehung zwischen Bestellung und Zahlung"
+      "Abstrakte Oberklasse Zahlung",
+      "Vererbung zu Kreditkartenzahlung und Ueberweisung",
+      "Komposition zwischen Bestellung und Bestellposition",
+      "Assoziation zwischen Bestellposition und Produkt",
+      "Assoziation zwischen Bestellung und Zahlung",
+      "Sinnvolle Multiplizitäten",
+      "Fachlich passende Attribute und mindestens eine Methode"
     ],
-    "tags": ["UML", "Vererbung", "Komposition", "Polymorphie", "AP2"]
+    "hints": [
+      {
+        "level": 1,
+        "title": "Gemeinsamkeiten erkennen",
+        "text": "Überlegen Sie zuerst, welche Eigenschaften alle Zahlungsarten gemeinsam haben und welche nur bei einzelnen Zahlungsarten vorkommen."
+      },
+      {
+        "level": 2,
+        "title": "Vererbung und Komposition trennen",
+        "text": "Kreditkartenzahlung und Ueberweisung sind Spezialisierungen von Zahlung. Bestellpositionen sind dagegen Bestandteile einer Bestellung und sollten nicht als Unterklassen modelliert werden."
+      },
+      {
+        "level": 3,
+        "title": "Lebenszyklen beachten",
+        "text": "Bestellpositionen existieren fachlich nur innerhalb einer Bestellung. Produkte und Zahlungen können dagegen als eigene Objekte referenziert werden."
+      }
+    ],
+    "tags": [
+      "UML",
+      "Klassendiagramm",
+      "Vererbung",
+      "Komposition",
+      "Multiplizitäten",
+      "AP2"
+    ]
   },
   {
     "id": "uml-hard-002",
@@ -30,49 +64,124 @@
     "diagram_type": "class",
     "difficulty": "hard",
     "topic": "domain-model",
-    "title": "Support-System",
-    "scenario": "Ein Support-System verwaltet Benutzerrollen, Tickets, Zuständigkeiten und Kommentare.",
+    "title": "Support-System mit Ticketbearbeitung",
+    "scenario": "Ein Unternehmen möchte ein internes Support-System entwickeln. Mitarbeitende können Störungen melden, Supportmitarbeitende bearbeiten die Tickets und dokumentieren die Kommunikation über Kommentare. Tickets können kategorisiert, priorisiert und optional einem Supportmitarbeiter zugewiesen werden.",
     "requirements": [
-      "Kunde und SupportMitarbeiter erben von Benutzer.",
-      "Ein Kunde meldet Tickets.",
-      "Ein Ticket kann einem SupportMitarbeiter zugewiesen werden.",
-      "Ein Ticket besteht aus Kommentaren."
+      "Benutzer ist die Oberklasse für Kunde und SupportMitarbeiter.",
+      "Benutzer besitzt id, name und email.",
+      "Kunde besitzt eine kundennummer.",
+      "SupportMitarbeiter besitzt kuerzel und supportLevel.",
+      "Ein Kunde kann mehrere Tickets melden.",
+      "Ein Ticket gehört immer zu genau einem Kunden.",
+      "Ein Ticket besitzt betreff, beschreibung, status und prioritaet.",
+      "Ein Ticket kann genau einem SupportMitarbeiter zugewiesen sein, muss aber nicht sofort zugewiesen werden.",
+      "Ein SupportMitarbeiter kann mehrere Tickets bearbeiten.",
+      "Ein Ticket gehört genau zu einer Kategorie.",
+      "Eine Kategorie kann vielen Tickets zugeordnet sein.",
+      "Ein Ticket besteht aus mehreren Kommentaren.",
+      "Ein Kommentar besitzt text und erstelltAm.",
+      "Jeder Kommentar wird von genau einem Benutzer erstellt."
     ],
-    "task": "Modelliere das Support-System als Klassendiagramm.",
-    "starter_plantuml": null,
-    "solution_plantuml": "@startuml\nclass Benutzer {\n  - id : Integer\n  - name : String\n}\nclass Kunde {\n  - kundennummer : String\n}\nclass SupportMitarbeiter {\n  - kuerzel : String\n}\nclass Ticket {\n  - betreff : String\n  - status : String\n}\nclass Kommentar {\n  - text : String\n  - erstelltAm : DateTime\n}\nBenutzer <|-- Kunde\nBenutzer <|-- SupportMitarbeiter\nKunde -> Ticket : meldet\nTicket -> SupportMitarbeiter : zugewiesen an\nTicket *-- Kommentar\n@enduml",
-    "explanation": "Die Benutzerrollen teilen gemeinsame Daten durch Vererbung. Kommentare sind als Komposition an das Ticket gebunden.",
+    "task": "Modellieren Sie das beschriebene Support-System als UML-Klassendiagramm. Achten Sie besonders auf Vererbung, optionale Zuordnung, Komposition und Multiplizitäten.",
+    "starter_plantuml": "@startuml\nclass Benutzer {\n}\n\nclass Ticket {\n}\n@enduml",
+    "solution_plantuml": "@startuml\nabstract class Benutzer {\n  - id : Integer\n  - name : String\n  - email : String\n}\n\nclass Kunde {\n  - kundennummer : String\n}\n\nclass SupportMitarbeiter {\n  - kuerzel : String\n  - supportLevel : Integer\n}\n\nclass Ticket {\n  - betreff : String\n  - beschreibung : String\n  - status : String\n  - prioritaet : String\n}\n\nclass Kategorie {\n  - name : String\n  - beschreibung : String\n}\n\nclass Kommentar {\n  - text : String\n  - erstelltAm : DateTime\n}\n\nBenutzer <|-- Kunde\nBenutzer <|-- SupportMitarbeiter\nKunde \"1\" --> \"0..*\" Ticket : meldet\nTicket \"0..*\" --> \"0..1\" SupportMitarbeiter : zugewiesen an\nKategorie \"1\" <-- \"0..*\" Ticket : gehoert zu\nTicket \"1\" *-- \"0..*\" Kommentar : enthaelt\nKommentar \"0..*\" --> \"1\" Benutzer : erstellt von\n@enduml",
+    "explanation": "Kunde und SupportMitarbeiter teilen gemeinsame Benutzerdaten und werden deshalb von Benutzer abgeleitet. Die Ticketzuweisung ist optional, weil ein neues Ticket zunächst noch keinem Supportmitarbeiter zugeordnet sein kann. Kommentare sind als Komposition modelliert, da sie fachlich zum Ticket gehören. Der Ersteller eines Kommentars wird über eine Assoziation zu Benutzer abgebildet, weil sowohl Kunden als auch Supportmitarbeiter Kommentare schreiben können.",
     "expected_elements": [
-      "Benutzerhierarchie",
-      "Ticketzuordnung",
-      "Komposition von Ticket und Kommentar"
+      "Oberklasse Benutzer",
+      "Unterklassen Kunde und SupportMitarbeiter",
+      "Optionale Ticketzuweisung mit 0..1",
+      "Kategorie als eigene Klasse",
+      "Komposition zwischen Ticket und Kommentar",
+      "Kommentar-Ersteller als Beziehung zu Benutzer",
+      "Korrekte Multiplizitäten zwischen Kunde, Ticket und SupportMitarbeiter"
     ],
-    "tags": ["UML", "Domänenmodell", "Vererbung", "Komposition", "AP2"]
+    "hints": [
+      {
+        "level": 1,
+        "title": "Benutzerrollen erkennen",
+        "text": "Prüfen Sie, welche Eigenschaften Kunde und SupportMitarbeiter gemeinsam haben. Gemeinsame Attribute sprechen für eine Oberklasse."
+      },
+      {
+        "level": 2,
+        "title": "Optionale Beziehung beachten",
+        "text": "Ein Ticket kann einem Supportmitarbeiter zugewiesen sein, muss es aber nicht. Diese fachliche Aussage sollte sich in der Multiplizität widerspiegeln."
+      },
+      {
+        "level": 3,
+        "title": "Kommentare richtig anbinden",
+        "text": "Kommentare gehören zum Ticket, werden aber von einem Benutzer erstellt. Dadurch entstehen zwei unterschiedliche Beziehungen: Komposition zum Ticket und Assoziation zum Benutzer."
+      }
+    ],
+    "tags": [
+      "UML",
+      "Klassendiagramm",
+      "Domänenmodell",
+      "Vererbung",
+      "Komposition",
+      "AP2"
+    ]
   },
   {
     "id": "uml-hard-003",
     "type": "uml",
     "diagram_type": "class",
     "difficulty": "hard",
-    "topic": "domain-model",
-    "title": "Kursverwaltung",
-    "scenario": "Eine Kursverwaltung ordnet Dozenten und Teilnehmern unterschiedliche Rollen und Beziehungen zu.",
+    "topic": "association-class",
+    "title": "Kursverwaltung mit Anmeldungen und Prüfungen",
+    "scenario": "Ein Bildungszentrum möchte Kurse, Teilnehmende, Dozenten und Prüfungsleistungen digital verwalten. Teilnehmende können sich zu mehreren Kursen anmelden. Für jede Anmeldung muss ein eigener Status gespeichert werden. Zusätzlich können Kurse Prüfungen enthalten, zu denen Teilnehmende Ergebnisse erhalten.",
     "requirements": [
       "Person ist die Oberklasse von Teilnehmer und Dozent.",
-      "Ein Kurs wird von einem Dozenten geleitet.",
-      "Teilnehmer werden über Anmeldung einem Kurs zugeordnet.",
-      "Anmeldung besitzt anmeldedatum und status."
+      "Person besitzt name und email.",
+      "Teilnehmer besitzt teilnehmernummer.",
+      "Dozent besitzt kuerzel und fachgebiet.",
+      "Ein Dozent kann mehrere Kurse leiten.",
+      "Ein Kurs wird von genau einem Dozenten geleitet.",
+      "Ein Teilnehmer kann an mehreren Kursen teilnehmen.",
+      "Ein Kurs kann mehrere Teilnehmer haben.",
+      "Die Beziehung zwischen Teilnehmer und Kurs wird über Anmeldung modelliert.",
+      "Anmeldung besitzt anmeldedatum und status.",
+      "Ein Kurs kann mehrere Prüfungen enthalten.",
+      "Eine Prüfung besitzt pruefungsdatum, pruefungsart und maximalePunktzahl.",
+      "Eine Prüfungsleistung gehört zu genau einem Teilnehmer und genau einer Prüfung.",
+      "Eine Prüfungsleistung besitzt erreichtePunkte und note."
     ],
-    "task": "Erstelle ein Klassendiagramm für die Kursverwaltung.",
-    "starter_plantuml": null,
-    "solution_plantuml": "@startuml\nclass Person {\n  - name : String\n  - email : String\n}\nclass Teilnehmer {\n  - teilnehmernummer : String\n}\nclass Dozent {\n  - kuerzel : String\n}\nclass Kurs {\n  - titel : String\n}\nclass Anmeldung {\n  - anmeldedatum : Date\n  - status : String\n}\nPerson <|-- Teilnehmer\nPerson <|-- Dozent\nDozent -> Kurs : leitet\nTeilnehmer -> Anmeldung\nAnmeldung -> Kurs\n@enduml",
-    "explanation": "Vererbung reduziert doppelte Personendaten. Anmeldung modelliert die fachlich eigenständige Beziehung zwischen Teilnehmer und Kurs.",
+    "task": "Erstellen Sie ein UML-Klassendiagramm für die Kursverwaltung. Modellieren Sie insbesondere die Anmeldung als eigene Klasse und ergänzen Sie sinnvolle Beziehungen und Multiplizitäten.",
+    "starter_plantuml": "@startuml\nabstract class Person {\n}\n\nclass Anmeldung {\n}\n@enduml",
+    "solution_plantuml": "@startuml\nabstract class Person {\n  - name : String\n  - email : String\n}\n\nclass Teilnehmer {\n  - teilnehmernummer : String\n}\n\nclass Dozent {\n  - kuerzel : String\n  - fachgebiet : String\n}\n\nclass Kurs {\n  - kursnummer : String\n  - titel : String\n  - startdatum : Date\n  - enddatum : Date\n}\n\nclass Anmeldung {\n  - anmeldedatum : Date\n  - status : String\n}\n\nclass Pruefung {\n  - pruefungsdatum : Date\n  - pruefungsart : String\n  - maximalePunktzahl : Integer\n}\n\nclass Pruefungsleistung {\n  - erreichtePunkte : Integer\n  - note : String\n}\n\nPerson <|-- Teilnehmer\nPerson <|-- Dozent\nDozent \"1\" --> \"0..*\" Kurs : leitet\nTeilnehmer \"1\" --> \"0..*\" Anmeldung : meldet sich an\nKurs \"1\" --> \"0..*\" Anmeldung : besitzt\nKurs \"1\" *-- \"0..*\" Pruefung : enthaelt\nTeilnehmer \"1\" --> \"0..*\" Pruefungsleistung : erzielt\nPruefung \"1\" --> \"0..*\" Pruefungsleistung : wird bewertet durch\n@enduml",
+    "explanation": "Die Anmeldung wird als eigene Klasse modelliert, weil die Beziehung zwischen Teilnehmer und Kurs eigene Attribute besitzt. Person dient als gemeinsame Oberklasse für Teilnehmer und Dozent. Prüfungen gehören fachlich zu einem Kurs und werden daher als Komposition modelliert. Prüfungsleistung verbindet Teilnehmer und Prüfung, da die erreichte Punktzahl und Note nicht direkt nur zum Teilnehmer oder nur zur Prüfung gehören.",
     "expected_elements": [
-      "Personenhierarchie",
-      "Leitungsbeziehung",
-      "Anmeldung als eigene Klasse"
+      "Oberklasse Person",
+      "Unterklassen Teilnehmer und Dozent",
+      "Anmeldung als eigene Beziehungsklasse zwischen Teilnehmer und Kurs",
+      "Pruefung als Bestandteil eines Kurses",
+      "Pruefungsleistung als eigene Klasse zwischen Teilnehmer und Pruefung",
+      "Sinnvolle Multiplizitäten",
+      "Attribute in den Beziehungsklassen"
     ],
-    "tags": ["UML", "Vererbung", "Assoziationsklasse", "AP2"]
+    "hints": [
+      {
+        "level": 1,
+        "title": "Beziehungen mit eigenen Daten suchen",
+        "text": "Achten Sie darauf, welche Beziehungen eigene Attribute besitzen. Solche Beziehungen werden häufig als eigene Klasse modelliert."
+      },
+      {
+        "level": 2,
+        "title": "Anmeldung nicht als Attribut modellieren",
+        "text": "Der Status und das Anmeldedatum gehören nicht direkt zum Teilnehmer und nicht direkt zum Kurs, sondern zur konkreten Teilnahme eines Teilnehmers an einem Kurs."
+      },
+      {
+        "level": 3,
+        "title": "Prüfungsleistung gesondert modellieren",
+        "text": "Auch erreichte Punkte und Note entstehen erst durch die Teilnahme eines konkreten Teilnehmers an einer konkreten Prüfung. Dafür eignet sich eine eigene Klasse Pruefungsleistung."
+      }
+    ],
+    "tags": [
+      "UML",
+      "Klassendiagramm",
+      "Assoziationsklasse",
+      "Domänenmodell",
+      "AP2"
+    ]
   },
   {
     "id": "uml-activity-hard-001",
@@ -80,41 +189,66 @@
     "diagram_type": "activity",
     "difficulty": "hard",
     "topic": "process-modeling",
-    "title": "Support-Ticket bearbeiten",
-    "scenario": "Ein eingehendes Support-Ticket wird geprüft, priorisiert und abhängig von der Lösbarkeit direkt bearbeitet oder eskaliert.",
+    "title": "IT-Störung im Support bearbeiten",
+    "scenario": "Ein Unternehmen möchte den Ablauf zur Bearbeitung von IT-Störungen standardisieren. Mitarbeitende melden Störungen über ein Supportportal. Das System erstellt daraus Tickets, die je nach Vollständigkeit, Kategorie und Lösbarkeit im First-Level-Support bearbeitet oder an den Second-Level-Support eskaliert werden.",
     "requirements": [
-      "Der Prozess beginnt mit dem Eingang eines Tickets.",
-      "Nach der Priorisierung wird die direkte Lösbarkeit geprüft.",
-      "Nicht direkt lösbare Tickets werden eskaliert.",
-      "Der Prozess endet nach Dokumentation der Lösung oder Eskalation."
+      "Der Prozess beginnt mit der Meldung einer Störung über das Supportportal.",
+      "Das System prüft, ob alle Pflichtangaben vorhanden sind.",
+      "Fehlen Angaben, muss der Mitarbeiter die Meldung ergänzen.",
+      "Bei vollständiger Meldung wird ein Ticket erstellt.",
+      "Das Ticket wird anhand von Kategorie und Priorität einer Supportgruppe zugeordnet.",
+      "Ein Supportmitarbeiter übernimmt das Ticket.",
+      "Es wird geprüft, ob eine bekannte Lösung existiert.",
+      "Falls eine bekannte Lösung existiert, wird diese angewendet.",
+      "Falls keine bekannte Lösung existiert, wird die Ursache analysiert.",
+      "Bei fehlenden Zusatzinformationen wird eine Rückfrage gestellt und auf Antwort gewartet.",
+      "Wenn das Problem im First-Level-Support gelöst werden kann, wird die Lösung umgesetzt.",
+      "Wenn das Problem nicht im First-Level-Support gelöst werden kann, wird an den Second-Level-Support eskaliert.",
+      "Nach der Behebung wird die Lösung dokumentiert und der Mitarbeiter informiert.",
+      "Der Mitarbeiter bestätigt, ob die Störung behoben wurde.",
+      "Falls die Störung weiterhin besteht, wird das Ticket erneut geöffnet.",
+      "Falls die Störung behoben ist, wird das Ticket geschlossen."
     ],
-    "task": "Erstelle ein Aktivitätsdiagramm mit einer Entscheidung zur direkten Lösbarkeit.",
-    "starter_plantuml": "@startuml\nstart\n:Ticket empfangen;\n@enduml",
-    "solution_plantuml": "@startuml\nstart\n:Ticket empfangen;\n:Ticket priorisieren;\nif (Direkt loesbar?) then (ja)\n  :Loesung umsetzen;\n  :Loesung dokumentieren;\nelse (nein)\n  :Ticket eskalieren;\nendif\nstop\n@enduml",
-    "explanation": "Die Entscheidung teilt den Ablauf in direkte Bearbeitung und Eskalation. Beide Pfade führen zu einem definierten Prozessende.",
+    "task": "Erstellen Sie ein Aktivitätsdiagramm für den beschriebenen Supportprozess. Berücksichtigen Sie Entscheidungen, Wiederholungen, Eskalation und ein eindeutiges Prozessende.",
+    "starter_plantuml": "@startuml\nstart\n:Störung im Supportportal melden;\n:Pflichtangaben prüfen;\n@enduml",
+    "solution_plantuml": "@startuml\nstart\n:Stoerung im Supportportal melden;\n\nwhile (Pflichtangaben vollstaendig?) is (nein)\n  :Fehlende Angaben anfordern;\n  :Mitarbeiter ergaenzt Meldung;\nendwhile (ja)\n\n:Ticket erstellen;\n:Kategorie und Prioritaet bestimmen;\n:Supportgruppe zuordnen;\n:Ticket uebernehmen;\n\nif (Bekannte Loesung vorhanden?) then (ja)\n  :Bekannte Loesung anwenden;\nelse (nein)\n  :Ursache analysieren;\n\n  while (Zusatzinformationen noetig?) is (ja)\n    :Rueckfrage an Mitarbeiter senden;\n    :Antwort abwarten;\n    :Antwort pruefen;\n  endwhile (nein)\n\n  if (Im First-Level loesbar?) then (ja)\n    :Loesung umsetzen;\n  else (nein)\n    :An Second-Level-Support eskalieren;\n    :Problem im Second-Level analysieren;\n    :Loesung erarbeiten und umsetzen;\n  endif\nendif\n\n:Loesung dokumentieren;\n:Mitarbeiter informieren;\n\nif (Stoerung behoben?) then (ja)\n  :Ticket schliessen;\nelse (nein)\n  :Ticket erneut oeffnen;\n  :Nachbearbeitung starten;\n  :Loesung korrigieren;\n  :Ticket schliessen;\nendif\n\nstop\n@enduml",
+    "explanation": "Das Aktivitätsdiagramm enthält mehrere typische Prozessstrukturen: eine Wiederholung bei unvollständigen Pflichtangaben, eine Entscheidung zwischen bekannter Lösung und Analyse, eine Rückfrageschleife bei fehlenden Informationen und eine Eskalation an den Second-Level-Support. Am Ende entscheidet die Bestätigung des Mitarbeiters, ob das Ticket geschlossen oder erneut geöffnet wird.",
     "expected_elements": [
-      "Start und Ende",
-      "Priorisierung",
-      "Entscheidung mit zwei Pfaden",
-      "Eskalationsaktivität"
+      "Startknoten und Endknoten",
+      "Schleife bei fehlenden Pflichtangaben",
+      "Ticketanlage und Zuordnung zur Supportgruppe",
+      "Entscheidung zu bekannter Lösung",
+      "Analysepfad bei unbekannter Lösung",
+      "Rückfrageschleife bei fehlenden Zusatzinformationen",
+      "Entscheidung First-Level oder Second-Level",
+      "Eskalation an Second-Level-Support",
+      "Bestätigung durch Mitarbeiter",
+      "Erneutes Öffnen bei nicht behobener Störung",
+      "Ticketabschluss"
     ],
     "hints": [
       {
         "level": 1,
-        "title": "Ablauf identifizieren",
-        "text": "Ordnen Sie zuerst die Aktivitäten vom Eingang des Tickets bis zum Prozessende."
+        "title": "Hauptphasen erkennen",
+        "text": "Teilen Sie den Prozess zuerst grob in Meldung, Prüfung, Bearbeitung, Rückmeldung und Abschluss ein."
       },
       {
         "level": 2,
-        "title": "Entscheidung modellieren",
-        "text": "Die direkte Lösbarkeit teilt den Prozess in zwei alternative Pfade."
+        "title": "Wiederholungen modellieren",
+        "text": "Zwei Stellen eignen sich für Schleifen: unvollständige Pflichtangaben und fehlende Zusatzinformationen während der Analyse."
       },
       {
         "level": 3,
-        "title": "Pfade abschließen",
-        "text": "Der Lösungs- und der Eskalationspfad müssen beide zu einem definierten Ende führen."
+        "title": "Eskalation und erneutes Öffnen trennen",
+        "text": "Die Eskalation passiert während der Bearbeitung, wenn der First-Level-Support nicht ausreicht. Das erneute Öffnen passiert erst nach der Rückmeldung des Mitarbeiters, wenn die Störung weiterhin besteht."
       }
     ],
-    "tags": ["UML", "Aktivitätsdiagramm", "Prozessmodell", "AP2"]
+    "tags": [
+      "UML",
+      "Aktivitätsdiagramm",
+      "Prozessmodellierung",
+      "Supportprozess",
+      "AP2"
+    ]
   }
 ]
