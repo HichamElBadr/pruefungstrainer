@@ -1,0 +1,324 @@
+[
+  {
+    "id": "uml-usecase-medium-001",
+    "type": "uml",
+    "diagram_type": "use_case",
+    "difficulty": "medium",
+    "topic": "role-based-support-process",
+    "title": "Support-Ticket-System",
+    "scenario": "Ein Unternehmen möchte ein internes Support-Ticket-System einführen. Mitarbeitende können Störungen melden und den Bearbeitungsstand einsehen. Supportmitarbeitende bearbeiten Tickets, schließen gelöste Vorgänge ab und können komplexe Fälle eskalieren. Administratoren verwalten Kategorien und Benutzerkonten. Bei wichtigen Statusänderungen versendet das System Benachrichtigungen über einen externen E-Mail-Dienst.",
+    "requirements": [
+      "Modellieren Sie das Support-Ticket-System mit einer klaren Systemgrenze.",
+      "Ein Mitarbeiter kann ein Ticket erstellen.",
+      "Ein Mitarbeiter kann den Ticketstatus einsehen.",
+      "Ein Supportmitarbeiter kann Tickets bearbeiten.",
+      "Ein Supportmitarbeiter kann Tickets schließen.",
+      "Ein Supportmitarbeiter kann ein Ticket bei Bedarf eskalieren.",
+      "Ein Administrator kann Benutzer verwalten.",
+      "Ein Administrator kann Ticketkategorien verwalten.",
+      "Beim Erstellen und Schließen eines Tickets soll eine Benachrichtigung versendet werden.",
+      "Der E-Mail-Dienst soll als externes System modelliert werden."
+    ],
+    "task": "Erstellen Sie ein UML-Use-Case-Diagramm für das beschriebene Support-Ticket-System. Berücksichtigen Sie mehrere Akteure, ein externes System sowie sinnvolle Include- und Extend-Beziehungen.",
+    "starter_plantuml": "@startuml\nleft to right direction\nactor \"Mitarbeiter\" as Mitarbeiter\nactor \"Supportmitarbeiter\" as Support\n\nrectangle \"Support-Ticket-System\" {\n}\n@enduml",
+    "solution_plantuml": "@startuml\nleft to right direction\nactor \"Mitarbeiter\" as Mitarbeiter\nactor \"Supportmitarbeiter\" as Support\nactor \"Administrator\" as Admin\nactor \"E-Mail-Dienst\" as Mail\n\nrectangle \"Support-Ticket-System\" {\n  usecase \"Ticket erstellen\" as UC1\n  usecase \"Ticketstatus einsehen\" as UC2\n  usecase \"Ticket bearbeiten\" as UC3\n  usecase \"Ticket schliessen\" as UC4\n  usecase \"Ticket eskalieren\" as UC5\n  usecase \"Benachrichtigung senden\" as UC6\n  usecase \"Benutzer verwalten\" as UC7\n  usecase \"Ticketkategorien verwalten\" as UC8\n}\n\nMitarbeiter -- UC1\nMitarbeiter -- UC2\nSupport -- UC3\nSupport -- UC4\nSupport -- UC5\nAdmin -- UC7\nAdmin -- UC8\nMail -- UC6\n\nUC1 ..> UC6 : <<include>>\nUC4 ..> UC6 : <<include>>\nUC5 ..> UC3 : <<extend>>\n@enduml",
+    "explanation": "Das Diagramm trennt fachliche Rollen: Mitarbeiter melden Tickets und sehen den Status ein, Supportmitarbeitende bearbeiten und schließen Tickets, Administratoren verwalten Stammdaten. Der E-Mail-Dienst wird als externer Akteur modelliert, da er außerhalb des Supportsystems liegt. Die Benachrichtigung wird beim Erstellen und Schließen eines Tickets zwingend verwendet und daher per Include eingebunden. Die Eskalation ist nur bei Bedarf Teil der Bearbeitung und wird deshalb als Extend modelliert.",
+    "expected_elements": [
+      "Systemgrenze für das Support-Ticket-System",
+      "Akteur Mitarbeiter",
+      "Akteur Supportmitarbeiter",
+      "Akteur Administrator",
+      "Externer Akteur E-Mail-Dienst",
+      "Use Cases Ticket erstellen und Ticketstatus einsehen",
+      "Use Cases Ticket bearbeiten, Ticket schließen und Ticket eskalieren",
+      "Administrative Use Cases Benutzer verwalten und Ticketkategorien verwalten",
+      "Include-Beziehung zur Benachrichtigung",
+      "Extend-Beziehung für optionale Eskalation"
+    ],
+    "hints": [
+      {
+        "level": 1,
+        "title": "Rollen sauber trennen",
+        "text": "Unterscheiden Sie zwischen Personen, die Tickets melden, Personen, die Tickets bearbeiten, und Personen, die das System verwalten."
+      },
+      {
+        "level": 2,
+        "title": "Externes System erkennen",
+        "text": "Der E-Mail-Dienst ist kein Bestandteil des Support-Ticket-Systems. Er sollte daher als externer Akteur außerhalb der Systemgrenze stehen."
+      },
+      {
+        "level": 3,
+        "title": "Include und Extend gezielt einsetzen",
+        "text": "Benachrichtigungen sind fester Bestandteil bestimmter Abläufe und eignen sich für Include. Eine Eskalation passiert nur bei Bedarf und eignet sich daher für Extend."
+      }
+    ],
+    "tags": [
+      "UML",
+      "Use-Case-Diagramm",
+      "Support",
+      "Akteure",
+      "Include",
+      "Extend",
+      "AP2"
+    ]
+  },
+  {
+    "id": "uml-usecase-medium-002",
+    "type": "uml",
+    "diagram_type": "use_case",
+    "difficulty": "medium",
+    "topic": "booking-with-external-payment",
+    "title": "Hotelbuchungssystem",
+    "scenario": "Ein Hotel möchte ein webbasiertes Buchungssystem anbieten. Gäste können freie Zimmer suchen, eine Buchung durchführen und bestehende Buchungen stornieren. Für eine verbindliche Buchung muss die Zahlung über einen externen Zahlungsdienst abgewickelt werden. Hotelmitarbeitende können Zimmer und Buchungen verwalten. Optional kann ein Gast bei der Buchung Zusatzleistungen wie Frühstück oder Parkplatz auswählen.",
+    "requirements": [
+      "Modellieren Sie das Hotelbuchungssystem mit Systemgrenze.",
+      "Ein Gast kann freie Zimmer suchen.",
+      "Ein Gast kann eine Buchung durchführen.",
+      "Ein Gast kann eine Buchung stornieren.",
+      "Eine verbindliche Buchung umfasst immer eine Zahlungsabwicklung.",
+      "Die Zahlung erfolgt über einen externen Zahlungsdienst.",
+      "Ein Gast kann optional Zusatzleistungen auswählen.",
+      "Ein Hotelmitarbeiter kann Zimmer verwalten.",
+      "Ein Hotelmitarbeiter kann Buchungen verwalten."
+    ],
+    "task": "Erstellen Sie ein UML-Use-Case-Diagramm für das beschriebene Hotelbuchungssystem. Modellieren Sie Gast, Hotelmitarbeiter und Zahlungsdienst sowie sinnvolle Include- und Extend-Beziehungen.",
+    "starter_plantuml": "@startuml\nleft to right direction\nactor \"Gast\" as Gast\nactor \"Hotelmitarbeiter\" as Mitarbeiter\n\nrectangle \"Hotelbuchungssystem\" {\n}\n@enduml",
+    "solution_plantuml": "@startuml\nleft to right direction\nactor \"Gast\" as Gast\nactor \"Hotelmitarbeiter\" as Mitarbeiter\nactor \"Zahlungsdienst\" as Payment\n\nrectangle \"Hotelbuchungssystem\" {\n  usecase \"Freie Zimmer suchen\" as UC1\n  usecase \"Buchung durchfuehren\" as UC2\n  usecase \"Zahlung abwickeln\" as UC3\n  usecase \"Zusatzleistungen auswaehlen\" as UC4\n  usecase \"Buchung stornieren\" as UC5\n  usecase \"Zimmer verwalten\" as UC6\n  usecase \"Buchungen verwalten\" as UC7\n}\n\nGast -- UC1\nGast -- UC2\nGast -- UC4\nGast -- UC5\nMitarbeiter -- UC6\nMitarbeiter -- UC7\nPayment -- UC3\n\nUC2 ..> UC3 : <<include>>\nUC4 ..> UC2 : <<extend>>\n@enduml",
+    "explanation": "Der Gast nutzt das Buchungssystem für Suche, Buchung und Stornierung. Der Hotelmitarbeiter verwaltet interne Daten wie Zimmer und Buchungen. Der Zahlungsdienst wird als externer Akteur dargestellt, weil die Zahlungsabwicklung außerhalb des Hotelsystems erfolgt. Die Zahlungsabwicklung ist zwingender Bestandteil einer verbindlichen Buchung und wird daher per Include modelliert. Zusatzleistungen sind optional und erweitern die Buchung nur bei Bedarf.",
+    "expected_elements": [
+      "Systemgrenze für das Hotelbuchungssystem",
+      "Akteur Gast",
+      "Akteur Hotelmitarbeiter",
+      "Externer Akteur Zahlungsdienst",
+      "Use Case freie Zimmer suchen",
+      "Use Case Buchung durchführen",
+      "Use Case Zahlung abwickeln",
+      "Use Case Buchung stornieren",
+      "Use Cases Zimmer verwalten und Buchungen verwalten",
+      "Include-Beziehung zwischen Buchung durchführen und Zahlung abwickeln",
+      "Extend-Beziehung für optionale Zusatzleistungen"
+    ],
+    "hints": [
+      {
+        "level": 1,
+        "title": "Hauptakteure identifizieren",
+        "text": "Prüfen Sie, wer das System direkt nutzt: Gäste buchen Zimmer, Mitarbeitende verwalten Hoteldaten."
+      },
+      {
+        "level": 2,
+        "title": "Externe Zahlung modellieren",
+        "text": "Ein Zahlungsdienst gehört nicht zum Hotelbuchungssystem selbst, ist aber an einem Use Case beteiligt."
+      },
+      {
+        "level": 3,
+        "title": "Pflicht und Option unterscheiden",
+        "text": "Eine Zahlung ist für die verbindliche Buchung notwendig. Zusatzleistungen sind dagegen nur eine optionale Erweiterung."
+      }
+    ],
+    "tags": [
+      "UML",
+      "Use-Case-Diagramm",
+      "Hotelbuchung",
+      "Externer Akteur",
+      "Include",
+      "Extend",
+      "AP2"
+    ]
+  },
+  {
+    "id": "uml-usecase-medium-003",
+    "type": "uml",
+    "diagram_type": "use_case",
+    "difficulty": "medium",
+    "topic": "learning-system-roles",
+    "title": "Prüfungstrainer verwenden",
+    "scenario": "Ein webbasierter Prüfungstrainer unterstützt Lernende bei der Vorbereitung auf IT-Prüfungen. Lernende können Aufgaben auswählen, Lösungen bearbeiten und Musterlösungen anzeigen. Lehrpersonen können Aufgaben verwalten und gespeicherte Aufgaben erneut verwenden. Für UML-Aufgaben nutzt das System einen externen PlantUML-Dienst zur Diagrammerzeugung.",
+    "requirements": [
+      "Modellieren Sie den Prüfungstrainer mit einer Systemgrenze.",
+      "Ein Lernender kann Aufgaben auswählen.",
+      "Ein Lernender kann eine Aufgabe bearbeiten.",
+      "Ein Lernender kann eine Musterlösung anzeigen.",
+      "Ein Lernender kann bei UML-Aufgaben ein Diagramm rendern lassen.",
+      "Das Rendern eines UML-Diagramms nutzt einen externen PlantUML-Dienst.",
+      "Eine Lehrperson kann Aufgaben verwalten.",
+      "Eine Lehrperson kann gespeicherte Aufgaben erneut verwenden.",
+      "Das Anzeigen einer Musterlösung soll als optionaler Folgefall nach der Bearbeitung modelliert werden."
+    ],
+    "task": "Erstellen Sie ein UML-Use-Case-Diagramm für den beschriebenen Prüfungstrainer. Berücksichtigen Sie Lernende, Lehrpersonen, den externen PlantUML-Dienst und sinnvolle optionale Erweiterungen bei der Aufgabenbearbeitung.",
+    "starter_plantuml": "@startuml\nleft to right direction\nactor \"Lernender\" as Lernender\nactor \"Lehrperson\" as Lehrperson\n\nrectangle \"Pruefungstrainer\" {\n}\n@enduml",
+    "solution_plantuml": "@startuml\nleft to right direction\nactor \"Lernender\" as Lernender\nactor \"Lehrperson\" as Lehrperson\nactor \"PlantUML-Dienst\" as PlantUML\n\nrectangle \"Pruefungstrainer\" {\n  usecase \"Aufgabe auswaehlen\" as UC1\n  usecase \"Aufgabe bearbeiten\" as UC2\n  usecase \"Musterloesung anzeigen\" as UC3\n  usecase \"UML-Diagramm rendern\" as UC4\n  usecase \"Aufgaben verwalten\" as UC5\n  usecase \"Gespeicherte Aufgabe wiederverwenden\" as UC6\n}\n\nLernender -- UC1\nLernender -- UC2\nLernender -- UC3\nLernender -- UC4\nLehrperson -- UC5\nLehrperson -- UC6\nPlantUML -- UC4\n\nUC3 ..> UC2 : <<extend>>\nUC4 ..> UC2 : <<extend>>\n@enduml",
+    "explanation": "Lernende und Lehrpersonen haben unterschiedliche Ziele und werden deshalb als getrennte Akteure modelliert. Der PlantUML-Dienst ist ein externer technischer Akteur, der nur am Rendern von UML-Diagrammen beteiligt ist. Aufgabe auswählen und Aufgabe bearbeiten werden als eigene Nutzerziele dargestellt, statt die Auswahl künstlich als Include-Teil der Bearbeitung zu modellieren. Die Musterlösung wird als optionaler Folgefall nach der Bearbeitung dargestellt. Das Rendern eines UML-Diagramms erweitert die Bearbeitung nur bei UML-Aufgaben.",
+    "expected_elements": [
+      "Systemgrenze für den Prüfungstrainer",
+      "Akteur Lernender",
+      "Akteur Lehrperson",
+      "Externer Akteur PlantUML-Dienst",
+      "Use Case Aufgabe auswählen",
+      "Use Case Aufgabe bearbeiten",
+      "Use Case Musterlösung anzeigen",
+      "Use Case UML-Diagramm rendern",
+      "Use Cases Aufgaben verwalten und gespeicherte Aufgabe wiederverwenden",
+      "Extend-Beziehung für Musterlösung anzeigen",
+      "Extend-Beziehung für UML-Diagramm rendern",
+      "Keine unnötige Include-Beziehung zwischen Aufgabe auswählen und Aufgabe bearbeiten"
+    ],
+    "hints": [
+      {
+        "level": 1,
+        "title": "Nutzerrollen bestimmen",
+        "text": "Lernende bearbeiten Aufgaben. Lehrpersonen verwalten Aufgaben. Daraus ergeben sich unterschiedliche Akteure."
+      },
+      {
+        "level": 2,
+        "title": "Technischen Dienst einordnen",
+        "text": "PlantUML ist kein Benutzer, sondern ein externes System, das bei einem bestimmten Use Case unterstützt."
+      },
+      {
+        "level": 3,
+        "title": "Optionale Folgefälle modellieren",
+        "text": "Musterlösung anzeigen und UML-Diagramm rendern sind keine allgemeinen Pflichtbestandteile jeder Aufgabenbearbeitung. Sie können als Erweiterungen der Bearbeitung modelliert werden."
+      }
+    ],
+    "tags": [
+      "UML",
+      "Use-Case-Diagramm",
+      "Prüfungstrainer",
+      "Lernsystem",
+      "Externer Akteur",
+      "Extend",
+      "AP2"
+    ]
+  },
+  {
+    "id": "uml-usecase-medium-004",
+    "type": "uml",
+    "diagram_type": "use_case",
+    "difficulty": "medium",
+    "topic": "inventory-management",
+    "title": "Lagerverwaltung im Unternehmen",
+    "scenario": "Ein Handelsunternehmen möchte eine digitale Lagerverwaltung einsetzen. Lagermitarbeitende können Artikel erfassen, Wareneingänge buchen und Bestände prüfen. Einkaufsmitarbeitende lösen Nachbestellungen aus, wenn der Mindestbestand unterschritten ist. Die Bestellung wird an ein externes Lieferantensystem übermittelt. Bei einer Bestandsprüfung kann optional eine Inventurdifferenz gemeldet werden.",
+    "requirements": [
+      "Modellieren Sie die Lagerverwaltung mit einer Systemgrenze.",
+      "Ein Lagermitarbeiter kann Artikel erfassen.",
+      "Ein Lagermitarbeiter kann Wareneingänge buchen.",
+      "Ein Lagermitarbeiter kann Bestände prüfen.",
+      "Bei der Bestandsprüfung kann optional eine Inventurdifferenz gemeldet werden.",
+      "Ein Einkaufsmitarbeiter kann eine Nachbestellung auslösen.",
+      "Eine Nachbestellung umfasst die Übermittlung an ein Lieferantensystem.",
+      "Das Lieferantensystem soll als externer Akteur dargestellt werden."
+    ],
+    "task": "Erstellen Sie ein UML-Use-Case-Diagramm für die beschriebene Lagerverwaltung. Achten Sie auf fachliche Rollen, externe Systeme und sinnvolle Include- und Extend-Beziehungen.",
+    "starter_plantuml": "@startuml\nleft to right direction\nactor \"Lagermitarbeiter\" as Lager\nactor \"Einkaufsmitarbeiter\" as Einkauf\n\nrectangle \"Lagerverwaltung\" {\n}\n@enduml",
+    "solution_plantuml": "@startuml\nleft to right direction\nactor \"Lagermitarbeiter\" as Lager\nactor \"Einkaufsmitarbeiter\" as Einkauf\nactor \"Lieferantensystem\" as Lieferant\n\nrectangle \"Lagerverwaltung\" {\n  usecase \"Artikel erfassen\" as UC1\n  usecase \"Wareneingang buchen\" as UC2\n  usecase \"Bestand pruefen\" as UC3\n  usecase \"Inventurdifferenz melden\" as UC4\n  usecase \"Nachbestellung ausloesen\" as UC5\n  usecase \"Bestellung uebermitteln\" as UC6\n}\n\nLager -- UC1\nLager -- UC2\nLager -- UC3\nLager -- UC4\nEinkauf -- UC5\nLieferant -- UC6\n\nUC4 ..> UC3 : <<extend>>\nUC5 ..> UC6 : <<include>>\n@enduml",
+    "explanation": "Lagermitarbeitende führen operative Lagerfunktionen aus, während Einkaufsmitarbeitende für Nachbestellungen zuständig sind. Das Lieferantensystem ist ein externer Akteur, da die Bestellung an ein anderes System übermittelt wird. Die Übermittlung ist fester Bestandteil einer Nachbestellung und wird daher per Include modelliert. Das Melden einer Inventurdifferenz tritt nur auf, wenn bei der Bestandsprüfung eine Abweichung festgestellt wird, und wird deshalb als Extend dargestellt.",
+    "expected_elements": [
+      "Systemgrenze für die Lagerverwaltung",
+      "Akteur Lagermitarbeiter",
+      "Akteur Einkaufsmitarbeiter",
+      "Externer Akteur Lieferantensystem",
+      "Use Case Artikel erfassen",
+      "Use Case Wareneingang buchen",
+      "Use Case Bestand prüfen",
+      "Use Case Inventurdifferenz melden",
+      "Use Case Nachbestellung auslösen",
+      "Use Case Bestellung übermitteln",
+      "Include-Beziehung für Bestellübermittlung",
+      "Extend-Beziehung für Inventurdifferenz"
+    ],
+    "hints": [
+      {
+        "level": 1,
+        "title": "Operative und kaufmännische Rolle trennen",
+        "text": "Lagermitarbeitende arbeiten direkt mit Artikeln und Beständen. Einkaufsmitarbeitende kümmern sich um Nachbestellungen."
+      },
+      {
+        "level": 2,
+        "title": "Externe Übermittlung erkennen",
+        "text": "Wenn eine Bestellung an ein anderes System gesendet wird, ist dieses System ein externer Akteur."
+      },
+      {
+        "level": 3,
+        "title": "Sonderfall als Erweiterung modellieren",
+        "text": "Eine Inventurdifferenz entsteht nur bei einer Abweichung während der Bestandsprüfung. Deshalb ist sie eine optionale Erweiterung."
+      }
+    ],
+    "tags": [
+      "UML",
+      "Use-Case-Diagramm",
+      "Lagerverwaltung",
+      "Warenwirtschaft",
+      "Externer Akteur",
+      "Include",
+      "Extend",
+      "AP2"
+    ]
+  },
+  {
+    "id": "uml-usecase-medium-005",
+    "type": "uml",
+    "diagram_type": "use_case",
+    "difficulty": "medium",
+    "topic": "application-portal",
+    "title": "Bewerbungsportal",
+    "scenario": "Ein Unternehmen möchte Bewerbungen über ein Online-Portal verwalten. Bewerber können ein Benutzerkonto anlegen, Bewerbungen einreichen und den Status einsehen. Personalmitarbeitende prüfen Bewerbungen und senden Rückmeldungen. Für geschützte Bewerberfunktionen wird ein externer Authentifizierungsdienst verwendet. Bei geeigneten Bewerbungen kann optional ein Vorstellungsgespräch geplant werden.",
+    "requirements": [
+      "Modellieren Sie das Bewerbungsportal mit einer Systemgrenze.",
+      "Ein Bewerber kann ein Benutzerkonto anlegen.",
+      "Ein Bewerber kann eine Bewerbung einreichen.",
+      "Ein Bewerber kann den Bewerbungsstatus einsehen.",
+      "Für geschützte Bewerberfunktionen wird eine Authentifizierung durchgeführt.",
+      "Die Authentifizierung nutzt einen externen Authentifizierungsdienst.",
+      "Ein Personalmitarbeiter kann Bewerbungen prüfen.",
+      "Ein Personalmitarbeiter kann eine Rückmeldung senden.",
+      "Bei geeigneten Bewerbungen kann optional ein Vorstellungsgespräch geplant werden.",
+      "Die Rückmeldung soll eine Benachrichtigung an den Bewerber auslösen."
+    ],
+    "task": "Erstellen Sie ein UML-Use-Case-Diagramm für das beschriebene Bewerbungsportal. Modellieren Sie Bewerber, Personalmitarbeiter und externe Authentifizierung sowie passende Include- und Extend-Beziehungen.",
+    "starter_plantuml": "@startuml\nleft to right direction\nactor \"Bewerber\" as Bewerber\nactor \"Personalmitarbeiter\" as HR\n\nrectangle \"Bewerbungsportal\" {\n}\n@enduml",
+    "solution_plantuml": "@startuml\nleft to right direction\nactor \"Bewerber\" as Bewerber\nactor \"Personalmitarbeiter\" as HR\nactor \"Authentifizierungsdienst\" as Auth\n\nrectangle \"Bewerbungsportal\" {\n  usecase \"Benutzerkonto anlegen\" as UC1\n  usecase \"Authentifizierung durchfuehren\" as UC2\n  usecase \"Bewerbung einreichen\" as UC3\n  usecase \"Bewerbungsstatus einsehen\" as UC4\n  usecase \"Bewerbung pruefen\" as UC5\n  usecase \"Rueckmeldung senden\" as UC6\n  usecase \"Benachrichtigung ausloesen\" as UC7\n  usecase \"Vorstellungsgespraech planen\" as UC8\n}\n\nBewerber -- UC1\nBewerber -- UC3\nBewerber -- UC4\nHR -- UC5\nHR -- UC6\nHR -- UC8\nAuth -- UC2\n\nUC3 ..> UC2 : <<include>>\nUC4 ..> UC2 : <<include>>\nUC6 ..> UC7 : <<include>>\nUC8 ..> UC5 : <<extend>>\n@enduml",
+    "explanation": "Bewerber und Personalmitarbeiter werden als getrennte Akteure modelliert, weil sie unterschiedliche Ziele im Portal verfolgen. Der Authentifizierungsdienst ist ein externes System, das an der Authentifizierung beteiligt ist. Für Bewerbung einreichen und Bewerbungsstatus einsehen ist eine Authentifizierung erforderlich, weshalb diese Beziehung als Include modelliert wird. Das Senden einer Rückmeldung löst immer eine Benachrichtigung aus. Das Planen eines Vorstellungsgesprächs ist dagegen nur bei geeigneten Bewerbungen erforderlich und erweitert die Bewerbungsprüfung optional.",
+    "expected_elements": [
+      "Systemgrenze für das Bewerbungsportal",
+      "Akteur Bewerber",
+      "Akteur Personalmitarbeiter",
+      "Externer Akteur Authentifizierungsdienst",
+      "Use Case Benutzerkonto anlegen",
+      "Use Case Authentifizierung durchführen",
+      "Use Case Bewerbung einreichen",
+      "Use Case Bewerbungsstatus einsehen",
+      "Use Case Bewerbung prüfen",
+      "Use Case Rückmeldung senden",
+      "Use Case Benachrichtigung auslösen",
+      "Use Case Vorstellungsgespräch planen",
+      "Include-Beziehungen zur Authentifizierung und Benachrichtigung",
+      "Extend-Beziehung für Vorstellungsgespräch planen"
+    ],
+    "hints": [
+      {
+        "level": 1,
+        "title": "Bewerber- und HR-Sicht trennen",
+        "text": "Bewerber reichen Unterlagen ein und sehen ihren Status. Personalmitarbeitende prüfen und beantworten Bewerbungen."
+      },
+      {
+        "level": 2,
+        "title": "Authentifizierung als Voraussetzung erkennen",
+        "text": "Einige Funktionen setzen voraus, dass der Bewerber authentifiziert ist. Solche verpflichtenden Teilabläufe können per Include dargestellt werden."
+      },
+      {
+        "level": 3,
+        "title": "Optionales Gespräch modellieren",
+        "text": "Ein Vorstellungsgespräch wird nicht bei jeder Bewerbung geplant, sondern nur bei passenden Kandidaten. Das spricht für eine Extend-Beziehung."
+      }
+    ],
+    "tags": [
+      "UML",
+      "Use-Case-Diagramm",
+      "Bewerbungsportal",
+      "Personalverwaltung",
+      "Externer Akteur",
+      "Include",
+      "Extend",
+      "AP2"
+    ]
+  }
+]

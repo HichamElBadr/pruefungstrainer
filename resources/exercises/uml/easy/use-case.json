@@ -1,0 +1,322 @@
+[
+  {
+    "id": "uml-use-case-easy-001",
+    "type": "uml",
+    "diagram_type": "use_case",
+    "difficulty": "easy",
+    "topic": "requirements-modeling",
+    "title": "Online-Bestellung",
+    "scenario": "Ein Kunde nutzt einen Onlineshop, um Produkte zu suchen und eine Bestellung abzusenden.",
+    "requirements": [
+      "Der Kunde ist der primäre Akteur.",
+      "Produkte suchen und Bestellung absenden sind Anwendungsfälle."
+    ],
+    "task": "Erstelle ein Use-Case-Diagramm für den beschriebenen Ausschnitt.",
+    "starter_plantuml": null,
+    "solution_plantuml": "@startuml\nleft to right direction\nactor Kunde\nrectangle Onlineshop {\n  usecase \"Produkte suchen\" as Suche\n  usecase \"Bestellung absenden\" as Bestellung\n}\nKunde --> Suche\nKunde --> Bestellung\n@enduml",
+    "explanation": "Der Akteur Kunde interagiert mit den beiden fachlichen Anwendungsfällen innerhalb der Systemgrenze.",
+    "expected_elements": [
+      "Akteur Kunde",
+      "Anwendungsfall Produkte suchen",
+      "Anwendungsfall Bestellung absenden",
+      "Systemgrenze Onlineshop"
+    ],
+    "tags": [
+      "UML",
+      "Use Case",
+      "Anforderungen",
+      "AP2"
+    ]
+  },
+  {
+    "id": "uml-usecase-easy-001",
+    "type": "uml",
+    "diagram_type": "use_case",
+    "difficulty": "easy",
+    "topic": "actors-system-boundary",
+    "title": "Bibliothekskonto verwalten",
+    "scenario": "Eine Stadtbibliothek möchte ein einfaches Online-System bereitstellen. Nutzer sollen Bücher suchen, ihr eigenes Konto einsehen und ausgeliehene Medien verlängern können. Bibliotheksmitarbeitende sollen zusätzlich Ausleihen und Rückgaben im System erfassen.",
+    "requirements": [
+      "Modellieren Sie das Online-Bibliothekssystem mit einer klaren Systemgrenze.",
+      "Ein Bibliotheksnutzer kann den Katalog durchsuchen.",
+      "Ein Bibliotheksnutzer kann sein Konto einsehen.",
+      "Ein Bibliotheksnutzer kann ausgeliehene Medien verlängern.",
+      "Ein Bibliotheksmitarbeiter kann eine Ausleihe erfassen.",
+      "Ein Bibliotheksmitarbeiter kann eine Rückgabe erfassen.",
+      "Achten Sie auf passende Akteure und einfache Anwendungsfälle."
+    ],
+    "task": "Erstellen Sie ein UML-Use-Case-Diagramm für das beschriebene Online-Bibliothekssystem. Modellieren Sie die beteiligten Akteure, die Systemgrenze und die wichtigsten Anwendungsfälle.",
+    "starter_plantuml": "@startuml\nleft to right direction\nactor \"Bibliotheksnutzer\" as Nutzer\n\nrectangle \"Online-Bibliothekssystem\" {\n}\n@enduml",
+    "solution_plantuml": "@startuml\nleft to right direction\nactor \"Bibliotheksnutzer\" as Nutzer\nactor \"Bibliotheksmitarbeiter\" as Mitarbeiter\n\nrectangle \"Online-Bibliothekssystem\" {\n  usecase \"Katalog durchsuchen\" as UC1\n  usecase \"Konto einsehen\" as UC2\n  usecase \"Medien verlaengern\" as UC3\n  usecase \"Ausleihe erfassen\" as UC4\n  usecase \"Rueckgabe erfassen\" as UC5\n}\n\nNutzer --> UC1\nNutzer --> UC2\nNutzer --> UC3\nMitarbeiter --> UC4\nMitarbeiter --> UC5\n@enduml",
+    "explanation": "Das System wird durch eine Systemgrenze als Online-Bibliothekssystem abgegrenzt. Der Bibliotheksnutzer ist ein primärer Akteur für selbstständige Online-Funktionen wie Suche, Kontoeinsicht und Verlängerung. Der Bibliotheksmitarbeiter ist ein weiterer Akteur, weil Ausleihe und Rückgabe fachlich durch das Personal erfasst werden. Include- oder Extend-Beziehungen sind hier nicht notwendig, da die Anwendungsfälle unabhängig und einfach gehalten sind.",
+    "expected_elements": [
+      "Systemgrenze für das Online-Bibliothekssystem",
+      "Akteur Bibliotheksnutzer",
+      "Akteur Bibliotheksmitarbeiter",
+      "Use Case Katalog durchsuchen",
+      "Use Case Konto einsehen",
+      "Use Case Medien verlängern",
+      "Use Case Ausleihe erfassen",
+      "Use Case Rückgabe erfassen",
+      "Sinnvolle Zuordnung der Akteure zu den Use Cases"
+    ],
+    "hints": [
+      {
+        "level": 1,
+        "title": "System abgrenzen",
+        "text": "Überlegen Sie zuerst, welche Funktionen innerhalb des Bibliothekssystems stattfinden und welche Personen nur mit dem System interagieren."
+      },
+      {
+        "level": 2,
+        "title": "Akteure trennen",
+        "text": "Bibliotheksnutzer und Bibliotheksmitarbeiter haben unterschiedliche Ziele. Deshalb sollten sie als getrennte Akteure modelliert werden."
+      },
+      {
+        "level": 3,
+        "title": "Einfache Use Cases verwenden",
+        "text": "Katalogsuche, Kontoeinsicht, Verlängerung, Ausleihe und Rückgabe können jeweils als eigene Anwendungsfälle innerhalb der Systemgrenze dargestellt werden."
+      }
+    ],
+    "tags": [
+      "UML",
+      "Use-Case-Diagramm",
+      "Akteure",
+      "Systemgrenze",
+      "Bibliothek",
+      "AP2"
+    ]
+  },
+  {
+    "id": "uml-usecase-easy-002",
+    "type": "uml",
+    "diagram_type": "use_case",
+    "difficulty": "easy",
+    "topic": "basic-user-actions",
+    "title": "Online-Bestellung aufgeben",
+    "scenario": "Ein kleiner Webshop verkauft Bürobedarf an Privat- und Geschäftskunden. Kunden sollen Produkte suchen, Artikel in den Warenkorb legen und eine Bestellung abschließen können. Nach dem Bestellabschluss wird die Bestellung durch das Shopsystem gespeichert.",
+    "requirements": [
+      "Modellieren Sie den Webshop mit einer Systemgrenze.",
+      "Ein Kunde kann Produkte suchen.",
+      "Ein Kunde kann Produktdetails anzeigen.",
+      "Ein Kunde kann Artikel in den Warenkorb legen.",
+      "Ein Kunde kann den Warenkorb anzeigen.",
+      "Ein Kunde kann eine Bestellung abschließen.",
+      "Die Use Cases sollen einfache Kundenaktionen im Webshop darstellen."
+    ],
+    "task": "Erstellen Sie ein UML-Use-Case-Diagramm für den beschriebenen Webshop. Berücksichtigen Sie den Kunden als Akteur, die Systemgrenze und die wichtigsten Anwendungsfälle einer Online-Bestellung.",
+    "starter_plantuml": "@startuml\nleft to right direction\nactor \"Kunde\" as Kunde\n\nrectangle \"Webshop\" {\n}\n@enduml",
+    "solution_plantuml": "@startuml\nleft to right direction\nactor \"Kunde\" as Kunde\n\nrectangle \"Webshop\" {\n  usecase \"Produkte suchen\" as UC1\n  usecase \"Produktdetails anzeigen\" as UC2\n  usecase \"Artikel in Warenkorb legen\" as UC3\n  usecase \"Warenkorb anzeigen\" as UC4\n  usecase \"Bestellung abschliessen\" as UC5\n}\n\nKunde --> UC1\nKunde --> UC2\nKunde --> UC3\nKunde --> UC4\nKunde --> UC5\n@enduml",
+    "explanation": "Der Kunde ist der zentrale Akteur, weil er alle beschriebenen Funktionen im Webshop auslöst. Die Systemgrenze enthält nur Funktionen, die vom Webshop bereitgestellt werden. Für eine einfache Aufgabe werden die einzelnen Kundenaktionen als eigenständige Use Cases modelliert. Eine Zerlegung mit Include- oder Extend-Beziehungen ist hier nicht erforderlich, da der Fokus auf Akteur, Systemgrenze und grundlegenden Anwendungsfällen liegt.",
+    "expected_elements": [
+      "Systemgrenze für den Webshop",
+      "Akteur Kunde",
+      "Use Case Produkte suchen",
+      "Use Case Produktdetails anzeigen",
+      "Use Case Artikel in Warenkorb legen",
+      "Use Case Warenkorb anzeigen",
+      "Use Case Bestellung abschließen",
+      "Direkte Beziehungen zwischen Kunde und den Kundenaktionen"
+    ],
+    "hints": [
+      {
+        "level": 1,
+        "title": "Kundenziele sammeln",
+        "text": "Lesen Sie das Szenario aus Sicht des Kunden. Jede fachliche Aktion des Kunden kann ein möglicher Use Case sein."
+      },
+      {
+        "level": 2,
+        "title": "Systemgrenze nicht vergessen",
+        "text": "Alle Webshop-Funktionen gehören in die Systemgrenze. Der Kunde bleibt außerhalb der Systemgrenze."
+      },
+      {
+        "level": 3,
+        "title": "Keine technischen Details modellieren",
+        "text": "Datenbank speichern oder interne Verarbeitungsschritte müssen nicht als eigene Akteure modelliert werden. Zeigen Sie die sichtbaren Funktionen des Webshops."
+      }
+    ],
+    "tags": [
+      "UML",
+      "Use-Case-Diagramm",
+      "Webshop",
+      "Systemgrenze",
+      "Kundenaktionen",
+      "AP2"
+    ]
+  },
+  {
+    "id": "uml-usecase-easy-003",
+    "type": "uml",
+    "diagram_type": "use_case",
+    "difficulty": "easy",
+    "topic": "appointment-booking",
+    "title": "Termin beim Arzt buchen",
+    "scenario": "Eine Arztpraxis möchte ein einfaches Online-Terminportal anbieten. Patienten sollen freie Termine suchen, einen Termin buchen und einen bereits gebuchten Termin stornieren können. Praxismitarbeitende sollen Termine im System verwalten.",
+    "requirements": [
+      "Modellieren Sie das Online-Terminportal mit einer Systemgrenze.",
+      "Ein Patient kann freie Termine suchen.",
+      "Ein Patient kann einen Termin buchen.",
+      "Ein Patient kann einen Termin stornieren.",
+      "Ein Praxismitarbeiter kann Termine anlegen.",
+      "Ein Praxismitarbeiter kann Termine ändern.",
+      "Achten Sie darauf, Akteure und Use Cases fachlich sinnvoll zu benennen."
+    ],
+    "task": "Erstellen Sie ein UML-Use-Case-Diagramm für das Online-Terminportal einer Arztpraxis. Stellen Sie Patienten- und Mitarbeiterfunktionen als Anwendungsfälle dar.",
+    "starter_plantuml": "@startuml\nleft to right direction\nactor \"Patient\" as Patient\n\nrectangle \"Online-Terminportal\" {\n}\n@enduml",
+    "solution_plantuml": "@startuml\nleft to right direction\nactor \"Patient\" as Patient\nactor \"Praxismitarbeiter\" as Mitarbeiter\n\nrectangle \"Online-Terminportal\" {\n  usecase \"Freie Termine suchen\" as UC1\n  usecase \"Termin buchen\" as UC2\n  usecase \"Termin stornieren\" as UC3\n  usecase \"Termin anlegen\" as UC4\n  usecase \"Termin aendern\" as UC5\n}\n\nPatient --> UC1\nPatient --> UC2\nPatient --> UC3\nMitarbeiter --> UC4\nMitarbeiter --> UC5\n@enduml",
+    "explanation": "Patient und Praxismitarbeiter sind unterschiedliche Akteure, weil sie verschiedene Ziele gegenüber dem System haben. Der Patient nutzt das Portal zur Suche, Buchung und Stornierung eigener Termine. Der Praxismitarbeiter pflegt dagegen die verfügbaren Termine. Die Use Cases bleiben bewusst einfach und beschreiben von außen sichtbare Funktionen des Terminportals.",
+    "expected_elements": [
+      "Systemgrenze für das Online-Terminportal",
+      "Akteur Patient",
+      "Akteur Praxismitarbeiter",
+      "Use Case freie Termine suchen",
+      "Use Case Termin buchen",
+      "Use Case Termin stornieren",
+      "Use Case Termin anlegen",
+      "Use Case Termin ändern",
+      "Passende Verbindungen zwischen Akteuren und Use Cases"
+    ],
+    "hints": [
+      {
+        "level": 1,
+        "title": "Rollen unterscheiden",
+        "text": "Patienten und Praxismitarbeitende nutzen das System aus unterschiedlichen Gründen. Daraus ergeben sich unterschiedliche Akteure."
+      },
+      {
+        "level": 2,
+        "title": "Use Cases als Ziele formulieren",
+        "text": "Benennen Sie Use Cases als fachliche Ziele, zum Beispiel Termin buchen oder Termin stornieren."
+      },
+      {
+        "level": 3,
+        "title": "Mitarbeiterfunktionen ergänzen",
+        "text": "Die Verwaltung der Termine gehört nicht zum Patienten, sondern zum Praxismitarbeiter. Modellieren Sie dafür eigene Use Cases."
+      }
+    ],
+    "tags": [
+      "UML",
+      "Use-Case-Diagramm",
+      "Terminverwaltung",
+      "Akteure",
+      "Arztpraxis",
+      "AP2"
+    ]
+  },
+  {
+    "id": "uml-usecase-easy-004",
+    "type": "uml",
+    "diagram_type": "use_case",
+    "difficulty": "easy",
+    "topic": "learning-platform",
+    "title": "Schulungsplattform nutzen",
+    "scenario": "Ein Unternehmen stellt eine interne Schulungsplattform bereit. Mitarbeitende können Kurse ansehen, Lernmaterial öffnen, Aufgaben bearbeiten und ihre Ergebnisse einsehen. Trainer sollen Kurse und Aufgaben verwalten können.",
+    "requirements": [
+      "Modellieren Sie die Schulungsplattform mit einer Systemgrenze.",
+      "Ein Mitarbeiter kann verfügbare Kurse ansehen.",
+      "Ein Mitarbeiter kann Lernmaterial öffnen.",
+      "Ein Mitarbeiter kann Aufgaben bearbeiten.",
+      "Ein Mitarbeiter kann eigene Ergebnisse einsehen.",
+      "Ein Trainer kann Kurse verwalten.",
+      "Ein Trainer kann Aufgaben verwalten."
+    ],
+    "task": "Erstellen Sie ein UML-Use-Case-Diagramm für die interne Schulungsplattform. Berücksichtigen Sie Mitarbeitende und Trainer als Akteure sowie die wichtigsten Lern- und Verwaltungsfunktionen.",
+    "starter_plantuml": "@startuml\nleft to right direction\nactor \"Mitarbeiter\" as Mitarbeiter\n\nrectangle \"Schulungsplattform\" {\n}\n@enduml",
+    "solution_plantuml": "@startuml\nleft to right direction\nactor \"Mitarbeiter\" as Mitarbeiter\nactor \"Trainer\" as Trainer\n\nrectangle \"Schulungsplattform\" {\n  usecase \"Kurse ansehen\" as UC1\n  usecase \"Lernmaterial oeffnen\" as UC2\n  usecase \"Aufgaben bearbeiten\" as UC3\n  usecase \"Ergebnisse einsehen\" as UC4\n  usecase \"Kurse verwalten\" as UC5\n  usecase \"Aufgaben verwalten\" as UC6\n}\n\nMitarbeiter --> UC1\nMitarbeiter --> UC2\nMitarbeiter --> UC3\nMitarbeiter --> UC4\nTrainer --> UC5\nTrainer --> UC6\n@enduml",
+    "explanation": "Die Schulungsplattform besitzt zwei fachliche Nutzerrollen. Mitarbeitende verwenden das System zum Lernen und zur Kontrolle ihrer Ergebnisse. Trainer verwalten dagegen Inhalte wie Kurse und Aufgaben. Die Systemgrenze macht deutlich, dass nur Funktionen der Plattform modelliert werden und die Akteure außerhalb des Systems stehen.",
+    "expected_elements": [
+      "Systemgrenze für die Schulungsplattform",
+      "Akteur Mitarbeiter",
+      "Akteur Trainer",
+      "Use Case Kurse ansehen",
+      "Use Case Lernmaterial öffnen",
+      "Use Case Aufgaben bearbeiten",
+      "Use Case Ergebnisse einsehen",
+      "Use Case Kurse verwalten",
+      "Use Case Aufgaben verwalten",
+      "Trennung zwischen Lernfunktionen und Verwaltungsfunktionen"
+    ],
+    "hints": [
+      {
+        "level": 1,
+        "title": "Lernende und verwaltende Rolle trennen",
+        "text": "Nicht jede Person nutzt die Plattform gleich. Mitarbeitende lernen mit der Plattform, Trainer pflegen die Inhalte."
+      },
+      {
+        "level": 2,
+        "title": "Funktionen gruppieren",
+        "text": "Ordnen Sie Lernfunktionen dem Mitarbeiter und Verwaltungsfunktionen dem Trainer zu."
+      },
+      {
+        "level": 3,
+        "title": "Use Cases innerhalb der Plattform platzieren",
+        "text": "Kurse ansehen, Lernmaterial öffnen, Aufgaben bearbeiten und Inhalte verwalten sind Funktionen der Schulungsplattform und gehören daher in die Systemgrenze."
+      }
+    ],
+    "tags": [
+      "UML",
+      "Use-Case-Diagramm",
+      "Lernplattform",
+      "Akteure",
+      "Systemgrenze",
+      "AP2"
+    ]
+  },
+  {
+    "id": "uml-usecase-easy-005",
+    "type": "uml",
+    "diagram_type": "use_case",
+    "difficulty": "easy",
+    "topic": "member-management",
+    "title": "Kundenkonto im Fitnessstudio",
+    "scenario": "Ein Fitnessstudio möchte seinen Mitgliedern ein Online-Portal anbieten. Mitglieder sollen ihre Vertragsdaten ansehen, Kurse buchen, Buchungen stornieren und persönliche Stammdaten ändern können. Studiomitarbeitende sollen Mitglieder und Kursangebote verwalten.",
+    "requirements": [
+      "Modellieren Sie das Mitgliederportal mit einer klaren Systemgrenze.",
+      "Ein Mitglied kann Vertragsdaten ansehen.",
+      "Ein Mitglied kann Kurse buchen.",
+      "Ein Mitglied kann Kursbuchungen stornieren.",
+      "Ein Mitglied kann Stammdaten ändern.",
+      "Ein Studiomitarbeiter kann Mitglieder verwalten.",
+      "Ein Studiomitarbeiter kann Kursangebote verwalten."
+    ],
+    "task": "Erstellen Sie ein UML-Use-Case-Diagramm für das Online-Portal eines Fitnessstudios. Modellieren Sie die Akteure, die Systemgrenze und die wichtigsten Funktionen für Mitglieder und Studiomitarbeitende.",
+    "starter_plantuml": "@startuml\nleft to right direction\nactor \"Mitglied\" as Mitglied\n\nrectangle \"Fitnessstudio-Portal\" {\n}\n@enduml",
+    "solution_plantuml": "@startuml\nleft to right direction\nactor \"Mitglied\" as Mitglied\nactor \"Studiomitarbeiter\" as Mitarbeiter\n\nrectangle \"Fitnessstudio-Portal\" {\n  usecase \"Vertragsdaten ansehen\" as UC1\n  usecase \"Kurs buchen\" as UC2\n  usecase \"Kursbuchung stornieren\" as UC3\n  usecase \"Stammdaten aendern\" as UC4\n  usecase \"Mitglieder verwalten\" as UC5\n  usecase \"Kursangebote verwalten\" as UC6\n}\n\nMitglied --> UC1\nMitglied --> UC2\nMitglied --> UC3\nMitglied --> UC4\nMitarbeiter --> UC5\nMitarbeiter --> UC6\n@enduml",
+    "explanation": "Das Mitglied ist der primäre Akteur für die Selbstservice-Funktionen des Portals. Der Studiomitarbeiter ist ein eigener Akteur, weil er administrative Funktionen ausführt. Die Use Cases beschreiben sichtbare Ziele der Akteure und keine internen Verarbeitungsschritte. Für eine einfache Use-Case-Aufgabe reichen direkte Beziehungen zwischen Akteuren und Anwendungsfällen aus.",
+    "expected_elements": [
+      "Systemgrenze für das Fitnessstudio-Portal",
+      "Akteur Mitglied",
+      "Akteur Studiomitarbeiter",
+      "Use Case Vertragsdaten ansehen",
+      "Use Case Kurs buchen",
+      "Use Case Kursbuchung stornieren",
+      "Use Case Stammdaten ändern",
+      "Use Case Mitglieder verwalten",
+      "Use Case Kursangebote verwalten",
+      "Sinnvolle Zuordnung von Selbstservice- und Verwaltungsfunktionen"
+    ],
+    "hints": [
+      {
+        "level": 1,
+        "title": "Selbstservice erkennen",
+        "text": "Alle Funktionen, die ein Mitglied selbst im Portal ausführen kann, sollten als Use Cases des Mitglieds modelliert werden."
+      },
+      {
+        "level": 2,
+        "title": "Administrative Funktionen trennen",
+        "text": "Mitgliederverwaltung und Verwaltung der Kursangebote sind Aufgaben des Studiomitarbeiters und sollten nicht dem Mitglied zugeordnet werden."
+      },
+      {
+        "level": 3,
+        "title": "Systemgrenze sauber setzen",
+        "text": "Die Use Cases liegen innerhalb des Fitnessstudio-Portals. Mitglied und Studiomitarbeiter stehen als externe Akteure außerhalb der Systemgrenze."
+      }
+    ],
+    "tags": [
+      "UML",
+      "Use-Case-Diagramm",
+      "Fitnessstudio",
+      "Mitgliederverwaltung",
+      "Systemgrenze",
+      "AP2"
+    ]
+  }
+]

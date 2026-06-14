@@ -148,6 +148,32 @@ class JsonExerciseProviderTest extends TestCase
         $this->assertIsArray($activity['expected_elements']);
     }
 
+    public function test_uml_fixture_files_are_split_by_diagram_type(): void
+    {
+        $expectedFiles = [
+            'class' => 'class.json',
+            'er' => 'er.json',
+            'use_case' => 'use-case.json',
+            'sequence' => 'sequence.json',
+            'activity' => 'activity.json',
+        ];
+
+        foreach (config('exercises.difficulties') as $difficulty) {
+            foreach (glob(resource_path("exercises/uml/{$difficulty}/*.json")) ?: [] as $file) {
+                $fixtures = json_decode(file_get_contents($file), true, flags: JSON_THROW_ON_ERROR);
+
+                $this->assertTrue(array_is_list($fixtures), basename($file).' must contain a list.');
+                $this->assertNotEmpty($fixtures, basename($file).' must contain exercises.');
+
+                $diagramTypes = array_values(array_unique(array_column($fixtures, 'diagram_type')));
+
+                $this->assertCount(1, $diagramTypes, basename($file).' must contain one diagram type.');
+                $this->assertArrayHasKey($diagramTypes[0], $expectedFiles);
+                $this->assertSame($expectedFiles[$diagramTypes[0]], basename($file));
+            }
+        }
+    }
+
     public function test_valid_structured_uml_fixture_accepts_nullable_starter_and_empty_expected_elements(): void
     {
         $directory = $this->temporaryRoot.'/uml/easy';

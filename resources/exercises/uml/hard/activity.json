@@ -1,0 +1,70 @@
+[
+  {
+    "id": "uml-activity-hard-001",
+    "type": "uml",
+    "diagram_type": "activity",
+    "difficulty": "hard",
+    "topic": "process-modeling",
+    "title": "IT-Störung im Support bearbeiten",
+    "scenario": "Ein Unternehmen möchte den Ablauf zur Bearbeitung von IT-Störungen standardisieren. Mitarbeitende melden Störungen über ein Supportportal. Das System erstellt daraus Tickets, die je nach Vollständigkeit, Kategorie und Lösbarkeit im First-Level-Support bearbeitet oder an den Second-Level-Support eskaliert werden.",
+    "requirements": [
+      "Der Prozess beginnt mit der Meldung einer Störung über das Supportportal.",
+      "Das System prüft, ob alle Pflichtangaben vorhanden sind.",
+      "Fehlen Angaben, muss der Mitarbeiter die Meldung ergänzen.",
+      "Bei vollständiger Meldung wird ein Ticket erstellt.",
+      "Das Ticket wird anhand von Kategorie und Priorität einer Supportgruppe zugeordnet.",
+      "Ein Supportmitarbeiter übernimmt das Ticket.",
+      "Es wird geprüft, ob eine bekannte Lösung existiert.",
+      "Falls eine bekannte Lösung existiert, wird diese angewendet.",
+      "Falls keine bekannte Lösung existiert, wird die Ursache analysiert.",
+      "Bei fehlenden Zusatzinformationen wird eine Rückfrage gestellt und auf Antwort gewartet.",
+      "Wenn das Problem im First-Level-Support gelöst werden kann, wird die Lösung umgesetzt.",
+      "Wenn das Problem nicht im First-Level-Support gelöst werden kann, wird an den Second-Level-Support eskaliert.",
+      "Nach der Behebung wird die Lösung dokumentiert und der Mitarbeiter informiert.",
+      "Der Mitarbeiter bestätigt, ob die Störung behoben wurde.",
+      "Falls die Störung weiterhin besteht, wird das Ticket erneut geöffnet.",
+      "Falls die Störung behoben ist, wird das Ticket geschlossen."
+    ],
+    "task": "Erstellen Sie ein Aktivitätsdiagramm für den beschriebenen Supportprozess. Berücksichtigen Sie Entscheidungen, Wiederholungen, Eskalation und ein eindeutiges Prozessende.",
+    "starter_plantuml": "@startuml\nstart\n:Störung im Supportportal melden;\n:Pflichtangaben prüfen;\n@enduml",
+    "solution_plantuml": "@startuml\nstart\n:Stoerung im Supportportal melden;\n\nwhile (Pflichtangaben vollstaendig?) is (nein)\n  :Fehlende Angaben anfordern;\n  :Mitarbeiter ergaenzt Meldung;\nendwhile (ja)\n\n:Ticket erstellen;\n:Kategorie und Prioritaet bestimmen;\n:Supportgruppe zuordnen;\n:Ticket uebernehmen;\n\nif (Bekannte Loesung vorhanden?) then (ja)\n  :Bekannte Loesung anwenden;\nelse (nein)\n  :Ursache analysieren;\n\n  while (Zusatzinformationen noetig?) is (ja)\n    :Rueckfrage an Mitarbeiter senden;\n    :Antwort abwarten;\n    :Antwort pruefen;\n  endwhile (nein)\n\n  if (Im First-Level loesbar?) then (ja)\n    :Loesung umsetzen;\n  else (nein)\n    :An Second-Level-Support eskalieren;\n    :Problem im Second-Level analysieren;\n    :Loesung erarbeiten und umsetzen;\n  endif\nendif\n\n:Loesung dokumentieren;\n:Mitarbeiter informieren;\n\nif (Stoerung behoben?) then (ja)\n  :Ticket schliessen;\nelse (nein)\n  :Ticket erneut oeffnen;\n  :Nachbearbeitung starten;\n  :Loesung korrigieren;\n  :Ticket schliessen;\nendif\n\nstop\n@enduml",
+    "explanation": "Das Aktivitätsdiagramm enthält mehrere typische Prozessstrukturen: eine Wiederholung bei unvollständigen Pflichtangaben, eine Entscheidung zwischen bekannter Lösung und Analyse, eine Rückfrageschleife bei fehlenden Informationen und eine Eskalation an den Second-Level-Support. Am Ende entscheidet die Bestätigung des Mitarbeiters, ob das Ticket geschlossen oder erneut geöffnet wird.",
+    "expected_elements": [
+      "Startknoten und Endknoten",
+      "Schleife bei fehlenden Pflichtangaben",
+      "Ticketanlage und Zuordnung zur Supportgruppe",
+      "Entscheidung zu bekannter Lösung",
+      "Analysepfad bei unbekannter Lösung",
+      "Rückfrageschleife bei fehlenden Zusatzinformationen",
+      "Entscheidung First-Level oder Second-Level",
+      "Eskalation an Second-Level-Support",
+      "Bestätigung durch Mitarbeiter",
+      "Erneutes Öffnen bei nicht behobener Störung",
+      "Ticketabschluss"
+    ],
+    "hints": [
+      {
+        "level": 1,
+        "title": "Hauptphasen erkennen",
+        "text": "Teilen Sie den Prozess zuerst grob in Meldung, Prüfung, Bearbeitung, Rückmeldung und Abschluss ein."
+      },
+      {
+        "level": 2,
+        "title": "Wiederholungen modellieren",
+        "text": "Zwei Stellen eignen sich für Schleifen: unvollständige Pflichtangaben und fehlende Zusatzinformationen während der Analyse."
+      },
+      {
+        "level": 3,
+        "title": "Eskalation und erneutes Öffnen trennen",
+        "text": "Die Eskalation passiert während der Bearbeitung, wenn der First-Level-Support nicht ausreicht. Das erneute Öffnen passiert erst nach der Rückmeldung des Mitarbeiters, wenn die Störung weiterhin besteht."
+      }
+    ],
+    "tags": [
+      "UML",
+      "Aktivitätsdiagramm",
+      "Prozessmodellierung",
+      "Supportprozess",
+      "AP2"
+    ]
+  }
+]

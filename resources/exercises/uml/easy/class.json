@@ -21,7 +21,12 @@
       "Klasse Bestellung",
       "Beziehung zwischen Kunde und Bestellung"
     ],
-    "tags": ["UML", "Klassendiagramm", "Beziehung", "AP2"]
+    "tags": [
+      "UML",
+      "Klassendiagramm",
+      "Beziehung",
+      "AP2"
+    ]
   },
   {
     "id": "uml-easy-002",
@@ -45,7 +50,12 @@
       "Klasse Abteilung",
       "Zuordnungsbeziehung"
     ],
-    "tags": ["UML", "Klassendiagramm", "Attribute", "AP2"]
+    "tags": [
+      "UML",
+      "Klassendiagramm",
+      "Attribute",
+      "AP2"
+    ]
   },
   {
     "id": "uml-easy-003",
@@ -69,54 +79,11 @@
       "Klasse Profil",
       "Besitzbeziehung"
     ],
-    "tags": ["UML", "Klassendiagramm", "Beziehung", "AP2"]
-  },
-  {
-    "id": "uml-er-easy-001",
-    "type": "uml",
-    "diagram_type": "er",
-    "difficulty": "easy",
-    "topic": "data-modeling",
-    "title": "Kunden und Aufträge",
-    "scenario": "Ein Betrieb speichert Kunden und die von ihnen erteilten Aufträge.",
-    "requirements": [
-      "Jeder Kunde besitzt eine eindeutige Kundennummer.",
-      "Jeder Auftrag besitzt eine eindeutige Auftragsnummer.",
-      "Ein Kunde kann mehrere Aufträge erteilen."
-    ],
-    "task": "Erstelle ein einfaches ER-/Datenmodell.",
-    "starter_plantuml": "@startuml\nentity Kunde\nentity Auftrag\n@enduml",
-    "solution_plantuml": "@startuml\nentity Kunde {\n  * kundennummer : Integer\n  --\n  name : String\n}\nentity Auftrag {\n  * auftragsnummer : Integer\n  --\n  datum : Date\n}\nKunde ||--o{ Auftrag : erteilt\n@enduml",
-    "explanation": "Die Kardinalität zeigt, dass ein Kunde keinen, einen oder mehrere Aufträge erteilen kann, während jeder Auftrag genau einem Kunden zugeordnet ist.",
-    "expected_elements": [
-      "Entität Kunde",
-      "Entität Auftrag",
-      "1:n-Beziehung"
-    ],
-    "tags": ["UML", "ER", "Datenmodell", "AP2"]
-  },
-  {
-    "id": "uml-use-case-easy-001",
-    "type": "uml",
-    "diagram_type": "use_case",
-    "difficulty": "easy",
-    "topic": "requirements-modeling",
-    "title": "Online-Bestellung",
-    "scenario": "Ein Kunde nutzt einen Onlineshop, um Produkte zu suchen und eine Bestellung abzusenden.",
-    "requirements": [
-      "Der Kunde ist der primäre Akteur.",
-      "Produkte suchen und Bestellung absenden sind Anwendungsfälle."
-    ],
-    "task": "Erstelle ein Use-Case-Diagramm für den beschriebenen Ausschnitt.",
-    "starter_plantuml": null,
-    "solution_plantuml": "@startuml\nleft to right direction\nactor Kunde\nrectangle Onlineshop {\n  usecase \"Produkte suchen\" as Suche\n  usecase \"Bestellung absenden\" as Bestellung\n}\nKunde --> Suche\nKunde --> Bestellung\n@enduml",
-    "explanation": "Der Akteur Kunde interagiert mit den beiden fachlichen Anwendungsfällen innerhalb der Systemgrenze.",
-    "expected_elements": [
-      "Akteur Kunde",
-      "Anwendungsfall Produkte suchen",
-      "Anwendungsfall Bestellung absenden",
-      "Systemgrenze Onlineshop"
-    ],
-    "tags": ["UML", "Use Case", "Anforderungen", "AP2"]
+    "tags": [
+      "UML",
+      "Klassendiagramm",
+      "Beziehung",
+      "AP2"
+    ]
   }
 ]

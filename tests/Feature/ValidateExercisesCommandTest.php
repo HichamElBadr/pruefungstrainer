@@ -30,9 +30,10 @@ class ValidateExercisesCommandTest extends TestCase
             '--skip-uml-render' => true,
         ])
             ->expectsOutputToContain('sql/easy: 3')
-            ->expectsOutputToContain('uml/easy: 5')
+            ->expectsOutputToContain('uml/easy: 10')
+            ->expectsOutputToContain('uml/hard: 9')
             ->expectsOutputToContain('calculation/hard: 7')
-            ->expectsOutputToContain('Validated 43 exercises successfully.')
+            ->expectsOutputToContain('Validated 58 exercises successfully.')
             ->assertExitCode(0);
     }
 

@@ -1,5 +1,139 @@
 # Progress Update
 
+## 2026-06-14 - Repair hard UML Use Case fixtures
+
+### Summary
+
+Repaired five newly added hard UML Use Case exercises and added them to the
+validated exercise catalog.
+
+### Changed Files
+
+- `resources/exercises/uml/hard/use-case.json`
+- `tests/Feature/ImportExercisesCommandTest.php`
+- `tests/Feature/ValidateExercisesCommandTest.php`
+- `docs/progress.md`
+
+### Behavior Changes
+
+- The hard Use Case fixture file is valid JSON and uses the supported
+  `use_case` diagram type.
+- Quoted PlantUML actor, system boundary, and use case labels are escaped
+  correctly.
+- Five hard Use Case exercises are available in the catalog.
+- The catalog now contains 58 exercises, including 28 UML exercises and 9 hard
+  UML exercises.
+- Cached sample solution images were generated for all five new exercises.
+
+### Testing
+
+- `php artisan exercises:validate`: passed, 58 exercises validated.
+- `php artisan exercises:import`: passed, 58 exercises imported.
+- `php artisan exercises:render-uml-solutions`: passed, 5 rendered, 23 reused,
+  and 0 failed.
+- `php artisan test --filter=JsonExerciseProviderTest`: passed, 16 tests and
+  620 assertions.
+- `php artisan test --filter=ImportExercisesCommandTest`: passed, 9 tests and
+  59 assertions.
+- `php artisan test --filter=ValidateExercisesCommandTest`: passed, 6 tests and
+  16 assertions.
+- `php artisan test`: passed, 103 tests and 1103 assertions.
+- `vendor/bin/pint --test tests/Unit/JsonExerciseProviderTest.php
+  tests/Feature/ImportExercisesCommandTest.php
+  tests/Feature/ValidateExercisesCommandTest.php`: passed.
+
+### Follow-up Notes
+
+- None.
+
+## 2026-06-14 - Split UML fixtures by diagram type
+
+### Summary
+
+Reorganized the UML fixture catalog into one JSON file per diagram type and
+difficulty while repairing the newly added medium Use Case exercises.
+
+### Changed Files
+
+- `resources/exercises/uml/easy/class.json`
+- `resources/exercises/uml/easy/er.json`
+- `resources/exercises/uml/easy/use-case.json`
+- `resources/exercises/uml/medium/class.json`
+- `resources/exercises/uml/medium/sequence.json`
+- `resources/exercises/uml/medium/use-case.json`
+- `resources/exercises/uml/hard/activity.json`
+- `resources/exercises/uml/hard/class.json`
+- Removed the former `exercises.json` files from the UML difficulty folders.
+- `tests/Unit/JsonExerciseProviderTest.php`
+- `tests/Feature/ImportExercisesCommandTest.php`
+- `tests/Feature/ValidateExercisesCommandTest.php`
+- `docs/progress.md`
+
+### Behavior Changes
+
+- Each UML fixture file now contains exercises for exactly one diagram type.
+- Existing class, ER, sequence, activity, and Use Case exercises remain in the
+  catalog after the restructuring.
+- Five new medium Use Case exercises were repaired and added to the catalog.
+- Invalid `usecase` values now use the supported `use_case` diagram type.
+- Invalid JSON suffixes and unescaped PlantUML labels were removed.
+- The UML catalog now contains 10 easy, 9 medium, and 4 hard exercises.
+- A fixture coverage test enforces the file-to-diagram-type convention.
+
+### Testing
+
+- `php artisan exercises:validate`: passed, 53 exercises validated.
+- `php artisan exercises:import`: passed, 53 exercises imported.
+- `php artisan test --filter=JsonExerciseProviderTest`: passed, 16 tests and
+  605 assertions.
+- `php artisan test --filter=ImportExercisesCommandTest`: passed, 9 tests and
+  59 assertions.
+- `php artisan test --filter=ValidateExercisesCommandTest`: passed, 6 tests and
+  15 assertions.
+- `php artisan test`: passed, 103 tests and 1087 assertions.
+- `vendor/bin/pint --test tests/Unit/JsonExerciseProviderTest.php
+  tests/Feature/ImportExercisesCommandTest.php
+  tests/Feature/ValidateExercisesCommandTest.php`: passed.
+
+### Follow-up Notes
+
+- Empty files are intentionally not created for diagram types that have no
+  exercises at a given difficulty because empty fixture collections are
+  invalid.
+
+## 2026-06-14 - Repair the easy UML fixture collection
+
+### Summary
+
+Repaired the easy UML fixture file after a second JSON collection had been
+appended with invalid syntax and unsupported diagram type values.
+
+### Changed Files
+
+- `resources/exercises/uml/easy/exercises.json`
+- `docs/progress.md`
+
+### Behavior Changes
+
+- The original and newly added easy UML exercises now form one valid JSON
+  collection containing ten exercises.
+- The five added Use Case exercises use the supported `use_case` diagram type.
+- Quoted PlantUML actor, system boundary, and use case labels are escaped
+  correctly in JSON.
+- All repaired exercises can be validated, rendered, loaded, and imported into
+  the exercise catalog.
+
+### Testing
+
+- `php artisan exercises:validate`: passed, 48 exercises validated.
+- `php artisan exercises:import`: passed, 48 exercises imported.
+- `php artisan test --filter=JsonExerciseProviderTest`: passed, 15 tests and
+  555 assertions.
+
+### Follow-up Notes
+
+- None.
+
 ## 2026-06-14 - Widen the shared desktop application shell
 
 ### Summary

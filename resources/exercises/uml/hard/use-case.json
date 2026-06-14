@@ -1,0 +1,386 @@
+[
+  {
+    "id": "uml-usecase-hard-001",
+    "type": "uml",
+    "diagram_type": "use_case",
+    "difficulty": "hard",
+    "topic": "healthcare-external-systems",
+    "title": "Krankenhaus-Informationssystem",
+    "scenario": "Ein Krankenhaus möchte ein zentrales Informationssystem einsetzen. Ärztinnen und Ärzte dokumentieren Behandlungen und fordern Laboruntersuchungen an. Pflegekräfte dokumentieren Medikamentengaben. Abrechnungsmitarbeitende übermitteln abrechnungsrelevante Leistungen an ein externes Abrechnungssystem. Laborbefunde werden über ein externes Laborsystem importiert. Für geschützte Patientendaten muss vor dem Zugriff eine Berechtigungsprüfung erfolgen. In Notfällen kann zusätzlich eine Notfallbehandlung dokumentiert werden.",
+    "requirements": [
+      "Modellieren Sie das Krankenhaus-Informationssystem mit einer klaren Systemgrenze.",
+      "Ein Arzt kann Patientendaten einsehen.",
+      "Ein Arzt kann Behandlungen dokumentieren.",
+      "Ein Arzt kann Laboruntersuchungen anfordern.",
+      "Eine Pflegekraft kann Medikamentengaben dokumentieren.",
+      "Ein Laborsystem liefert Laborbefunde an das Krankenhaus-Informationssystem.",
+      "Ein Abrechnungsmitarbeiter kann Leistungen abrechnen.",
+      "Die Abrechnung übermittelt Leistungsdaten an ein externes Abrechnungssystem.",
+      "Für Zugriffe auf Patientendaten soll eine Berechtigungsprüfung durchgeführt werden.",
+      "Eine Notfallbehandlung ist ein optionaler Sonderfall der Behandlungsdokumentation."
+    ],
+    "task": "Erstellen Sie ein UML-Use-Case-Diagramm für das Krankenhaus-Informationssystem. Berücksichtigen Sie mehrere fachliche Rollen, externe Systeme, verpflichtende Berechtigungsprüfungen und einen optionalen Notfall-Sonderfall.",
+    "starter_plantuml": "@startuml\nleft to right direction\nactor \"Arzt\" as Arzt\nactor \"Pflegekraft\" as Pflege\n\nrectangle \"Krankenhaus-Informationssystem\" {\n}\n@enduml",
+    "solution_plantuml": "@startuml\nleft to right direction\nactor \"Arzt\" as Arzt\nactor \"Pflegekraft\" as Pflege\nactor \"Abrechnungsmitarbeiter\" as Abrechnung\nactor \"Laborsystem\" as Labor\nactor \"Abrechnungssystem\" as ExternAbrechnung\n\nrectangle \"Krankenhaus-Informationssystem\" {\n  usecase \"Patientendaten einsehen\" as UC1\n  usecase \"Behandlung dokumentieren\" as UC2\n  usecase \"Laboruntersuchung anfordern\" as UC3\n  usecase \"Laborbefund importieren\" as UC4\n  usecase \"Medikamentengabe dokumentieren\" as UC5\n  usecase \"Leistung abrechnen\" as UC6\n  usecase \"Leistungsdaten uebermitteln\" as UC7\n  usecase \"Berechtigung pruefen\" as UC8\n  usecase \"Notfallbehandlung dokumentieren\" as UC9\n}\n\nArzt -- UC1\nArzt -- UC2\nArzt -- UC3\nPflege -- UC5\nAbrechnung -- UC6\nLabor -- UC4\nExternAbrechnung -- UC7\n\nUC1 ..> UC8 : <<include>>\nUC2 ..> UC8 : <<include>>\nUC3 ..> UC8 : <<include>>\nUC5 ..> UC8 : <<include>>\nUC6 ..> UC7 : <<include>>\nUC9 ..> UC2 : <<extend>>\n@enduml",
+    "explanation": "Das Diagramm unterscheidet medizinische, pflegerische und administrative Akteure. Laborsystem und Abrechnungssystem sind externe Akteure, weil sie außerhalb des Krankenhaus-Informationssystems liegen. Die Berechtigungsprüfung wird bei geschützten Patientendaten als verpflichtender Teilablauf modelliert und daher per Include eingebunden. Die Übermittlung von Leistungsdaten ist fester Bestandteil der Abrechnung. Die Notfallbehandlung ist kein Standardfall jeder Behandlung, sondern ein optionaler Sonderfall und wird deshalb als Extend zur Behandlungsdokumentation dargestellt.",
+    "expected_elements": [
+      "Systemgrenze für das Krankenhaus-Informationssystem",
+      "Akteur Arzt",
+      "Akteur Pflegekraft",
+      "Akteur Abrechnungsmitarbeiter",
+      "Externer Akteur Laborsystem",
+      "Externer Akteur Abrechnungssystem",
+      "Use Case Patientendaten einsehen",
+      "Use Case Behandlung dokumentieren",
+      "Use Case Laboruntersuchung anfordern",
+      "Use Case Laborbefund importieren",
+      "Use Case Medikamentengabe dokumentieren",
+      "Use Case Leistung abrechnen",
+      "Use Case Leistungsdaten übermitteln",
+      "Use Case Berechtigung prüfen",
+      "Include-Beziehungen zur Berechtigungsprüfung",
+      "Include-Beziehung für die Leistungsdatenübermittlung",
+      "Extend-Beziehung für Notfallbehandlung"
+    ],
+    "hints": [
+      {
+        "level": 1,
+        "title": "Fachliche Rollen trennen",
+        "text": "Ärztliche, pflegerische und administrative Aufgaben werden von unterschiedlichen Akteuren ausgeführt."
+      },
+      {
+        "level": 2,
+        "title": "Externe Systeme erkennen",
+        "text": "Laborsystem und Abrechnungssystem gehören nicht zum Krankenhaus-Informationssystem, interagieren aber mit einzelnen Use Cases."
+      },
+      {
+        "level": 3,
+        "title": "Pflicht und Sonderfall unterscheiden",
+        "text": "Berechtigungsprüfungen sind verpflichtende Teilabläufe bei Patientendatenzugriffen. Eine Notfallbehandlung tritt dagegen nur in bestimmten Situationen auf und eignet sich als Extend."
+      }
+    ],
+    "tags": [
+      "UML",
+      "Use-Case-Diagramm",
+      "Krankenhaus",
+      "Externe Systeme",
+      "Berechtigung",
+      "Include",
+      "Extend",
+      "AP2"
+    ]
+  },
+  {
+    "id": "uml-usecase-hard-002",
+    "type": "uml",
+    "diagram_type": "use_case",
+    "difficulty": "hard",
+    "topic": "online-exam-process",
+    "title": "Online-Prüfungssystem",
+    "scenario": "Eine Bildungseinrichtung möchte ein Online-Prüfungssystem einführen. Prüflinge melden sich über einen externen Authentifizierungsdienst an, starten eine freigegebene Prüfung, bearbeiten Aufgaben und geben ihre Prüfung ab. Die Abgabe wird automatisch validiert. Prüfer können Prüfungen freigeben, Abgaben bewerten und Ergebnisse veröffentlichen. Aufsichtspersonen überwachen laufende Prüfungen und können bei Auffälligkeiten einen Täuschungsverdacht melden. Bei technischen Problemen kann ein Prüfling eine Störung melden.",
+    "requirements": [
+      "Modellieren Sie das Online-Prüfungssystem mit einer Systemgrenze.",
+      "Ein Prüfling kann eine Prüfung starten.",
+      "Vor dem Start der Prüfung muss eine Authentifizierung durchgeführt werden.",
+      "Die Authentifizierung erfolgt über einen externen Authentifizierungsdienst.",
+      "Vor dem Start soll geprüft werden, ob die Prüfung freigegeben ist.",
+      "Ein Prüfling kann Aufgaben bearbeiten.",
+      "Ein Prüfling kann die Prüfung abgeben.",
+      "Bei der Abgabe soll eine automatische Validierung durchgeführt werden.",
+      "Ein Prüfer kann Prüfungen freigeben.",
+      "Ein Prüfer kann Abgaben bewerten.",
+      "Ein Prüfer kann Ergebnisse veröffentlichen.",
+      "Eine Aufsichtsperson kann laufende Prüfungen überwachen.",
+      "Eine Aufsichtsperson kann optional einen Täuschungsverdacht melden.",
+      "Ein Prüfling kann bei technischen Problemen optional eine Störung melden."
+    ],
+    "task": "Erstellen Sie ein UML-Use-Case-Diagramm für das beschriebene Online-Prüfungssystem. Berücksichtigen Sie Authentifizierung, Prüfungsfreigabe, automatische Validierung, Aufsicht, Bewertung und optionale Sonderfälle.",
+    "starter_plantuml": "@startuml\nleft to right direction\nactor \"Pruefling\" as Pruefling\nactor \"Pruefer\" as Pruefer\n\nrectangle \"Online-Pruefungssystem\" {\n}\n@enduml",
+    "solution_plantuml": "@startuml\nleft to right direction\nactor \"Pruefling\" as Pruefling\nactor \"Pruefer\" as Pruefer\nactor \"Aufsichtsperson\" as Aufsicht\nactor \"Authentifizierungsdienst\" as Auth\n\nrectangle \"Online-Pruefungssystem\" {\n  usecase \"Pruefung starten\" as UC1\n  usecase \"Authentifizierung durchfuehren\" as UC2\n  usecase \"Aufgaben bearbeiten\" as UC3\n  usecase \"Pruefung abgeben\" as UC4\n  usecase \"Abgabe validieren\" as UC5\n  usecase \"Pruefung freigeben\" as UC6\n  usecase \"Abgabe bewerten\" as UC7\n  usecase \"Ergebnis veroeffentlichen\" as UC8\n  usecase \"Pruefung ueberwachen\" as UC9\n  usecase \"Taeuschungsverdacht melden\" as UC10\n  usecase \"Technische Stoerung melden\" as UC11\n  usecase \"Pruefungsfreigabe pruefen\" as UC12\n}\n\nPruefling -- UC1\nPruefling -- UC3\nPruefling -- UC4\nPruefling -- UC11\nPruefer -- UC6\nPruefer -- UC7\nPruefer -- UC8\nAufsicht -- UC9\nAufsicht -- UC10\nAuth -- UC2\n\nUC1 ..> UC2 : <<include>>\nUC1 ..> UC12 : <<include>>\nUC4 ..> UC5 : <<include>>\nUC10 ..> UC9 : <<extend>>\nUC11 ..> UC3 : <<extend>>\n@enduml",
+    "explanation": "Das Diagramm trennt die Rollen Prüfling, Prüfer und Aufsichtsperson. Der Authentifizierungsdienst ist ein externes System, das nur am Authentifizierungsvorgang beteiligt ist. Die Authentifizierung und die Prüfung der Freigabe sind vor dem Prüfungsstart verpflichtend und werden deshalb per Include modelliert. Auch die Validierung der Abgabe ist ein verpflichtender Teil der Prüfungsabgabe. Täuschungsverdacht und technische Störung sind Sonderfälle, die nicht in jedem Prüfungsablauf auftreten, und werden daher als Extend-Beziehungen dargestellt.",
+    "expected_elements": [
+      "Systemgrenze für das Online-Prüfungssystem",
+      "Akteur Prüfling",
+      "Akteur Prüfer",
+      "Akteur Aufsichtsperson",
+      "Externer Akteur Authentifizierungsdienst",
+      "Use Case Prüfung starten",
+      "Use Case Authentifizierung durchführen",
+      "Use Case Prüfungsfreigabe prüfen",
+      "Use Case Aufgaben bearbeiten",
+      "Use Case Prüfung abgeben",
+      "Use Case Abgabe validieren",
+      "Use Case Prüfung freigeben",
+      "Use Case Abgabe bewerten",
+      "Use Case Ergebnis veröffentlichen",
+      "Use Case Prüfung überwachen",
+      "Use Case Täuschungsverdacht melden",
+      "Use Case Technische Störung melden",
+      "Include-Beziehung für Authentifizierung",
+      "Include-Beziehung für Prüfungsfreigabe prüfen",
+      "Include-Beziehung für Abgabevalidierung",
+      "Extend-Beziehung für Täuschungsverdacht",
+      "Extend-Beziehung für technische Störung"
+    ],
+    "hints": [
+      {
+        "level": 1,
+        "title": "Prüfungsrollen identifizieren",
+        "text": "Prüflinge bearbeiten und geben Prüfungen ab, Prüfer verwalten und bewerten, Aufsichtspersonen überwachen."
+      },
+      {
+        "level": 2,
+        "title": "Pflichtabläufe als Include modellieren",
+        "text": "Authentifizierung, Freigabeprüfung und Abgabevalidierung sind verpflichtende Teilabläufe bestimmter Hauptfunktionen."
+      },
+      {
+        "level": 3,
+        "title": "Sonderfälle als Extend modellieren",
+        "text": "Täuschungsverdacht und technische Störung treten nur unter bestimmten Bedingungen auf und erweitern den normalen Ablauf."
+      }
+    ],
+    "tags": [
+      "UML",
+      "Use-Case-Diagramm",
+      "Online-Prüfung",
+      "Authentifizierung",
+      "Aufsicht",
+      "Include",
+      "Extend",
+      "AP2"
+    ]
+  },
+  {
+    "id": "uml-usecase-hard-003",
+    "type": "uml",
+    "diagram_type": "use_case",
+    "difficulty": "hard",
+    "topic": "fleet-management-workflow",
+    "title": "Fuhrparkverwaltung mit Schadensmeldung",
+    "scenario": "Ein Unternehmen verwaltet Dienstfahrzeuge über ein digitales Fuhrparksystem. Mitarbeitende können verfügbare Fahrzeuge suchen und buchen. Für bestimmte Fahrzeugklassen ist eine Genehmigung durch eine Führungskraft erforderlich. Fuhrparkmanager verwalten Fahrzeuge, prüfen Schadensmeldungen und beauftragen bei Bedarf eine externe Werkstatt. Bei versicherungsrelevanten Schäden wird zusätzlich eine externe Versicherung informiert. Nach einem Schaden kann optional ein Ersatzfahrzeug gebucht werden.",
+    "requirements": [
+      "Modellieren Sie das Fuhrparksystem mit einer Systemgrenze.",
+      "Ein Mitarbeiter kann verfügbare Fahrzeuge suchen.",
+      "Ein Mitarbeiter kann ein Fahrzeug buchen.",
+      "Vor einer Fahrzeugbuchung soll die Verfügbarkeit geprüft werden.",
+      "Für bestimmte Fahrzeugklassen kann eine Genehmigung erforderlich sein.",
+      "Eine Führungskraft kann Buchungen genehmigen.",
+      "Ein Mitarbeiter kann einen Schaden melden.",
+      "Ein Fuhrparkmanager kann Fahrzeuge verwalten.",
+      "Ein Fuhrparkmanager kann Schadensmeldungen prüfen.",
+      "Ein Fuhrparkmanager kann eine Reparatur beauftragen.",
+      "Eine Reparaturbeauftragung wird an eine externe Werkstatt übermittelt.",
+      "Bei versicherungsrelevanten Schäden kann eine Versicherung informiert werden.",
+      "Nach einem Schaden kann optional ein Ersatzfahrzeug gebucht werden."
+    ],
+    "task": "Erstellen Sie ein UML-Use-Case-Diagramm für die Fuhrparkverwaltung. Modellieren Sie Rollen, externe Partner, verpflichtende Prüfungen und optionale Sonderfälle wie Genehmigung, Versicherung und Ersatzfahrzeug.",
+    "starter_plantuml": "@startuml\nleft to right direction\nactor \"Mitarbeiter\" as Mitarbeiter\nactor \"Fuhrparkmanager\" as Manager\n\nrectangle \"Fuhrparksystem\" {\n}\n@enduml",
+    "solution_plantuml": "@startuml\nleft to right direction\nactor \"Mitarbeiter\" as Mitarbeiter\nactor \"Fuehrungskraft\" as Fuehrung\nactor \"Fuhrparkmanager\" as Manager\nactor \"Werkstatt\" as Werkstatt\nactor \"Versicherung\" as Versicherung\n\nrectangle \"Fuhrparksystem\" {\n  usecase \"Verfuegbare Fahrzeuge suchen\" as UC1\n  usecase \"Fahrzeug buchen\" as UC2\n  usecase \"Verfuegbarkeit pruefen\" as UC3\n  usecase \"Buchung genehmigen\" as UC4\n  usecase \"Schaden melden\" as UC5\n  usecase \"Fahrzeuge verwalten\" as UC6\n  usecase \"Schadensmeldung pruefen\" as UC7\n  usecase \"Reparatur beauftragen\" as UC8\n  usecase \"Werkstattauftrag uebermitteln\" as UC9\n  usecase \"Versicherung informieren\" as UC10\n  usecase \"Ersatzfahrzeug buchen\" as UC11\n}\n\nMitarbeiter -- UC1\nMitarbeiter -- UC2\nMitarbeiter -- UC5\nMitarbeiter -- UC11\nFuehrung -- UC4\nManager -- UC6\nManager -- UC7\nManager -- UC8\nWerkstatt -- UC9\nVersicherung -- UC10\n\nUC2 ..> UC3 : <<include>>\nUC4 ..> UC2 : <<extend>>\nUC8 ..> UC9 : <<include>>\nUC10 ..> UC7 : <<extend>>\nUC11 ..> UC2 : <<extend>>\n@enduml",
+    "explanation": "Mitarbeitende nutzen das System für Fahrzeugsuche, Buchung und Schadensmeldung. Führungskräfte werden als eigener Akteur modelliert, weil sie nur bei genehmigungspflichtigen Buchungen beteiligt sind. Fuhrparkmanager verwalten Fahrzeuge und prüfen Schäden. Werkstatt und Versicherung sind externe Akteure. Die Verfügbarkeitsprüfung ist fester Bestandteil der Buchung und wird per Include modelliert. Eine Genehmigung ist nur bei bestimmten Fahrzeugklassen erforderlich und erweitert daher die Fahrzeugbuchung. Eine Reparaturbeauftragung umfasst immer die Übermittlung an die Werkstatt. Die Versicherung wird nur bei versicherungsrelevanten Schäden informiert. Das Ersatzfahrzeug ist eine optionale Sonderform der Fahrzeugbuchung nach einem Schaden.",
+    "expected_elements": [
+      "Systemgrenze für das Fuhrparksystem",
+      "Akteur Mitarbeiter",
+      "Akteur Führungskraft",
+      "Akteur Fuhrparkmanager",
+      "Externer Akteur Werkstatt",
+      "Externer Akteur Versicherung",
+      "Use Case verfügbare Fahrzeuge suchen",
+      "Use Case Fahrzeug buchen",
+      "Use Case Verfügbarkeit prüfen",
+      "Use Case Buchung genehmigen",
+      "Use Case Schaden melden",
+      "Use Case Fahrzeuge verwalten",
+      "Use Case Schadensmeldung prüfen",
+      "Use Case Reparatur beauftragen",
+      "Use Case Werkstattauftrag übermitteln",
+      "Use Case Versicherung informieren",
+      "Use Case Ersatzfahrzeug buchen",
+      "Include-Beziehung für Verfügbarkeitsprüfung",
+      "Include-Beziehung für Werkstattauftrag",
+      "Extend-Beziehung für Genehmigung",
+      "Extend-Beziehung für Versicherung",
+      "Extend-Beziehung für Ersatzfahrzeugbuchung"
+    ],
+    "hints": [
+      {
+        "level": 1,
+        "title": "Rollen im Fuhrpark erkennen",
+        "text": "Nicht alle Beteiligten haben dieselbe Aufgabe: Mitarbeitende buchen, Führungskräfte genehmigen, Fuhrparkmanager verwalten und prüfen."
+      },
+      {
+        "level": 2,
+        "title": "Externe Partner modellieren",
+        "text": "Werkstatt und Versicherung gehören nicht zum Fuhrparksystem, sind aber an bestimmten Use Cases beteiligt."
+      },
+      {
+        "level": 3,
+        "title": "Bedingte Abläufe unterscheiden",
+        "text": "Verfügbarkeit prüfen ist bei jeder Buchung nötig. Genehmigung, Versicherung und Ersatzfahrzeug treten nur in bestimmten Fällen auf."
+      }
+    ],
+    "tags": [
+      "UML",
+      "Use-Case-Diagramm",
+      "Fuhrparkverwaltung",
+      "Genehmigung",
+      "Externe Akteure",
+      "Include",
+      "Extend",
+      "AP2"
+    ]
+  },
+  {
+    "id": "uml-usecase-hard-004",
+    "type": "uml",
+    "diagram_type": "use_case",
+    "difficulty": "hard",
+    "topic": "ecommerce-after-sales",
+    "title": "E-Commerce mit Retouren und Reklamationen",
+    "scenario": "Ein Online-Shop möchte seine Prozesse nach dem Kauf digital abbilden. Kunden können Bestellungen einsehen, Retouren anmelden und Reklamationen einreichen. Bei einer Retoure wird ein Rücksendeetikett über einen externen Versanddienstleister erzeugt. Supportmitarbeitende prüfen Retouren und Reklamationen. Je nach Ergebnis kann eine Rückerstattung über einen externen Zahlungsdienst ausgelöst oder eine Ersatzlieferung veranlasst werden. Bei Reklamationen kann optional eine Schadensdokumentation angefordert werden.",
+    "requirements": [
+      "Modellieren Sie das E-Commerce-System mit einer Systemgrenze.",
+      "Ein Kunde kann Bestellungen einsehen.",
+      "Ein Kunde kann eine Retoure anmelden.",
+      "Ein Kunde kann eine Reklamation einreichen.",
+      "Bei einer Retoure soll ein Rücksendeetikett erzeugt werden.",
+      "Das Rücksendeetikett wird über einen externen Versanddienstleister erzeugt.",
+      "Ein Supportmitarbeiter kann Retouren prüfen.",
+      "Ein Supportmitarbeiter kann Reklamationen prüfen.",
+      "Eine Rückerstattung erfolgt über einen externen Zahlungsdienst.",
+      "Bei berechtigter Reklamation kann eine Ersatzlieferung veranlasst werden.",
+      "Bei bestimmten Reklamationen kann optional eine Schadensdokumentation angefordert werden."
+    ],
+    "task": "Erstellen Sie ein UML-Use-Case-Diagramm für den beschriebenen E-Commerce-Prozess nach dem Kauf. Berücksichtigen Sie Kunden, Support, Versanddienstleister, Zahlungsdienst sowie optionale und verpflichtende Teilabläufe.",
+    "starter_plantuml": "@startuml\nleft to right direction\nactor \"Kunde\" as Kunde\nactor \"Supportmitarbeiter\" as Support\n\nrectangle \"E-Commerce-System\" {\n}\n@enduml",
+    "solution_plantuml": "@startuml\nleft to right direction\nactor \"Kunde\" as Kunde\nactor \"Supportmitarbeiter\" as Support\nactor \"Versanddienstleister\" as Versand\nactor \"Zahlungsdienst\" as Zahlung\n\nrectangle \"E-Commerce-System\" {\n  usecase \"Bestellung einsehen\" as UC1\n  usecase \"Retoure anmelden\" as UC2\n  usecase \"Ruecksendeetikett erzeugen\" as UC3\n  usecase \"Reklamation einreichen\" as UC4\n  usecase \"Retoure pruefen\" as UC5\n  usecase \"Reklamation pruefen\" as UC6\n  usecase \"Rueckerstattung ausloesen\" as UC7\n  usecase \"Ersatzlieferung veranlassen\" as UC8\n  usecase \"Schadensdokumentation anfordern\" as UC9\n}\n\nKunde -- UC1\nKunde -- UC2\nKunde -- UC4\nSupport -- UC5\nSupport -- UC6\nSupport -- UC7\nSupport -- UC8\nSupport -- UC9\nVersand -- UC3\nZahlung -- UC7\n\nUC2 ..> UC3 : <<include>>\nUC7 ..> UC5 : <<extend>>\nUC7 ..> UC6 : <<extend>>\nUC8 ..> UC6 : <<extend>>\nUC9 ..> UC6 : <<extend>>\n@enduml",
+    "explanation": "Der Kunde löst nach dem Kauf Retouren und Reklamationen aus. Supportmitarbeitende prüfen diese Vorgänge und entscheiden über Rückerstattung, Ersatzlieferung oder weitere Nachweise. Der Versanddienstleister und der Zahlungsdienst sind externe Akteure. Das Erzeugen eines Rücksendeetiketts ist fester Bestandteil der Retourenanmeldung und wird daher per Include modelliert. Rückerstattung, Ersatzlieferung und Schadensdokumentation hängen vom Prüfergebnis ab und sind deshalb optionale Erweiterungen der Prüf-Use-Cases.",
+    "expected_elements": [
+      "Systemgrenze für das E-Commerce-System",
+      "Akteur Kunde",
+      "Akteur Supportmitarbeiter",
+      "Externer Akteur Versanddienstleister",
+      "Externer Akteur Zahlungsdienst",
+      "Use Case Bestellung einsehen",
+      "Use Case Retoure anmelden",
+      "Use Case Rücksendeetikett erzeugen",
+      "Use Case Reklamation einreichen",
+      "Use Case Retoure prüfen",
+      "Use Case Reklamation prüfen",
+      "Use Case Rückerstattung auslösen",
+      "Use Case Ersatzlieferung veranlassen",
+      "Use Case Schadensdokumentation anfordern",
+      "Include-Beziehung für Rücksendeetikett",
+      "Extend-Beziehung für Rückerstattung nach Retourenprüfung",
+      "Extend-Beziehung für Rückerstattung nach Reklamationsprüfung",
+      "Extend-Beziehung für Ersatzlieferung",
+      "Extend-Beziehung für Schadensdokumentation"
+    ],
+    "hints": [
+      {
+        "level": 1,
+        "title": "Nachkaufprozesse trennen",
+        "text": "Retoure und Reklamation sind verwandte, aber unterschiedliche Prozesse und sollten eigene Use Cases erhalten."
+      },
+      {
+        "level": 2,
+        "title": "Externe Dienstleister erkennen",
+        "text": "Versanddienstleister und Zahlungsdienst arbeiten mit dem System zusammen, gehören aber nicht zur Systemgrenze."
+      },
+      {
+        "level": 3,
+        "title": "Prüfungsergebnis beachten",
+        "text": "Nicht jede Retoure oder Reklamation führt automatisch zu Rückerstattung, Ersatzlieferung oder Schadensdokumentation. Diese Vorgänge sind optionale Erweiterungen."
+      }
+    ],
+    "tags": [
+      "UML",
+      "Use-Case-Diagramm",
+      "E-Commerce",
+      "Retoure",
+      "Reklamation",
+      "Externe Akteure",
+      "Include",
+      "Extend",
+      "AP2"
+    ]
+  },
+  {
+    "id": "uml-usecase-hard-005",
+    "type": "uml",
+    "diagram_type": "use_case",
+    "difficulty": "hard",
+    "topic": "identity-access-management",
+    "title": "Benutzer- und Rechteverwaltung",
+    "scenario": "Ein Unternehmen möchte ein zentrales System zur Benutzer- und Rechteverwaltung einführen. Administratoren können Benutzerkonten anlegen, Rollen zuweisen, Rechte entziehen und Benutzer deaktivieren. Normale Benutzer können sich anmelden und ihr Passwort zurücksetzen. Die Anmeldung nutzt einen externen Identitätsdienst und eine Zwei-Faktor-Prüfung. Sicherheitsrelevante Aktionen werden in einem Audit-Log protokolliert. Bei auffälligen Anmeldeversuchen kann optional ein Sicherheitsvorfall an ein externes Sicherheitsmonitoring gemeldet werden.",
+    "requirements": [
+      "Modellieren Sie das Rechteverwaltungssystem mit einer Systemgrenze.",
+      "Ein Benutzer kann sich anmelden.",
+      "Die Anmeldung nutzt einen externen Identitätsdienst.",
+      "Bei der Anmeldung soll eine Zwei-Faktor-Prüfung durchgeführt werden.",
+      "Ein Benutzer kann sein Passwort zurücksetzen.",
+      "Ein Administrator kann Benutzerkonten anlegen.",
+      "Ein Administrator kann Rollen zuweisen.",
+      "Ein Administrator kann Rechte entziehen.",
+      "Ein Administrator kann Benutzer deaktivieren.",
+      "Administrative Änderungen sollen eine Rechteprüfung durchführen.",
+      "Sicherheitsrelevante Aktionen sollen im Audit-Log protokolliert werden.",
+      "Bei auffälligen Anmeldeversuchen kann optional ein Sicherheitsvorfall gemeldet werden.",
+      "Das Sicherheitsmonitoring soll als externes System modelliert werden."
+    ],
+    "task": "Erstellen Sie ein UML-Use-Case-Diagramm für die Benutzer- und Rechteverwaltung. Berücksichtigen Sie Benutzer, Administrator, externe Identitätsprüfung, Zwei-Faktor-Prüfung, Audit-Protokollierung und optionale Sicherheitsvorfälle.",
+    "starter_plantuml": "@startuml\nleft to right direction\nactor \"Benutzer\" as Benutzer\nactor \"Administrator\" as Admin\n\nrectangle \"Rechteverwaltungssystem\" {\n}\n@enduml",
+    "solution_plantuml": "@startuml\nleft to right direction\nactor \"Benutzer\" as Benutzer\nactor \"Administrator\" as Admin\nactor \"Identitaetsdienst\" as IDP\nactor \"Audit-Log-System\" as Audit\nactor \"Sicherheitsmonitoring\" as Security\n\nrectangle \"Rechteverwaltungssystem\" {\n  usecase \"Anmelden\" as UC1\n  usecase \"Identitaet pruefen\" as UC2\n  usecase \"Zwei-Faktor-Pruefung durchfuehren\" as UC3\n  usecase \"Passwort zuruecksetzen\" as UC4\n  usecase \"Benutzerkonto anlegen\" as UC5\n  usecase \"Rolle zuweisen\" as UC6\n  usecase \"Rechte entziehen\" as UC7\n  usecase \"Benutzer deaktivieren\" as UC8\n  usecase \"Administratorberechtigung pruefen\" as UC9\n  usecase \"Aktion protokollieren\" as UC10\n  usecase \"Sicherheitsvorfall melden\" as UC11\n}\n\nBenutzer -- UC1\nBenutzer -- UC4\nAdmin -- UC5\nAdmin -- UC6\nAdmin -- UC7\nAdmin -- UC8\nIDP -- UC2\nAudit -- UC10\nSecurity -- UC11\n\nUC1 ..> UC2 : <<include>>\nUC1 ..> UC3 : <<include>>\nUC4 ..> UC2 : <<include>>\nUC5 ..> UC9 : <<include>>\nUC6 ..> UC9 : <<include>>\nUC7 ..> UC9 : <<include>>\nUC8 ..> UC9 : <<include>>\nUC5 ..> UC10 : <<include>>\nUC6 ..> UC10 : <<include>>\nUC7 ..> UC10 : <<include>>\nUC8 ..> UC10 : <<include>>\nUC11 ..> UC1 : <<extend>>\n@enduml",
+    "explanation": "Benutzer und Administratoren werden getrennt modelliert, weil sie unterschiedliche Ziele im System verfolgen. Der Identitätsdienst ist ein externer Akteur für die Identitätsprüfung, das Audit-Log-System ein externer technischer Akteur für die Protokollierung. Das Sicherheitsmonitoring wird als externer Akteur ergänzt, weil auffällige Anmeldeversuche an ein Sicherheits- oder Monitoring-System gemeldet werden. Die Identitätsprüfung und Zwei-Faktor-Prüfung sind feste Bestandteile der Anmeldung. Administrative Aktionen müssen die Administratorberechtigung prüfen und werden protokolliert, weshalb Include-Beziehungen verwendet werden. Ein Sicherheitsvorfall tritt nur bei auffälligen Anmeldeversuchen auf und erweitert daher den normalen Anmeldevorgang optional.",
+    "expected_elements": [
+      "Systemgrenze für das Rechteverwaltungssystem",
+      "Akteur Benutzer",
+      "Akteur Administrator",
+      "Externer Akteur Identitätsdienst",
+      "Externer Akteur Audit-Log-System",
+      "Externer Akteur Sicherheitsmonitoring",
+      "Use Case Anmelden",
+      "Use Case Identität prüfen",
+      "Use Case Zwei-Faktor-Prüfung durchführen",
+      "Use Case Passwort zurücksetzen",
+      "Use Case Benutzerkonto anlegen",
+      "Use Case Rolle zuweisen",
+      "Use Case Rechte entziehen",
+      "Use Case Benutzer deaktivieren",
+      "Use Case Administratorberechtigung prüfen",
+      "Use Case Aktion protokollieren",
+      "Use Case Sicherheitsvorfall melden",
+      "Include-Beziehungen für Identitätsprüfung und Zwei-Faktor-Prüfung",
+      "Include-Beziehungen für Administratorberechtigung prüfen",
+      "Include-Beziehungen für Audit-Protokollierung",
+      "Extend-Beziehung für Sicherheitsvorfall"
+    ],
+    "hints": [
+      {
+        "level": 1,
+        "title": "Benutzer und Administrator unterscheiden",
+        "text": "Normale Benutzer melden sich an und setzen Passwörter zurück. Administratoren verändern Benutzerkonten und Rechte."
+      },
+      {
+        "level": 2,
+        "title": "Sicherheitsfunktionen als Teilabläufe erkennen",
+        "text": "Identitätsprüfung, Zwei-Faktor-Prüfung, Berechtigungsprüfung und Protokollierung sind unterstützende Use Cases."
+      },
+      {
+        "level": 3,
+        "title": "Sicherheitsvorfall als Sonderfall modellieren",
+        "text": "Ein Sicherheitsvorfall entsteht nicht bei jeder Anmeldung, sondern nur bei auffälligem Verhalten. Deshalb eignet sich eine Extend-Beziehung. Das Sicherheitsmonitoring steht dabei als externer Empfänger außerhalb der Systemgrenze."
+      }
+    ],
+    "tags": [
+      "UML",
+      "Use-Case-Diagramm",
+      "Benutzerverwaltung",
+      "Rechteverwaltung",
+      "Authentifizierung",
+      "Audit",
+      "Include",
+      "Extend",
+      "AP2"
+    ]
+  }
+]

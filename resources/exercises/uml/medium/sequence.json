@@ -1,0 +1,31 @@
+[
+  {
+    "id": "uml-sequence-medium-001",
+    "type": "uml",
+    "diagram_type": "sequence",
+    "difficulty": "medium",
+    "topic": "interaction-modeling",
+    "title": "Anmeldung prüfen",
+    "scenario": "Ein Benutzer meldet sich an. Die Anwendung prüft die Zugangsdaten über einen Authentifizierungsdienst.",
+    "requirements": [
+      "Benutzer, Anwendung und Authentifizierungsdienst nehmen teil.",
+      "Die Anwendung leitet die Zugangsdaten zur Prüfung weiter.",
+      "Das Prüfergebnis wird an den Benutzer zurückgegeben."
+    ],
+    "task": "Erstelle ein Sequenzdiagramm für den Anmeldeablauf.",
+    "starter_plantuml": "@startuml\nactor Benutzer\nparticipant Anwendung\nparticipant AuthDienst\n@enduml",
+    "solution_plantuml": "@startuml\nactor Benutzer\nparticipant Anwendung\nparticipant AuthDienst\nBenutzer -> Anwendung : Zugangsdaten senden\nAnwendung -> AuthDienst : Zugangsdaten pruefen\nAuthDienst --> Anwendung : Ergebnis\nAnwendung --> Benutzer : Anmeldung bestaetigen\n@enduml",
+    "explanation": "Das Diagramm zeigt die zeitliche Reihenfolge der Nachrichten zwischen Benutzer, Anwendung und Authentifizierungsdienst.",
+    "expected_elements": [
+      "Drei Teilnehmer",
+      "Prüfanfrage an den Authentifizierungsdienst",
+      "Rückgabe des Ergebnisses"
+    ],
+    "tags": [
+      "UML",
+      "Sequenzdiagramm",
+      "Interaktion",
+      "AP2"
+    ]
+  }
+]
