@@ -1,5 +1,91 @@
 # Progress Update
 
+## 2026-06-14 - Widen the shared desktop application shell
+
+### Summary
+
+Expanded the shared authenticated page shell so dashboard, profile, SQL,
+calculation, UML, and future exercise views use wide desktop screens more
+effectively.
+
+### Changed Files
+
+- `resources/views/components/exercise-layout.blade.php`
+- `tests/Feature/ItExerciseFlowTest.php`
+- `docs/progress.md`
+
+### Behavior Changes
+
+- The sidebar and main content are centered together in a shared shell with a
+  1600-pixel maximum width instead of the previous 1280-pixel limit.
+- Existing mobile, tablet, sidebar, grid, spacing, and horizontal padding
+  behavior remains unchanged.
+- All current authenticated pages benefit from the wider content column through
+  the shared layout component.
+- Pages that need the previous narrower presentation can pass
+  `:narrow="true"` to the shared exercise layout.
+- Internal readability limits such as the profile form's `max-w-xl` remain in
+  place.
+
+### Testing
+
+- Shared-shell feature test: passed, 1 test and 20 assertions across dashboard,
+  profile, SQL, calculation, and UML pages.
+- `php artisan test`: passed, 102 tests and 1027 assertions.
+- `php artisan view:cache`: passed.
+- `npm.cmd run build`: passed.
+- `vendor/bin/pint --dirty`: passed.
+- `git diff --check`: passed.
+
+### Follow-up Notes
+
+- None.
+
+## 2026-06-14 - Refactor the UML desktop workspace
+
+### Summary
+
+Reorganized the UML exercise page into a compact, responsive workbench while
+preserving the existing exercise content and rendering flow.
+
+### Changed Files
+
+- `resources/views/components/exercise-layout.blade.php`
+- `resources/views/components/exercise/hints.blade.php`
+- `resources/views/it/uml-exercise/index.blade.php`
+- `tests/Feature/ItExerciseFlowTest.php`
+- `docs/progress.md`
+
+### Behavior Changes
+
+- The UML page uses a compact header and selection toolbar.
+- Large screens show task content in a five-part left column and the PlantUML
+  editor and preview in a seven-part right column.
+- Small screens continue to stack the same content vertically.
+- Hints and the sample solution remain available as compact disclosure
+  elements in the task column.
+- The diagram preview is always visible as a dedicated minimum-height panel
+  and displays a placeholder until the learner renders a diagram.
+- The PlantUML guidance is shown as muted helper text next to the render action
+  instead of a separate card.
+- Exercise text, request fields, routes, selection behavior, rendering, cached
+  sample solutions, and validation output remain unchanged.
+- Compact layout options on shared components are opt-in, so other exercise
+  pages retain their current presentation.
+
+### Testing
+
+- `php artisan test --filter=Uml`: passed, 14 tests and 84 assertions.
+- `php artisan test`: passed, 101 tests and 1007 assertions.
+- `php artisan view:cache`: passed.
+- `npm.cmd run build`: passed.
+- `vendor/bin/pint --dirty`: passed.
+- `git diff --check`: passed.
+
+### Follow-up Notes
+
+- None.
+
 ## 2026-06-14 - Cache rendered UML sample solutions
 
 ### Summary

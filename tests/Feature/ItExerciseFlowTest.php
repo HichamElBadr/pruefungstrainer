@@ -44,6 +44,26 @@ class ItExerciseFlowTest extends TestCase
         $this->get(route('uml.form'))->assertRedirect(route('login'));
     }
 
+    public function test_authenticated_pages_share_the_wide_desktop_shell(): void
+    {
+        $user = User::factory()->create();
+
+        foreach ([
+            route('dashboard'),
+            route('sql-uebung'),
+            route('calculation-exercises.index'),
+            route('uml.form'),
+            route('profile.edit'),
+        ] as $url) {
+            $this->actingAs($user)
+                ->get($url)
+                ->assertOk()
+                ->assertSee('data-exercise-shell', false)
+                ->assertSee('data-layout-width="wide"', false)
+                ->assertSee('max-w-[100rem]', false);
+        }
+    }
+
     public function test_sql_difficulty_selection_page_shows_options(): void
     {
         $user = User::factory()->create();
@@ -433,6 +453,13 @@ class ItExerciseFlowTest extends TestCase
             ->assertSeeText('Schwierigkeit: Einfach')
             ->assertSeeText('PlantUML-Eingabe')
             ->assertSeeText('Musterlösung anzeigen')
+            ->assertSee('data-uml-toolbar', false)
+            ->assertSee('data-uml-workspace', false)
+            ->assertSee('xl:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]', false)
+            ->assertSee('data-uml-task-column', false)
+            ->assertSee('data-uml-editor-column', false)
+            ->assertSee('data-uml-preview', false)
+            ->assertSeeText('Diagrammvorschau')
             ->assertSee(route('uml.solution-image', ['hash' => str_repeat('a', 64)]), false)
             ->assertSee('alt="Gerenderte UML-Musterlösung"', false)
             ->assertSessionMissing('uml_exercise_id');
