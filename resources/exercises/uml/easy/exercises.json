@@ -2,34 +2,121 @@
   {
     "id": "uml-easy-001",
     "type": "uml",
+    "diagram_type": "class",
     "difficulty": "easy",
     "topic": "class-diagram",
     "title": "Kunde und Bestellung",
-    "task": "Erstelle ein Klassendiagramm mit den Klassen Kunde und Bestellung. Kunde besitzt name und kundennummer. Bestellung besitzt bestellnummer und datum. Ein Kunde kann Bestellungen aufgeben.",
+    "scenario": "Ein kleines Bestellsystem verwaltet Kunden und ihre Bestellungen.",
+    "requirements": [
+      "Kunde besitzt name und kundennummer.",
+      "Bestellung besitzt bestellnummer und datum.",
+      "Ein Kunde kann Bestellungen aufgeben."
+    ],
+    "task": "Erstelle ein passendes Klassendiagramm.",
+    "starter_plantuml": "@startuml\nclass Kunde\nclass Bestellung\n@enduml",
     "solution_plantuml": "@startuml\nclass Kunde {\n  - name : String\n  - kundennummer : Integer\n}\nclass Bestellung {\n  - bestellnummer : Integer\n  - datum : Date\n}\nKunde -> Bestellung : gibt auf\n@enduml",
     "explanation": "Die beiden Klassen enthalten ihre fachlichen Attribute. Die gerichtete Beziehung beschreibt, dass ein Kunde eine Bestellung aufgibt.",
+    "expected_elements": [
+      "Klasse Kunde",
+      "Klasse Bestellung",
+      "Beziehung zwischen Kunde und Bestellung"
+    ],
     "tags": ["UML", "Klassendiagramm", "Beziehung", "AP2"]
   },
   {
     "id": "uml-easy-002",
     "type": "uml",
+    "diagram_type": "class",
     "difficulty": "easy",
     "topic": "class-diagram",
     "title": "Mitarbeiter und Abteilung",
-    "task": "Modelliere die Klassen Mitarbeiter und Abteilung. Mitarbeiter hat name und personalnummer. Abteilung hat bezeichnung. Ein Mitarbeiter ist einer Abteilung zugeordnet.",
+    "scenario": "Ein Unternehmen ordnet jeden Mitarbeiter einer Abteilung zu.",
+    "requirements": [
+      "Mitarbeiter besitzt name und personalnummer.",
+      "Abteilung besitzt bezeichnung.",
+      "Mitarbeiter und Abteilung sind miteinander verbunden."
+    ],
+    "task": "Modelliere die beschriebene Struktur als Klassendiagramm.",
+    "starter_plantuml": null,
     "solution_plantuml": "@startuml\nclass Mitarbeiter {\n  - name : String\n  - personalnummer : Integer\n}\nclass Abteilung {\n  - bezeichnung : String\n}\nMitarbeiter -> Abteilung : gehoert zu\n@enduml",
     "explanation": "Attribute stehen innerhalb der Klassen. Die Zuordnung wird als gerichtete Beziehung zwischen Mitarbeiter und Abteilung dargestellt.",
+    "expected_elements": [
+      "Klasse Mitarbeiter",
+      "Klasse Abteilung",
+      "Zuordnungsbeziehung"
+    ],
     "tags": ["UML", "Klassendiagramm", "Attribute", "AP2"]
   },
   {
     "id": "uml-easy-003",
     "type": "uml",
+    "diagram_type": "class",
     "difficulty": "easy",
     "topic": "class-diagram",
     "title": "Benutzer und Profil",
-    "task": "Erstelle ein Klassendiagramm mit Benutzer und Profil. Benutzer besitzt benutzername. Profil besitzt anzeigename. Ein Benutzer besitzt ein Profil.",
+    "scenario": "Eine Anwendung trennt Anmeldedaten von öffentlich sichtbaren Profildaten.",
+    "requirements": [
+      "Benutzer besitzt benutzername.",
+      "Profil besitzt anzeigename.",
+      "Ein Benutzer besitzt ein Profil."
+    ],
+    "task": "Erstelle ein Klassendiagramm für Benutzer und Profil.",
+    "starter_plantuml": null,
     "solution_plantuml": "@startuml\nclass Benutzer {\n  - benutzername : String\n}\nclass Profil {\n  - anzeigename : String\n}\nBenutzer -> Profil : besitzt\n@enduml",
-    "explanation": "Das Diagramm trennt Anmeldedaten und Profildaten in zwei Klassen und verbindet sie ueber eine Besitzbeziehung.",
+    "explanation": "Das Diagramm trennt Anmeldedaten und Profildaten in zwei Klassen und verbindet sie über eine Besitzbeziehung.",
+    "expected_elements": [
+      "Klasse Benutzer",
+      "Klasse Profil",
+      "Besitzbeziehung"
+    ],
     "tags": ["UML", "Klassendiagramm", "Beziehung", "AP2"]
+  },
+  {
+    "id": "uml-er-easy-001",
+    "type": "uml",
+    "diagram_type": "er",
+    "difficulty": "easy",
+    "topic": "data-modeling",
+    "title": "Kunden und Aufträge",
+    "scenario": "Ein Betrieb speichert Kunden und die von ihnen erteilten Aufträge.",
+    "requirements": [
+      "Jeder Kunde besitzt eine eindeutige Kundennummer.",
+      "Jeder Auftrag besitzt eine eindeutige Auftragsnummer.",
+      "Ein Kunde kann mehrere Aufträge erteilen."
+    ],
+    "task": "Erstelle ein einfaches ER-/Datenmodell.",
+    "starter_plantuml": "@startuml\nentity Kunde\nentity Auftrag\n@enduml",
+    "solution_plantuml": "@startuml\nentity Kunde {\n  * kundennummer : Integer\n  --\n  name : String\n}\nentity Auftrag {\n  * auftragsnummer : Integer\n  --\n  datum : Date\n}\nKunde ||--o{ Auftrag : erteilt\n@enduml",
+    "explanation": "Die Kardinalität zeigt, dass ein Kunde keinen, einen oder mehrere Aufträge erteilen kann, während jeder Auftrag genau einem Kunden zugeordnet ist.",
+    "expected_elements": [
+      "Entität Kunde",
+      "Entität Auftrag",
+      "1:n-Beziehung"
+    ],
+    "tags": ["UML", "ER", "Datenmodell", "AP2"]
+  },
+  {
+    "id": "uml-use-case-easy-001",
+    "type": "uml",
+    "diagram_type": "use_case",
+    "difficulty": "easy",
+    "topic": "requirements-modeling",
+    "title": "Online-Bestellung",
+    "scenario": "Ein Kunde nutzt einen Onlineshop, um Produkte zu suchen und eine Bestellung abzusenden.",
+    "requirements": [
+      "Der Kunde ist der primäre Akteur.",
+      "Produkte suchen und Bestellung absenden sind Anwendungsfälle."
+    ],
+    "task": "Erstelle ein Use-Case-Diagramm für den beschriebenen Ausschnitt.",
+    "starter_plantuml": null,
+    "solution_plantuml": "@startuml\nleft to right direction\nactor Kunde\nrectangle Onlineshop {\n  usecase \"Produkte suchen\" as Suche\n  usecase \"Bestellung absenden\" as Bestellung\n}\nKunde --> Suche\nKunde --> Bestellung\n@enduml",
+    "explanation": "Der Akteur Kunde interagiert mit den beiden fachlichen Anwendungsfällen innerhalb der Systemgrenze.",
+    "expected_elements": [
+      "Akteur Kunde",
+      "Anwendungsfall Produkte suchen",
+      "Anwendungsfall Bestellung absenden",
+      "Systemgrenze Onlineshop"
+    ],
+    "tags": ["UML", "Use Case", "Anforderungen", "AP2"]
   }
 ]

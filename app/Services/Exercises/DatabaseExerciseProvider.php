@@ -83,8 +83,11 @@ class DatabaseExerciseProvider implements ExerciseProvider
             ]),
             'uml' => array_merge($payload, [
                 'diagram_type' => $exercise->umlDetail->diagram_type,
+                'scenario' => $exercise->umlDetail->scenario,
+                'requirements' => $exercise->umlDetail->requirements ?? [],
                 'starter_plantuml' => $exercise->umlDetail->starter_plantuml,
                 'solution_plantuml' => $exercise->umlDetail->solution_plantuml,
+                'expected_elements' => $exercise->umlDetail->expected_elements ?? [],
             ]),
             default => $payload,
         };

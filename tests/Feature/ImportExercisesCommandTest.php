@@ -38,6 +38,9 @@ class ImportExercisesCommandTest extends TestCase
         $this->assertTrue(Schema::hasTable('sql_exercise_details'));
         $this->assertTrue(Schema::hasTable('calculation_exercise_details'));
         $this->assertTrue(Schema::hasTable('uml_exercise_details'));
+        $this->assertTrue(Schema::hasColumn('uml_exercise_details', 'scenario'));
+        $this->assertTrue(Schema::hasColumn('uml_exercise_details', 'requirements'));
+        $this->assertTrue(Schema::hasColumn('uml_exercise_details', 'expected_elements'));
     }
 
     public function test_detail_models_use_exercise_id_as_their_primary_key(): void
@@ -65,13 +68,13 @@ class ImportExercisesCommandTest extends TestCase
     public function test_command_imports_all_fixtures_into_type_specific_tables(): void
     {
         $this->artisan('exercises:import')
-            ->expectsOutput('Imported 39 exercises (39 created, 0 updated).')
+            ->expectsOutput('Imported 43 exercises (43 created, 0 updated).')
             ->assertExitCode(0);
 
-        $this->assertDatabaseCount('exercises', 39);
+        $this->assertDatabaseCount('exercises', 43);
         $this->assertDatabaseCount('sql_exercise_details', 9);
         $this->assertDatabaseCount('calculation_exercise_details', 21);
-        $this->assertDatabaseCount('uml_exercise_details', 9);
+        $this->assertDatabaseCount('uml_exercise_details', 13);
         $this->assertDatabaseHas('categories', [
             'slug' => 'sql',
             'name' => 'SQL',
@@ -92,12 +95,12 @@ class ImportExercisesCommandTest extends TestCase
     {
         $this->artisan('exercises:import')->assertExitCode(0);
         $this->artisan('exercises:import')
-            ->expectsOutput('Imported 39 exercises (0 created, 39 updated).')
+            ->expectsOutput('Imported 43 exercises (0 created, 43 updated).')
             ->assertExitCode(0);
 
-        $this->assertDatabaseCount('exercises', 39);
+        $this->assertDatabaseCount('exercises', 43);
         $this->assertSame(
-            39,
+            43,
             Exercise::query()->distinct()->count('external_id'),
         );
     }
@@ -115,7 +118,7 @@ class ImportExercisesCommandTest extends TestCase
 
         $this->artisan('exercises:import')->assertExitCode(0);
 
-        $this->assertDatabaseCount('exercises', 39);
+        $this->assertDatabaseCount('exercises', 43);
         $this->assertDatabaseHas('exercises', [
             'external_id' => 'sql-easy-001',
             'title' => 'Aktualisierter SQL-Titel',
@@ -137,6 +140,9 @@ class ImportExercisesCommandTest extends TestCase
         $this->assertArrayHasKey('solution', $sql[0]);
         $this->assertSame('17139.6', $calculation[0]['expected_result']);
         $this->assertSame('class', $uml[0]['diagram_type']);
+        $this->assertNotEmpty($uml[0]['scenario']);
+        $this->assertIsArray($uml[0]['requirements']);
+        $this->assertIsArray($uml[0]['expected_elements']);
         $this->assertStringContainsString('@startuml', $uml[0]['solution_plantuml']);
     }
 
@@ -154,7 +160,7 @@ class ImportExercisesCommandTest extends TestCase
     {
         $this->seed(DatabaseSeeder::class);
 
-        $this->assertDatabaseCount('exercises', 39);
+        $this->assertDatabaseCount('exercises', 43);
         $this->assertDatabaseCount('categories', 9);
         $this->assertDatabaseHas('users', ['email' => 'gh@gmail.com']);
     }

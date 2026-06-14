@@ -146,17 +146,18 @@ class JsonExerciseProvider implements ExerciseProvider
                 );
             }
 
-            if ($field === 'tags') {
-                $this->validateTags($fixture[$field], $file, $index);
-
-                continue;
-            }
-
-            if (! is_string($fixture[$field]) || trim($fixture[$field]) === '') {
-                throw new ExerciseSourceException(
-                    $this->fixtureLocation($file, $index)." enthaelt kein gueltiges Feld '{$field}'.",
-                );
-            }
+            match ($field) {
+                'tags' => $this->validateStringList($fixture[$field], $field, $file, $index, false),
+                'requirements' => $this->validateStringList($fixture[$field], $field, $file, $index),
+                'expected_elements' => $this->validateStringList($fixture[$field], $field, $file, $index),
+                'starter_plantuml' => $this->validateNullableString(
+                    $fixture[$field],
+                    $field,
+                    $file,
+                    $index,
+                ),
+                default => $this->validateRequiredString($fixture[$field], $field, $file, $index),
+            };
         }
 
         if ($fixture['type'] !== $type) {
@@ -188,18 +189,63 @@ class JsonExerciseProvider implements ExerciseProvider
                 );
             }
         }
+
+        if ($type === 'uml') {
+            $supportedDiagramTypes = array_keys(config('exercises.uml.diagram_types', []));
+
+            if (! in_array($fixture['diagram_type'], $supportedDiagramTypes, true)) {
+                throw new ExerciseSourceException(
+                    $this->fixtureLocation($file, $index)
+                    ." enthaelt einen unbekannten UML-Diagrammtyp '{$fixture['diagram_type']}'.",
+                );
+            }
+        }
     }
 
-    private function validateTags(mixed $tags, string $file, int $index): void
-    {
+    private function validateRequiredString(
+        mixed $value,
+        string $field,
+        string $file,
+        int $index,
+    ): void {
+        if (! is_string($value) || trim($value) === '') {
+            throw new ExerciseSourceException(
+                $this->fixtureLocation($file, $index)." enthaelt kein gueltiges Feld '{$field}'.",
+            );
+        }
+    }
+
+    private function validateNullableString(
+        mixed $value,
+        string $field,
+        string $file,
+        int $index,
+    ): void {
+        if ($value !== null && ! is_string($value)) {
+            throw new ExerciseSourceException(
+                $this->fixtureLocation($file, $index)." enthaelt kein gueltiges Feld '{$field}'.",
+            );
+        }
+    }
+
+    private function validateStringList(
+        mixed $values,
+        string $field,
+        string $file,
+        int $index,
+        bool $allowEmpty = true,
+    ): void {
         if (
-            ! is_array($tags)
-            || ! array_is_list($tags)
-            || $tags === []
-            || array_filter($tags, fn (mixed $tag): bool => ! is_string($tag) || trim($tag) === '') !== []
+            ! is_array($values)
+            || ! array_is_list($values)
+            || (! $allowEmpty && $values === [])
+            || array_filter(
+                $values,
+                fn (mixed $value): bool => ! is_string($value) || trim($value) === '',
+            ) !== []
         ) {
             throw new ExerciseSourceException(
-                $this->fixtureLocation($file, $index)." enthaelt kein gueltiges Feld 'tags'.",
+                $this->fixtureLocation($file, $index)." enthaelt kein gueltiges Feld '{$field}'.",
             );
         }
     }

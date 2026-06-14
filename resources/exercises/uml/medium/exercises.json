@@ -2,34 +2,99 @@
   {
     "id": "uml-medium-001",
     "type": "uml",
+    "diagram_type": "class",
     "difficulty": "medium",
     "topic": "inheritance",
-    "title": "Geraetehierarchie",
-    "task": "Modelliere die Oberklasse Geraet mit seriennummer und der Methode einschalten(). Leite Notebook und Drucker davon ab. Notebook besitzt ramGb, Drucker besitzt farbdruck.",
+    "title": "Gerätehierarchie",
+    "scenario": "Eine Geräteverwaltung soll gemeinsame und gerätespezifische Eigenschaften abbilden.",
+    "requirements": [
+      "Gerät besitzt seriennummer und die Methode einschalten().",
+      "Notebook und Drucker werden von Gerät abgeleitet.",
+      "Notebook besitzt ramGb, Drucker besitzt farbdruck."
+    ],
+    "task": "Modelliere die Gerätehierarchie als Klassendiagramm.",
+    "starter_plantuml": null,
     "solution_plantuml": "@startuml\nclass Geraet {\n  - seriennummer : String\n  + einschalten() : void\n}\nclass Notebook {\n  - ramGb : Integer\n}\nclass Drucker {\n  - farbdruck : Boolean\n}\nGeraet <|-- Notebook\nGeraet <|-- Drucker\n@enduml",
-    "explanation": "Gemeinsame Merkmale liegen in Geraet. Notebook und Drucker erben diese Merkmale ueber Generalisierungsbeziehungen.",
+    "explanation": "Gemeinsame Merkmale liegen in Gerät. Notebook und Drucker erben diese Merkmale über Generalisierungsbeziehungen.",
+    "expected_elements": [
+      "Oberklasse Gerät",
+      "Unterklassen Notebook und Drucker",
+      "Zwei Generalisierungsbeziehungen"
+    ],
     "tags": ["UML", "Vererbung", "Klassendiagramm", "AP2"]
   },
   {
     "id": "uml-medium-002",
     "type": "uml",
+    "diagram_type": "class",
     "difficulty": "medium",
     "topic": "aggregation",
     "title": "Projektteam modellieren",
-    "task": "Erstelle die Klassen Projekt, Team und Mitarbeiter. Projekt besitzt titel, Team besitzt name und Mitarbeiter besitzt personalnummer. Ein Projekt nutzt ein Team, das aus Mitarbeitern besteht.",
+    "scenario": "Ein Projekt nutzt ein Team, dessen Mitarbeiter auch unabhängig vom Team bestehen können.",
+    "requirements": [
+      "Projekt besitzt titel.",
+      "Team besitzt name.",
+      "Mitarbeiter besitzt personalnummer.",
+      "Team und Mitarbeiter bilden eine Aggregation."
+    ],
+    "task": "Erstelle das beschriebene Klassendiagramm.",
+    "starter_plantuml": null,
     "solution_plantuml": "@startuml\nclass Projekt {\n  - titel : String\n}\nclass Team {\n  - name : String\n}\nclass Mitarbeiter {\n  - personalnummer : Integer\n}\nProjekt -> Team : nutzt\nTeam o-- Mitarbeiter\n@enduml",
-    "explanation": "Projekt und Team werden assoziiert. Die Aggregation zeigt, dass Mitarbeiter auch unabhaengig vom Team bestehen koennen.",
+    "explanation": "Projekt und Team werden assoziiert. Die Aggregation zeigt, dass Mitarbeiter auch unabhängig vom Team bestehen können.",
+    "expected_elements": [
+      "Klassen Projekt, Team und Mitarbeiter",
+      "Assoziation zwischen Projekt und Team",
+      "Aggregation zwischen Team und Mitarbeiter"
+    ],
     "tags": ["UML", "Aggregation", "Assoziation", "AP2"]
   },
   {
     "id": "uml-medium-003",
     "type": "uml",
+    "diagram_type": "class",
     "difficulty": "medium",
     "topic": "class-diagram",
     "title": "Bibliotheksausleihe",
-    "task": "Modelliere Buch, Mitglied und Ausleihe. Buch hat isbn und titel, Mitglied hat mitgliedsnummer, Ausleihe hat ausleihdatum und rueckgabedatum. Mitglied und Buch sind ueber Ausleihe verbunden.",
+    "scenario": "Eine Bibliothek verwaltet Bücher, Mitglieder und Ausleihvorgänge mit eigenen Datumsangaben.",
+    "requirements": [
+      "Buch besitzt isbn und titel.",
+      "Mitglied besitzt mitgliedsnummer.",
+      "Ausleihe besitzt ausleihdatum und rückgabedatum.",
+      "Mitglied und Buch werden über Ausleihe verbunden."
+    ],
+    "task": "Modelliere die Bibliotheksausleihe als Klassendiagramm.",
+    "starter_plantuml": null,
     "solution_plantuml": "@startuml\nclass Buch {\n  - isbn : String\n  - titel : String\n}\nclass Mitglied {\n  - mitgliedsnummer : Integer\n}\nclass Ausleihe {\n  - ausleihdatum : Date\n  - rueckgabedatum : Date\n}\nMitglied -> Ausleihe\nAusleihe -> Buch\n@enduml",
     "explanation": "Die Ausleihe ist eine eigene Klasse, weil die Beziehung zwischen Mitglied und Buch eigene Attribute besitzt.",
+    "expected_elements": [
+      "Klassen Buch, Mitglied und Ausleihe",
+      "Datumsattribute der Ausleihe",
+      "Verbindungen über die Ausleihe"
+    ],
     "tags": ["UML", "Assoziationsklasse", "Klassendiagramm", "AP2"]
+  },
+  {
+    "id": "uml-sequence-medium-001",
+    "type": "uml",
+    "diagram_type": "sequence",
+    "difficulty": "medium",
+    "topic": "interaction-modeling",
+    "title": "Anmeldung prüfen",
+    "scenario": "Ein Benutzer meldet sich an. Die Anwendung prüft die Zugangsdaten über einen Authentifizierungsdienst.",
+    "requirements": [
+      "Benutzer, Anwendung und Authentifizierungsdienst nehmen teil.",
+      "Die Anwendung leitet die Zugangsdaten zur Prüfung weiter.",
+      "Das Prüfergebnis wird an den Benutzer zurückgegeben."
+    ],
+    "task": "Erstelle ein Sequenzdiagramm für den Anmeldeablauf.",
+    "starter_plantuml": "@startuml\nactor Benutzer\nparticipant Anwendung\nparticipant AuthDienst\n@enduml",
+    "solution_plantuml": "@startuml\nactor Benutzer\nparticipant Anwendung\nparticipant AuthDienst\nBenutzer -> Anwendung : Zugangsdaten senden\nAnwendung -> AuthDienst : Zugangsdaten pruefen\nAuthDienst --> Anwendung : Ergebnis\nAnwendung --> Benutzer : Anmeldung bestaetigen\n@enduml",
+    "explanation": "Das Diagramm zeigt die zeitliche Reihenfolge der Nachrichten zwischen Benutzer, Anwendung und Authentifizierungsdienst.",
+    "expected_elements": [
+      "Drei Teilnehmer",
+      "Prüfanfrage an den Authentifizierungsdienst",
+      "Rückgabe des Ergebnisses"
+    ],
+    "tags": ["UML", "Sequenzdiagramm", "Interaktion", "AP2"]
   }
 ]

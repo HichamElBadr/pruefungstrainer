@@ -408,21 +408,43 @@ class ItExerciseFlowTest extends TestCase
         $user = User::factory()->create();
         $exerciseCount = Exercise::count();
 
-        $this->actingAs($user)
+        $response = $this->actingAs($user)
             ->get(route('uml.form', ['difficulty' => 'easy']))
             ->assertOk()
             ->assertSeeText('Beispielaufgabe')
             ->assertSeeText('Schwierigkeit: Einfach')
-            ->assertSeeText('UML-Eingabe')
-            ->assertSeeText('Musterloesung anzeigen')
-            ->assertSessionHas('uml_exercise_id');
+            ->assertSeeText('PlantUML-Eingabe')
+            ->assertSeeText('Musterlösung anzeigen')
+            ->assertSessionMissing('uml_exercise_id');
 
         $this->assertSame($exerciseCount, Exercise::count());
+        $response->assertSee(
+            'name="exercise_id" value="'.$response->viewData('exercise')['database_id'].'"',
+            false,
+        );
     }
 
-    public function test_uml_exercise_still_renders_simplified_input_with_plantuml(): void
+    public function test_uml_page_filters_catalog_exercises_by_diagram_type(): void
     {
         $user = User::factory()->create();
+
+        $this->actingAs($user)
+            ->get(route('uml.form', ['diagram_type' => 'sequence']))
+            ->assertOk()
+            ->assertSeeText('Sequenzdiagramm')
+            ->assertSeeText('Anmeldung prüfen')
+            ->assertSeeText('Klassendiagramm')
+            ->assertSeeText('ER-/Datenmodell')
+            ->assertSeeText('Use-Case-Diagramm')
+            ->assertSeeText('Aktivitätsdiagramm');
+    }
+
+    public function test_uml_exercise_wraps_diagram_neutral_input_with_plantuml_markers(): void
+    {
+        $user = User::factory()->create();
+        $exercise = Exercise::query()
+            ->where('external_id', 'uml-sequence-medium-001')
+            ->firstOrFail();
         $pngPath = storage_path('framework/testing/uml.png');
 
         if (! is_dir(dirname($pngPath))) {
@@ -437,31 +459,27 @@ class ItExerciseFlowTest extends TestCase
         $plantUml = Mockery::mock(PlantUmlService::class);
         $plantUml->shouldReceive('generate')
             ->once()
-            ->withArgs(fn (string $uml): bool => str_contains($uml, 'class Person {')
-                && str_contains($uml, 'Person -> Hund : besitzt'))
+            ->with("@startuml\nactor Benutzer\nBenutzer -> Anwendung : anmelden\n@enduml")
             ->andReturn($pngPath);
         $this->app->instance(PlantUmlService::class, $plantUml);
 
         $this->actingAs($user)
             ->post(route('uml.render'), [
-                'difficulty' => 'medium',
-                'uml_text' => implode("\n", [
-                    'class Person',
-                    '- name : String',
-                    '',
-                    'class Hund',
-                    '+ bellen() : void',
-                    '',
-                    'Person -> Hund : besitzt',
-                ]),
+                'exercise_id' => $exercise->id,
+                'uml_text' => "actor Benutzer\nBenutzer -> Anwendung : anmelden",
             ])
             ->assertOk()
+            ->assertSeeText('Anmeldung prüfen')
+            ->assertSeeText('actor Benutzer')
             ->assertSee('data:image/png;base64,', false);
     }
 
     public function test_uml_rendering_errors_do_not_expose_process_details(): void
     {
         $user = User::factory()->create();
+        $exercise = Exercise::query()
+            ->where('external_id', 'uml-activity-hard-001')
+            ->firstOrFail();
         $plantUml = Mockery::mock(PlantUmlService::class);
         $plantUml->shouldReceive('generate')
             ->once()
@@ -471,16 +489,14 @@ class ItExerciseFlowTest extends TestCase
         $this->app->instance(PlantUmlService::class, $plantUml);
 
         $this->actingAs($user)
-            ->get(route('uml.form', ['difficulty' => 'easy']))
-            ->assertOk();
-
-        $this->actingAs($user)
             ->post(route('uml.render'), [
-                'difficulty' => 'easy',
-                'uml_text' => "class Person\n- name : String",
+                'exercise_id' => $exercise->id,
+                'uml_text' => "start\n:Ticket prüfen;\nstop",
             ])
             ->assertOk()
             ->assertSeeText('Das UML-Diagramm konnte nicht gerendert werden.')
+            ->assertSeeText('Support-Ticket bearbeiten')
+            ->assertSeeText('Ticket prüfen')
             ->assertDontSee('plantuml.jar')
             ->assertDontSee('password=secret');
     }
@@ -519,6 +535,9 @@ class ItExerciseFlowTest extends TestCase
             ->assertNotFound();
         $this->actingAs($user)
             ->get(route('uml.form', ['difficulty' => 'expert']))
+            ->assertNotFound();
+        $this->actingAs($user)
+            ->get(route('uml.form', ['diagram_type' => 'component']))
             ->assertNotFound();
     }
 

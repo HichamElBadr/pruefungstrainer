@@ -30,12 +30,27 @@ return [
             'solution',
         ],
         'uml' => [
+            'diagram_type',
+            'scenario',
+            'requirements',
+            'starter_plantuml',
             'solution_plantuml',
+            'expected_elements',
         ],
         'calculation' => [
             'expected_result',
             'unit',
             'solution_steps',
+        ],
+    ],
+
+    'uml' => [
+        'diagram_types' => [
+            'class' => 'Klassendiagramm',
+            'er' => 'ER-/Datenmodell',
+            'use_case' => 'Use-Case-Diagramm',
+            'sequence' => 'Sequenzdiagramm',
+            'activity' => 'Aktivitätsdiagramm',
         ],
     ],
 

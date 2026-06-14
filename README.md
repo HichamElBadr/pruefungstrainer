@@ -71,8 +71,11 @@ exception message and a learning hint without exposing stack traces, file
 paths, credentials, or connection details. Unsafe delay, file, locking,
 system-schema, and variable access constructs are rejected.
 
-UML fixtures contain a task and `solution_plantuml`. Learner input is still
-rendered locally with Java and PlantUML.
+UML fixtures support `class`, `er`, `use_case`, `sequence`, and `activity`
+diagram types. They contain a scenario, requirements, optional starter code,
+the PlantUML sample solution, and expected elements. Learner input is rendered
+locally with Java and PlantUML. Input without `@startuml` is wrapped without
+diagram-specific transformations.
 
 Calculation fixtures contain `expected_result`, `unit`, `solution_steps`, and an
 explanation. Existing topic selection and numeric checking remain in Laravel.

@@ -1,6 +1,6 @@
 <x-exercise-layout
     title="UML-Aufgaben"
-    description="Erstelle aus vereinfachter Texteingabe ein UML-Klassendiagramm und prüfe die Darstellung direkt als Vorschau."
+    description="Bearbeite unterschiedliche UML- und Datenmodellierungsaufgaben direkt mit PlantUML."
 >
     <x-slot name="badges">
         <span class="exercise-badge">UML</span>
@@ -9,6 +9,9 @@
         @endif
         @if(!empty($difficultyLabel))
             <span class="exercise-badge">Schwierigkeit: {{ $difficultyLabel }}</span>
+        @endif
+        @if(!empty($diagramTypeLabel))
+            <span class="exercise-badge">{{ $diagramTypeLabel }}</span>
         @endif
         <span class="exercise-badge">Übungsaufgabe</span>
     </x-slot>
@@ -22,17 +25,20 @@
 
     <section class="exercise-card">
         <div class="exercise-card-body">
-            <h2 class="font-heading text-xl font-semibold text-slate-950">
-                {{ $exercise['title'] ?? 'UML-Aufgabe' }}
-            </h2>
+            <h2 class="font-heading text-lg font-semibold text-slate-950">Diagrammtyp auswählen</h2>
+            <div class="mt-4 flex flex-wrap gap-2">
+                @foreach($diagramTypes as $diagramType)
+                    <a
+                        href="{{ route('uml.form', ['diagram_type' => $diagramType['value']]) }}"
+                        class="{{ $selectedDiagramType === $diagramType['value'] ? 'exercise-button' : 'exercise-button-secondary' }}"
+                    >
+                        {{ $diagramType['label'] }}
+                    </a>
+                @endforeach
+            </div>
 
-            @if(!empty($exercise['task']))
-                <div class="exercise-muted-panel mt-4 whitespace-pre-line leading-7">
-                    {{ $exercise['task'] }}
-                </div>
-            @endif
-
-            <div class="mt-5 flex flex-wrap gap-2">
+            <h3 class="mt-6 font-heading text-base font-semibold text-slate-950">Schwierigkeit auswählen</h3>
+            <div class="mt-3 flex flex-wrap gap-2">
                 @foreach($difficulties as $difficulty)
                     <a
                         href="{{ route('uml.form', ['difficulty' => $difficulty['value']]) }}"
@@ -42,36 +48,87 @@
                     </a>
                 @endforeach
             </div>
-
-            <h3 class="mt-7 font-heading text-lg font-semibold text-slate-950">UML-Eingabe</h3>
-
-            <form action="{{ route('uml.render') }}" method="POST" class="mt-4 space-y-4">
-                @csrf
-                <input type="hidden" name="difficulty" value="{{ $selectedDifficulty }}">
-
-                <div>
-                    <label for="uml_text" class="font-heading block text-sm font-semibold text-slate-800">Vereinfachter UML-Text</label>
-                    <textarea
-                        id="uml_text"
-                        name="uml_text"
-                        rows="12"
-                        class="mt-2 block w-full rounded-lg border-slate-300 text-sm shadow-sm focus:border-slate-500 focus:ring-slate-500"
-                        placeholder="class Person&#10;  - name : String&#10;  + getName() : String"
-                    >{{ old('uml_text', $input ?? '') }}</textarea>
-                    <x-input-error :messages="$errors->get('uml_text')" class="mt-2" />
-                </div>
-
-                <button type="submit" class="exercise-button">Diagramm generieren</button>
-            </form>
         </div>
     </section>
+
+    @if(!empty($exercise))
+        <section class="exercise-card">
+            <div class="exercise-card-body">
+                <div class="flex flex-wrap items-start justify-between gap-3">
+                    <div>
+                        <h2 class="font-heading text-xl font-semibold text-slate-950">
+                            {{ $exercise['title'] }}
+                        </h2>
+                        <p class="mt-2 text-sm text-slate-600">
+                            {{ $diagramTypeLabel }} · {{ $difficultyLabel }}
+                            @if(!empty($exercise['topic']))
+                                · Thema: {{ $exercise['topic'] }}
+                            @endif
+                        </p>
+                    </div>
+                </div>
+
+                @if(!empty($exercise['scenario']))
+                    <div class="exercise-muted-panel mt-5">
+                        <h3 class="font-heading text-base font-semibold text-slate-950">Szenario</h3>
+                        <p class="mt-2 whitespace-pre-line leading-7">{{ $exercise['scenario'] }}</p>
+                    </div>
+                @endif
+
+                @if(!empty($exercise['requirements']))
+                    <div class="mt-5">
+                        <h3 class="font-heading text-base font-semibold text-slate-950">Anforderungen</h3>
+                        <ul class="mt-3 list-disc space-y-2 pl-5 leading-7 text-slate-800">
+                            @foreach($exercise['requirements'] as $requirement)
+                                <li>{{ $requirement }}</li>
+                            @endforeach
+                        </ul>
+                    </div>
+                @endif
+
+                <div class="mt-5">
+                    <h3 class="font-heading text-base font-semibold text-slate-950">Aufgabe</h3>
+                    <div class="exercise-muted-panel mt-3 whitespace-pre-line leading-7">
+                        {{ $exercise['task'] }}
+                    </div>
+                </div>
+
+                <h3 class="mt-7 font-heading text-lg font-semibold text-slate-950">PlantUML-Eingabe</h3>
+
+                <form action="{{ route('uml.render') }}" method="POST" class="mt-4 space-y-4">
+                    @csrf
+                    <input type="hidden" name="exercise_id" value="{{ $exercise['database_id'] }}">
+
+                    <div>
+                        <label for="uml_text" class="font-heading block text-sm font-semibold text-slate-800">
+                            PlantUML-Code
+                        </label>
+                        <textarea
+                            id="uml_text"
+                            name="uml_text"
+                            rows="16"
+                            class="mt-2 block w-full rounded-lg border-slate-300 text-sm shadow-sm focus:border-slate-500 focus:ring-slate-500"
+                            placeholder="@startuml&#10;...&#10;@enduml"
+                        >{{ old('uml_text', $input) }}</textarea>
+                        <x-input-error :messages="$errors->get('uml_text')" class="mt-2" />
+                    </div>
+
+                    <button type="submit" class="exercise-button">Diagramm rendern</button>
+                </form>
+            </div>
+        </section>
+    @endif
 
     @if(!empty($imageDataUrl))
         <section class="exercise-card">
             <div class="exercise-card-body">
-                <h2 class="font-heading text-xl font-semibold text-slate-950">Vorschau</h2>
+                <h2 class="font-heading text-xl font-semibold text-slate-950">Dein Diagramm</h2>
                 <div class="mt-4 overflow-x-auto rounded-lg border border-slate-200 bg-slate-50 p-4">
-                    <img src="{{ $imageDataUrl }}" alt="UML-Diagramm" class="max-w-full rounded-md border border-slate-200 bg-white">
+                    <img
+                        src="{{ $imageDataUrl }}"
+                        alt="Gerendertes UML-Diagramm"
+                        class="max-w-full rounded-md border border-slate-200 bg-white"
+                    >
                 </div>
             </div>
         </section>
@@ -81,10 +138,23 @@
         <section class="exercise-card">
             <div class="exercise-card-body">
                 <details>
-                    <summary class="cursor-pointer font-heading text-base font-semibold text-slate-950">Musterloesung anzeigen</summary>
+                    <summary class="cursor-pointer font-heading text-base font-semibold text-slate-950">
+                        Musterlösung anzeigen
+                    </summary>
+
                     <pre class="exercise-code mt-4 overflow-x-auto"><code>{{ $exercise['solution_plantuml'] }}</code></pre>
+
+                    @if(!empty($exercise['expected_elements']))
+                        <h3 class="mt-5 font-heading text-base font-semibold text-slate-950">Erwartete Elemente</h3>
+                        <ul class="mt-3 list-disc space-y-2 pl-5 text-slate-800">
+                            @foreach($exercise['expected_elements'] as $element)
+                                <li>{{ $element }}</li>
+                            @endforeach
+                        </ul>
+                    @endif
+
                     @if(!empty($exercise['explanation']))
-                        <div class="exercise-muted-panel mt-4 whitespace-pre-line leading-7">
+                        <div class="exercise-muted-panel mt-5 whitespace-pre-line leading-7">
                             {{ $exercise['explanation'] }}
                         </div>
                     @endif
@@ -95,32 +165,12 @@
 
     <section class="exercise-card">
         <div class="exercise-card-body">
-            <h2 class="font-heading text-xl font-semibold text-slate-950">Syntaxhilfe</h2>
-
-            <div class="mt-4 grid gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(18rem,0.9fr)]">
-                <ul class="space-y-2 text-sm leading-6 text-slate-700">
-                    <li><span class="font-semibold text-slate-900">Klasse:</span> <code>class Klassenname</code></li>
-                    <li><span class="font-semibold text-slate-900">Mitglieder:</span> Attribute und Methoden stehen unter der Klasse.</li>
-                    <li><span class="font-semibold text-slate-900">Sichtbarkeit:</span> <code>+</code> public, <code>-</code> private, <code>#</code> protected.</li>
-                    <li><span class="font-semibold text-slate-900">Attribute:</span> <code>- name : String</code></li>
-                    <li><span class="font-semibold text-slate-900">Methoden:</span> <code>+ getName() : String</code></li>
-                    <li><span class="font-semibold text-slate-900">Beziehungen:</span> <code>A -&gt; B : label</code>, <code>A o-- B</code>, <code>Parent &lt;|-- Child</code></li>
-                </ul>
-
-                <div>
-                    <p class="mb-2 font-heading text-sm font-semibold text-slate-800">Beispiel-Eingabe</p>
-                    <pre class="exercise-code overflow-x-auto"><code>class Person
-- name : String
-- age : Integer
-+ getName() : String
-
-class Hund
-- rasse : String
-+ bellen() : void
-
-Person -> Hund : besitzt</code></pre>
-                </div>
-            </div>
+            <h2 class="font-heading text-xl font-semibold text-slate-950">PlantUML-Hinweis</h2>
+            <p class="mt-3 text-sm leading-6 text-slate-700">
+                Vollständiger PlantUML-Code mit <code>@startuml</code> wird unverändert gerendert.
+                Fehlen die Start- und Endmarkierungen, ergänzt die Anwendung sie automatisch.
+                Die konkrete Syntax richtet sich nach dem ausgewählten Diagrammtyp.
+            </p>
         </div>
     </section>
 </x-exercise-layout>

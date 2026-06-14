@@ -5,10 +5,11 @@ namespace App\Http\Controllers;
 use App\Contracts\ExerciseProvider;
 use App\Exceptions\ExerciseSourceException;
 use App\Models\Exercise;
+use App\Services\PlantUmlInput;
 use App\Services\PlantUmlService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
-use InvalidArgumentException;
+use RuntimeException;
 use Throwable;
 
 class UmlExerciseController extends Controller
@@ -21,17 +22,20 @@ class UmlExerciseController extends Controller
 
     public function __construct(
         private readonly ExerciseProvider $exerciseProvider,
+        private readonly PlantUmlInput $plantUmlInput,
     ) {}
 
     public function create(Request $request)
     {
         $difficulty = $this->validatedDifficulty($request->query('difficulty', 'medium'));
+        $diagramType = $this->validatedDiagramType($request->query('diagram_type'));
+        $filterByDifficulty = $diagramType === null || $request->query->has('difficulty');
 
         try {
-            $exercise = $this->exerciseProvider->random('uml', $difficulty);
-            session(['uml_exercise_id' => $exercise['database_id']]);
+            $exercise = $this->selectExercise($difficulty, $diagramType, $filterByDifficulty);
+            $input = (string) ($exercise['starter_plantuml'] ?? '');
 
-            return view('it.uml-exercise.index', $this->viewData($exercise, '', null, null));
+            return view('it.uml-exercise.index', $this->viewData($exercise, $input));
         } catch (ExerciseSourceException $e) {
             return view('it.uml-exercise.index', $this->viewData(
                 null,
@@ -39,6 +43,7 @@ class UmlExerciseController extends Controller
                 null,
                 $e->getMessage(),
                 $difficulty,
+                $diagramType,
             ));
         }
     }
@@ -46,47 +51,31 @@ class UmlExerciseController extends Controller
     public function render(Request $request, PlantUmlService $plantUmlService)
     {
         $validated = $request->validate([
+            'exercise_id' => ['required', 'integer'],
             'uml_text' => ['required', 'string', 'max:10000'],
         ]);
 
         $raw = $validated['uml_text'];
-        $exercise = $this->currentExerciseData();
+        $exercise = $this->exerciseData((int) $validated['exercise_id']);
 
-        if (! is_array($exercise)) {
-            $difficulty = $this->validatedDifficulty($request->input('difficulty', 'medium'));
-
-            try {
-                $exercise = $this->exerciseProvider->random('uml', $difficulty);
-                session(['uml_exercise_id' => $exercise['database_id']]);
-            } catch (ExerciseSourceException $e) {
-                return view('it.uml-exercise.index', $this->viewData(
-                    null,
-                    $raw,
-                    null,
-                    $e->getMessage(),
-                    $difficulty,
-                ));
-            }
+        if ($exercise === null) {
+            return view('it.uml-exercise.index', $this->viewData(
+                null,
+                $raw,
+                null,
+                'Die ausgewaehlte UML-Aufgabe ist nicht mehr verfuegbar.',
+            ));
         }
 
         try {
-            $plantUml = $this->normalizeToPlantUml($raw);
-            $pngPath = $plantUmlService->generate($plantUml);
-            $dataUrl = 'data:image/png;base64,'.base64_encode(file_get_contents($pngPath));
-            @unlink($pngPath);
+            $plantUml = $this->plantUmlInput->wrap($raw);
+            $dataUrl = $this->renderDataUrl($plantUmlService, $plantUml);
 
-            return view('it.uml-exercise.index', $this->viewData($exercise, $raw, $dataUrl, null));
-        } catch (InvalidArgumentException $e) {
-            return view('it.uml-exercise.index', $this->viewData(
-                $exercise,
-                $raw,
-                null,
-                $e->getMessage(),
-            ));
+            return view('it.uml-exercise.index', $this->viewData($exercise, $raw, $dataUrl));
         } catch (Throwable $e) {
             Log::warning('UML rendering failed.', [
                 'user_id' => auth()->id(),
-                'exercise_id' => $exercise['database_id'] ?? null,
+                'exercise_id' => $exercise['database_id'],
                 'exception' => $e::class,
                 'error' => $e->getMessage(),
             ]);
@@ -101,17 +90,59 @@ class UmlExerciseController extends Controller
     }
 
     /**
+     * @return array<string, mixed>
+     */
+    private function selectExercise(
+        string $difficulty,
+        ?string $diagramType,
+        bool $filterByDifficulty,
+    ): array {
+        if ($diagramType === null || $filterByDifficulty) {
+            return $this->exerciseProvider->random(
+                'uml',
+                $difficulty,
+                $diagramType === null ? [] : ['diagram_type' => $diagramType],
+            );
+        }
+
+        $matching = [];
+
+        foreach (array_keys(self::DIFFICULTIES) as $candidateDifficulty) {
+            foreach ($this->exerciseProvider->all('uml', $candidateDifficulty) as $exercise) {
+                if ($exercise['diagram_type'] === $diagramType) {
+                    $matching[] = $exercise;
+                }
+            }
+        }
+
+        if ($matching === []) {
+            throw new ExerciseSourceException(
+                "Keine UML-Aufgabe fuer den Diagrammtyp {$diagramType} gefunden.",
+            );
+        }
+
+        return $matching[random_int(0, count($matching) - 1)];
+    }
+
+    /**
      * @param  array<string, mixed>|null  $exercise
      * @return array<string, mixed>
      */
     private function viewData(
         ?array $exercise,
         string $input,
-        ?string $imageDataUrl,
-        ?string $error,
+        ?string $imageDataUrl = null,
+        ?string $error = null,
         ?string $difficulty = null,
+        ?string $diagramType = null,
     ): array {
-        $difficulty ??= is_array($exercise) ? ($exercise['difficulty'] ?? 'medium') : 'medium';
+        $difficulty = is_array($exercise)
+            ? (string) ($exercise['difficulty'] ?? 'medium')
+            : ($difficulty ?? 'medium');
+        $diagramType = is_array($exercise)
+            ? ($exercise['diagram_type'] ?? null)
+            : $diagramType;
+        $diagramTypes = config('exercises.uml.diagram_types', []);
 
         return [
             'input' => $input,
@@ -122,8 +153,14 @@ class UmlExerciseController extends Controller
                 ->map(fn (string $label, string $value): array => compact('value', 'label'))
                 ->values()
                 ->all(),
+            'diagramTypes' => collect($diagramTypes)
+                ->map(fn (string $label, string $value): array => compact('value', 'label'))
+                ->values()
+                ->all(),
             'selectedDifficulty' => $difficulty,
+            'selectedDiagramType' => $diagramType,
             'difficultyLabel' => self::DIFFICULTIES[$difficulty] ?? null,
+            'diagramTypeLabel' => $diagramType !== null ? ($diagramTypes[$diagramType] ?? null) : null,
             'sourceLabel' => is_array($exercise) ? 'Beispielaufgabe' : null,
         ];
     }
@@ -136,17 +173,27 @@ class UmlExerciseController extends Controller
         return $difficulty;
     }
 
-    /**
-     * @return array<string, mixed>|null
-     */
-    private function currentExerciseData(): ?array
+    private function validatedDiagramType(mixed $diagramType): ?string
     {
-        $exerciseId = session('uml_exercise_id');
-
-        if (! $exerciseId) {
+        if ($diagramType === null || $diagramType === '') {
             return null;
         }
 
+        $diagramType = (string) $diagramType;
+        abort_if(
+            ! array_key_exists($diagramType, config('exercises.uml.diagram_types', [])),
+            404,
+            'Unbekannter UML-Diagrammtyp.',
+        );
+
+        return $diagramType;
+    }
+
+    /**
+     * @return array<string, mixed>|null
+     */
+    private function exerciseData(int $exerciseId): ?array
+    {
         $exercise = Exercise::query()
             ->with('umlDetail')
             ->whereKey($exerciseId)
@@ -155,8 +202,6 @@ class UmlExerciseController extends Controller
             ->first();
 
         if ($exercise === null || $exercise->umlDetail === null) {
-            session()->forget('uml_exercise_id');
-
             return null;
         }
 
@@ -167,76 +212,34 @@ class UmlExerciseController extends Controller
             'difficulty' => $exercise->difficulty,
             'topic' => $exercise->topic,
             'title' => $exercise->title,
+            'scenario' => $exercise->umlDetail->scenario,
+            'requirements' => $exercise->umlDetail->requirements ?? [],
             'task' => $exercise->task,
             'explanation' => $exercise->explanation,
             'source' => $exercise->source,
             'diagram_type' => $exercise->umlDetail->diagram_type,
             'starter_plantuml' => $exercise->umlDetail->starter_plantuml,
             'solution_plantuml' => $exercise->umlDetail->solution_plantuml,
+            'expected_elements' => $exercise->umlDetail->expected_elements ?? [],
         ];
     }
 
-    private function normalizeToPlantUml(string $input): string
+    private function renderDataUrl(PlantUmlService $plantUmlService, string $plantUml): string
     {
-        if (preg_match('/@(?:startuml|enduml)\b/i', $input)) {
-            if (! config('plantuml.allow_raw_directives')) {
-                throw new InvalidArgumentException('Direkte PlantUML-Direktiven sind deaktiviert.');
+        $pngPath = $plantUmlService->generate($plantUml);
+
+        try {
+            $contents = file_get_contents($pngPath);
+
+            if ($contents === false) {
+                throw new RuntimeException('Das generierte UML-Bild konnte nicht gelesen werden.');
             }
 
-            return trim($input);
+            return 'data:image/png;base64,'.base64_encode($contents);
+        } finally {
+            if (is_file($pngPath)) {
+                unlink($pngPath);
+            }
         }
-
-        $lines = preg_split('/\R/', $input);
-        $out = [];
-        $inClass = false;
-
-        foreach ($lines as $line) {
-            $trim = ltrim(rtrim($line));
-
-            if ($trim === '') {
-                if ($inClass) {
-                    $out[] = '}';
-                    $inClass = false;
-                }
-
-                continue;
-            }
-
-            if (preg_match('/^class\s+([A-Za-z_]\w*)$/i', $trim, $matches)) {
-                if ($inClass) {
-                    $out[] = '}';
-                }
-
-                $out[] = "class {$matches[1]} {";
-                $inClass = true;
-
-                continue;
-            }
-
-            if (preg_match('/^\w[\w$]*\s+(?:--|->|-->|o--|\*--|\.\.>|<\|--)\s+\w[\w$]*(?:\s*:\s*.*)?$/', $trim)) {
-                if ($inClass) {
-                    $out[] = '}';
-                    $inClass = false;
-                }
-
-                $out[] = $trim;
-
-                continue;
-            }
-
-            if ($inClass) {
-                $out[] = '  '.$trim;
-
-                continue;
-            }
-
-            throw new InvalidArgumentException("Unbekannte UML-Zeile: {$trim}");
-        }
-
-        if ($inClass) {
-            $out[] = '}';
-        }
-
-        return implode("\n", $out);
     }
 }

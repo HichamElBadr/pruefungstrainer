@@ -10,10 +10,15 @@ use Symfony\Component\Process\Process;
 class PlantUmlService
 {
     protected string $javaPath;
+
     protected string $jarPath;
+
     protected string $outputDir;
+
     protected string $tempDir;
+
     protected string $javaTmpDir;
+
     protected int $retentionSeconds;
 
     public function __construct()
@@ -32,18 +37,14 @@ class PlantUmlService
 
     public function generate(string $umlCode): string
     {
-        if (!file_exists($this->jarPath)) {
+        if (! file_exists($this->jarPath)) {
             throw new \RuntimeException("PlantUML JAR nicht gefunden unter: {$this->jarPath}");
         }
 
         $this->cleanupArtifacts();
 
-        if (!str_contains($umlCode, '@startuml')) {
-            $umlCode = "@startuml\nhide circle\n" . trim($umlCode) . "\n@enduml";
-        }
-
-        $tempFileName = Str::random(10) . '.puml';
-        $tempFilePath = $this->tempDir . DIRECTORY_SEPARATOR . $tempFileName;
+        $tempFileName = Str::random(10).'.puml';
+        $tempFilePath = $this->tempDir.DIRECTORY_SEPARATOR.$tempFileName;
         file_put_contents($tempFilePath, $umlCode);
 
         $process = new Process([
@@ -64,21 +65,21 @@ class PlantUmlService
         $process->setTimeout(60);
         $process->run();
 
-        if (!$process->isSuccessful()) {
-            Log::error('PlantUML stderr: ' . $process->getErrorOutput());
-            Log::error('PlantUML stdout: ' . $process->getOutput());
+        if (! $process->isSuccessful()) {
+            Log::error('PlantUML stderr: '.$process->getErrorOutput());
+            Log::error('PlantUML stdout: '.$process->getOutput());
             throw new ProcessFailedException($process);
         }
 
         $basename = pathinfo($tempFileName, PATHINFO_FILENAME);
-        $pngPath = $this->outputDir . DIRECTORY_SEPARATOR . $basename . '.png';
-        $fallback = $this->tempDir . DIRECTORY_SEPARATOR . $basename . '.png';
+        $pngPath = $this->outputDir.DIRECTORY_SEPARATOR.$basename.'.png';
+        $fallback = $this->tempDir.DIRECTORY_SEPARATOR.$basename.'.png';
 
-        if (!file_exists($pngPath) && file_exists($fallback)) {
+        if (! file_exists($pngPath) && file_exists($fallback)) {
             rename($fallback, $pngPath);
         }
 
-        if (!file_exists($pngPath) || filesize($pngPath) < 10) {
+        if (! file_exists($pngPath) || filesize($pngPath) < 10) {
             Log::warning('PlantUML PNG fehlt oder ist zu klein', [
                 'pngPath' => $pngPath,
                 'stderr' => $process->getErrorOutput(),
@@ -97,8 +98,8 @@ class PlantUmlService
         $cutoff = time() - $this->retentionSeconds;
 
         foreach ([$this->outputDir, $this->tempDir] as $directory) {
-            foreach (glob($directory . DIRECTORY_SEPARATOR . '*') ?: [] as $path) {
-                if (!is_file($path) || filemtime($path) >= $cutoff) {
+            foreach (glob($directory.DIRECTORY_SEPARATOR.'*') ?: [] as $path) {
+                if (! is_file($path) || filemtime($path) >= $cutoff) {
                     continue;
                 }
 
@@ -109,7 +110,7 @@ class PlantUmlService
 
     private function ensureDirectory(string $path): void
     {
-        if (!is_dir($path)) {
+        if (! is_dir($path)) {
             mkdir($path, 0755, true);
         }
     }

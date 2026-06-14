@@ -1,5 +1,69 @@
 # Progress Update
 
+## 2026-06-14 - Support structured multi-type UML exercises
+
+### Summary
+
+Refactored the UML exercise flow to load structured catalog fixtures for class,
+ER/data-model, use-case, sequence, and activity diagrams. Replaced the
+class-specific input normalizer with neutral PlantUML wrapping and kept the
+selected catalog exercise stable during rendering.
+
+### Changed Files
+
+- `.env.example`
+- `README.md`
+- `app/Http/Controllers/UmlExerciseController.php`
+- `app/Models/UmlExerciseDetail.php`
+- `app/Services/PlantUmlInput.php`
+- `app/Services/PlantUmlService.php`
+- `app/Services/Exercises/DatabaseExerciseProvider.php`
+- `app/Services/Exercises/ExerciseFixtureImporter.php`
+- `app/Services/Exercises/JsonExerciseProvider.php`
+- `config/exercises.php`
+- `config/plantuml.php`
+- `database/migrations/2026_06_14_000000_add_structured_fields_to_uml_exercise_details.php`
+- `resources/exercises/uml/*/exercises.json`
+- `resources/views/it/uml-exercise/index.blade.php`
+- `tests/Feature/ImportExercisesCommandTest.php`
+- `tests/Feature/ItExerciseFlowTest.php`
+- `tests/Feature/ValidateExercisesCommandTest.php`
+- `tests/Unit/JsonExerciseProviderTest.php`
+- `tests/Unit/PlantUmlInputTest.php`
+
+### Behavior Changes
+
+- UML fixtures now validate and persist `diagram_type`, `scenario`,
+  `requirements`, `starter_plantuml`, `solution_plantuml`, and
+  `expected_elements`.
+- Supported diagram types are `class`, `er`, `use_case`, `sequence`, and
+  `activity`.
+- The UML page provides German diagram-type navigation and displays the full
+  structured task data.
+- Rendering resolves the submitted exercise ID instead of relying on session
+  state, preserving the selected exercise and learner input on render errors.
+- PlantUML input is passed through unchanged when it contains `@startuml`;
+  otherwise only the standard start and end markers are added.
+- `PlantUmlService` now focuses exclusively on rendering complete PlantUML
+  source and no longer injects class-diagram directives.
+- Existing class fixtures use the new schema, with four minimal fixtures added
+  to cover the other diagram types.
+
+### Testing
+
+- `php artisan exercises:validate`: passed for all 43 fixtures with SQL and
+  PlantUML execution enabled.
+- `php artisan exercises:import`: passed; 43 catalog exercises imported.
+- `php artisan test`: passed, 92 tests and 916 assertions.
+- Focused final UML tests: passed, 33 tests and 710 assertions.
+- `php artisan view:cache`: passed.
+- Laravel Pint and `git diff --check`: passed.
+
+### Follow-up Notes
+
+- Replace the four minimal non-class placeholders with the final AP2-style UML
+  fixture collection in a later task.
+
 ## 2026-06-13 - Germanize SQL fixtures and add cyclic navigation
 
 ### Summary

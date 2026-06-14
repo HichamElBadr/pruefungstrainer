@@ -80,6 +80,70 @@ class JsonExerciseProviderTest extends TestCase
         }
     }
 
+    public function test_uml_fixtures_cover_and_load_every_supported_diagram_type(): void
+    {
+        $provider = new JsonExerciseProvider;
+        $loadedTypes = [];
+
+        foreach (config('exercises.difficulties') as $difficulty) {
+            foreach ($provider->all('uml', $difficulty) as $exercise) {
+                $loadedTypes[$exercise['diagram_type']] = true;
+            }
+        }
+
+        $this->assertSame(
+            array_keys(config('exercises.uml.diagram_types')),
+            array_values(array_intersect(
+                array_keys(config('exercises.uml.diagram_types')),
+                array_keys($loadedTypes),
+            )),
+        );
+
+        $activity = $provider->random('uml', 'hard', ['diagram_type' => 'activity']);
+
+        $this->assertSame('activity', $activity['diagram_type']);
+        $this->assertIsArray($activity['requirements']);
+        $this->assertIsArray($activity['expected_elements']);
+    }
+
+    public function test_valid_structured_uml_fixture_accepts_nullable_starter_and_empty_expected_elements(): void
+    {
+        $directory = $this->temporaryRoot.'/uml/easy';
+        File::ensureDirectoryExists($directory);
+        $fixture = $this->validUmlFixture();
+        $fixture['starter_plantuml'] = null;
+        $fixture['expected_elements'] = [];
+        file_put_contents(
+            $directory.'/valid.json',
+            json_encode($fixture, JSON_THROW_ON_ERROR),
+        );
+        config(['exercises.path' => $this->temporaryRoot]);
+
+        $exercise = (new JsonExerciseProvider)->random('uml', 'easy');
+
+        $this->assertSame('use_case', $exercise['diagram_type']);
+        $this->assertNull($exercise['starter_plantuml']);
+        $this->assertSame([], $exercise['expected_elements']);
+    }
+
+    public function test_uml_fixture_rejects_an_unknown_diagram_type(): void
+    {
+        $directory = $this->temporaryRoot.'/uml/easy';
+        File::ensureDirectoryExists($directory);
+        $fixture = $this->validUmlFixture();
+        $fixture['diagram_type'] = 'component';
+        file_put_contents(
+            $directory.'/invalid-diagram-type.json',
+            json_encode($fixture, JSON_THROW_ON_ERROR),
+        );
+        config(['exercises.path' => $this->temporaryRoot]);
+
+        $this->expectException(ExerciseSourceException::class);
+        $this->expectExceptionMessage('unbekannten UML-Diagrammtyp');
+
+        (new JsonExerciseProvider)->random('uml', 'easy');
+    }
+
     public function test_all_sql_fixture_setup_and_solution_queries_are_executable(): void
     {
         foreach (config('exercises.difficulties') as $difficulty) {
@@ -254,6 +318,29 @@ class JsonExerciseProviderTest extends TestCase
             'solution' => 'SELECT id FROM items;',
             'explanation' => 'Testerklaerung',
             'tags' => ['SQL'],
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function validUmlFixture(): array
+    {
+        return [
+            'id' => 'uml-use-case-easy-test',
+            'type' => 'uml',
+            'diagram_type' => 'use_case',
+            'difficulty' => 'easy',
+            'topic' => 'requirements-modeling',
+            'title' => 'Test',
+            'scenario' => 'Ein Benutzer verwendet eine Anwendung.',
+            'requirements' => ['Ein Akteur und ein Anwendungsfall sind vorhanden.'],
+            'task' => 'Erstelle ein Use-Case-Diagramm.',
+            'starter_plantuml' => null,
+            'solution_plantuml' => "@startuml\nactor Benutzer\nusecase Anwendung\n@enduml",
+            'explanation' => 'Der Benutzer verwendet den Anwendungsfall.',
+            'expected_elements' => ['Akteur Benutzer'],
+            'tags' => ['UML'],
         ];
     }
 }

@@ -13,9 +13,20 @@ class UmlExerciseDetail extends Model
 
     protected $fillable = [
         'diagram_type',
+        'scenario',
+        'requirements',
         'starter_plantuml',
         'solution_plantuml',
+        'expected_elements',
     ];
+
+    protected function casts(): array
+    {
+        return [
+            'requirements' => 'array',
+            'expected_elements' => 'array',
+        ];
+    }
 
     public function exercise(): BelongsTo
     {

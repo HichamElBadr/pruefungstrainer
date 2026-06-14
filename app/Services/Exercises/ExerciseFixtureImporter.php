@@ -120,9 +120,12 @@ class ExerciseFixtureImporter
                 'solution_steps' => $fixture['solution_steps'] ?? null,
             ]),
             'uml' => $exercise->umlDetail()->updateOrCreate([], [
-                'diagram_type' => $fixture['diagram_type'] ?? $this->inferDiagramType($fixture),
+                'diagram_type' => $fixture['diagram_type'],
+                'scenario' => $fixture['scenario'],
+                'requirements' => $fixture['requirements'],
                 'starter_plantuml' => $fixture['starter_plantuml'] ?? null,
                 'solution_plantuml' => $fixture['solution_plantuml'],
+                'expected_elements' => $fixture['expected_elements'],
             ]),
             default => throw new ExerciseSourceException(
                 "Aufgabentyp wird beim Import nicht unterstuetzt: {$exercise->type}.",
@@ -143,15 +146,5 @@ class ExerciseFixtureImporter
         if ($exercise->type !== 'uml') {
             $exercise->umlDetail()->delete();
         }
-    }
-
-    /**
-     * @param  array<string, mixed>  $fixture
-     */
-    private function inferDiagramType(array $fixture): ?string
-    {
-        return str_contains((string) ($fixture['solution_plantuml'] ?? ''), 'class ')
-            ? 'class'
-            : null;
     }
 }

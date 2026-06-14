@@ -2,34 +2,102 @@
   {
     "id": "uml-hard-001",
     "type": "uml",
+    "diagram_type": "class",
     "difficulty": "hard",
     "topic": "inheritance-composition",
     "title": "Zahlungssystem",
-    "task": "Modelliere die abstrakte fachliche Struktur Zahlung mit betrag und ausfuehren(). Leite Kreditkartenzahlung und Ueberweisung ab. Eine Bestellung setzt sich aus Bestellpositionen zusammen und verweist auf eine Zahlung.",
+    "scenario": "Ein Bestellsystem unterstützt unterschiedliche Zahlungsarten und zusammengesetzte Bestellungen.",
+    "requirements": [
+      "Zahlung besitzt betrag und ausführen().",
+      "Kreditkartenzahlung und Überweisung werden von Zahlung abgeleitet.",
+      "Eine Bestellung besteht aus Bestellpositionen.",
+      "Eine Bestellung verweist auf eine Zahlung."
+    ],
+    "task": "Erstelle ein Klassendiagramm mit Vererbung und Komposition.",
+    "starter_plantuml": null,
     "solution_plantuml": "@startuml\nclass Zahlung {\n  - betrag : Decimal\n  + ausfuehren() : Boolean\n}\nclass Kreditkartenzahlung {\n  - kartenende : String\n}\nclass Ueberweisung {\n  - iban : String\n}\nclass Bestellung {\n  - nummer : String\n}\nclass Bestellposition {\n  - menge : Integer\n}\nZahlung <|-- Kreditkartenzahlung\nZahlung <|-- Ueberweisung\nBestellung *-- Bestellposition\nBestellung -> Zahlung : bezahlt mit\n@enduml",
     "explanation": "Spezialisierte Zahlungsarten erben von Zahlung. Die Komposition bindet Bestellpositionen an den Lebenszyklus ihrer Bestellung.",
+    "expected_elements": [
+      "Zahlungshierarchie",
+      "Komposition von Bestellung und Bestellposition",
+      "Beziehung zwischen Bestellung und Zahlung"
+    ],
     "tags": ["UML", "Vererbung", "Komposition", "Polymorphie", "AP2"]
   },
   {
     "id": "uml-hard-002",
     "type": "uml",
+    "diagram_type": "class",
     "difficulty": "hard",
     "topic": "domain-model",
     "title": "Support-System",
-    "task": "Modelliere Ticket, Kommentar, Benutzer, Kunde und SupportMitarbeiter. Kunde und SupportMitarbeiter erben von Benutzer. Ein Ticket gehoert zu einem Kunden, kann einem SupportMitarbeiter zugewiesen sein und besteht aus Kommentaren.",
+    "scenario": "Ein Support-System verwaltet Benutzerrollen, Tickets, Zuständigkeiten und Kommentare.",
+    "requirements": [
+      "Kunde und SupportMitarbeiter erben von Benutzer.",
+      "Ein Kunde meldet Tickets.",
+      "Ein Ticket kann einem SupportMitarbeiter zugewiesen werden.",
+      "Ein Ticket besteht aus Kommentaren."
+    ],
+    "task": "Modelliere das Support-System als Klassendiagramm.",
+    "starter_plantuml": null,
     "solution_plantuml": "@startuml\nclass Benutzer {\n  - id : Integer\n  - name : String\n}\nclass Kunde {\n  - kundennummer : String\n}\nclass SupportMitarbeiter {\n  - kuerzel : String\n}\nclass Ticket {\n  - betreff : String\n  - status : String\n}\nclass Kommentar {\n  - text : String\n  - erstelltAm : DateTime\n}\nBenutzer <|-- Kunde\nBenutzer <|-- SupportMitarbeiter\nKunde -> Ticket : meldet\nTicket -> SupportMitarbeiter : zugewiesen an\nTicket *-- Kommentar\n@enduml",
     "explanation": "Die Benutzerrollen teilen gemeinsame Daten durch Vererbung. Kommentare sind als Komposition an das Ticket gebunden.",
-    "tags": ["UML", "Domaenenmodell", "Vererbung", "Komposition", "AP2"]
+    "expected_elements": [
+      "Benutzerhierarchie",
+      "Ticketzuordnung",
+      "Komposition von Ticket und Kommentar"
+    ],
+    "tags": ["UML", "Domänenmodell", "Vererbung", "Komposition", "AP2"]
   },
   {
     "id": "uml-hard-003",
     "type": "uml",
+    "diagram_type": "class",
     "difficulty": "hard",
     "topic": "domain-model",
     "title": "Kursverwaltung",
-    "task": "Modelliere Person als Oberklasse von Teilnehmer und Dozent. Ein Kurs wird von einem Dozenten geleitet. Teilnehmer werden ueber die Klasse Anmeldung einem Kurs zugeordnet; Anmeldung besitzt anmeldedatum und status.",
+    "scenario": "Eine Kursverwaltung ordnet Dozenten und Teilnehmern unterschiedliche Rollen und Beziehungen zu.",
+    "requirements": [
+      "Person ist die Oberklasse von Teilnehmer und Dozent.",
+      "Ein Kurs wird von einem Dozenten geleitet.",
+      "Teilnehmer werden über Anmeldung einem Kurs zugeordnet.",
+      "Anmeldung besitzt anmeldedatum und status."
+    ],
+    "task": "Erstelle ein Klassendiagramm für die Kursverwaltung.",
+    "starter_plantuml": null,
     "solution_plantuml": "@startuml\nclass Person {\n  - name : String\n  - email : String\n}\nclass Teilnehmer {\n  - teilnehmernummer : String\n}\nclass Dozent {\n  - kuerzel : String\n}\nclass Kurs {\n  - titel : String\n}\nclass Anmeldung {\n  - anmeldedatum : Date\n  - status : String\n}\nPerson <|-- Teilnehmer\nPerson <|-- Dozent\nDozent -> Kurs : leitet\nTeilnehmer -> Anmeldung\nAnmeldung -> Kurs\n@enduml",
-    "explanation": "Vererbung reduziert doppelte Personendaten. Anmeldung modelliert die fachlich eigenstaendige Beziehung zwischen Teilnehmer und Kurs.",
+    "explanation": "Vererbung reduziert doppelte Personendaten. Anmeldung modelliert die fachlich eigenständige Beziehung zwischen Teilnehmer und Kurs.",
+    "expected_elements": [
+      "Personenhierarchie",
+      "Leitungsbeziehung",
+      "Anmeldung als eigene Klasse"
+    ],
     "tags": ["UML", "Vererbung", "Assoziationsklasse", "AP2"]
+  },
+  {
+    "id": "uml-activity-hard-001",
+    "type": "uml",
+    "diagram_type": "activity",
+    "difficulty": "hard",
+    "topic": "process-modeling",
+    "title": "Support-Ticket bearbeiten",
+    "scenario": "Ein eingehendes Support-Ticket wird geprüft, priorisiert und abhängig von der Lösbarkeit direkt bearbeitet oder eskaliert.",
+    "requirements": [
+      "Der Prozess beginnt mit dem Eingang eines Tickets.",
+      "Nach der Priorisierung wird die direkte Lösbarkeit geprüft.",
+      "Nicht direkt lösbare Tickets werden eskaliert.",
+      "Der Prozess endet nach Dokumentation der Lösung oder Eskalation."
+    ],
+    "task": "Erstelle ein Aktivitätsdiagramm mit einer Entscheidung zur direkten Lösbarkeit.",
+    "starter_plantuml": "@startuml\nstart\n:Ticket empfangen;\n@enduml",
+    "solution_plantuml": "@startuml\nstart\n:Ticket empfangen;\n:Ticket priorisieren;\nif (Direkt loesbar?) then (ja)\n  :Loesung umsetzen;\n  :Loesung dokumentieren;\nelse (nein)\n  :Ticket eskalieren;\nendif\nstop\n@enduml",
+    "explanation": "Die Entscheidung teilt den Ablauf in direkte Bearbeitung und Eskalation. Beide Pfade führen zu einem definierten Prozessende.",
+    "expected_elements": [
+      "Start und Ende",
+      "Priorisierung",
+      "Entscheidung mit zwei Pfaden",
+      "Eskalationsaktivität"
+    ],
+    "tags": ["UML", "Aktivitätsdiagramm", "Prozessmodell", "AP2"]
   }
 ]
