@@ -1,345 +1,247 @@
-# Prüfungstrainer
+# Pruefungstrainer
 
-**Prüfungstrainer** is a modular, locally hosted AI-powered learning platform for technical education and IT exam preparation.
+Pruefungstrainer is a Laravel-based learning application for IT exam preparation.
+Version-controlled JSON fixtures are imported into a reusable database catalog,
+so normal exercise loading is fast, deterministic, and self-contained.
 
-The platform combines a Laravel web application with a dedicated Python-based AI Gateway to generate structured learning tasks, execute selected exercises in the browser, and provide model-generated reference solutions for self-assessment.
+## Features
 
-The project focuses on privacy, reproducibility, maintainability, and extensibility.
+- SQL exercises with isolated temporary MySQL databases
+- Safe learner execution restricted to single `SELECT` queries
+- UML exercises with PlantUML rendering
+- Calculation exercises with automatic numeric result checking
+- Easy, medium, and hard difficulty levels
+- Random catalog exercise selection through a shared provider abstraction
+- Defensive JSON validation with user-facing source errors
 
----
+## Exercise Architecture
 
-## Overview
+Laravel resolves `App\Contracts\ExerciseProvider` to
+`App\Services\Exercises\DatabaseExerciseProvider` during normal operation.
+`JsonExerciseProvider` remains responsible for validating fixture files during
+imports and fixture validation.
 
-Prüfungstrainer helps learners prepare for technical and IT-related exams by generating practice tasks for different exercise types, such as SQL, UML, and calculation tasks.
+The configured source is:
 
-Unlike static worksheets or fixed question banks, the system can generate new task variations dynamically through a locally running language model. The generated output is normalized and validated before it is used by the Laravel application.
+```env
+EXERCISE_SOURCE=database
+```
 
-The first version of the project was developed as a functional prototype for IT education and exam preparation.
-
----
-
-## Core Goals
-
-* Provide a browser-based learning environment for IT-related practice tasks
-* Generate realistic and structured exercises using a local AI model
-* Keep all AI processing local through Ollama
-* Validate AI output before using it in the application
-* Separate web application logic from AI orchestration
-* Support future extension with additional task types and models
-
----
-
-## Key Features
-
-* AI-generated exercises for technical education
-* SQL practice tasks with temporary exercise databases
-* In-browser SQL query execution
-* UML task support with PlantUML rendering
-* Calculation exercises for technical and business-related scenarios
-* Structured JSON-based AI responses
-* AI output validation and normalization
-* Local AI execution through Ollama
-* Laravel-based web interface
-* Python-based AI Gateway
-* Modular architecture for future task categories
-
----
-
-## Architecture
-
-The system is split into two main layers:
-
-### 1. Laravel Web Application
-
-The Laravel application is responsible for:
-
-* User interface
-* Routing and controllers
-* Exercise rendering
-* Database access
-* SQL exercise execution
-* Task category handling
-* Displaying tasks, user input, and reference solutions
-
-### 2. AI Gateway
-
-The AI Gateway is a separate Python service responsible for:
-
-* Prompt construction
-* Communication with local AI models
-* JSON validation
-* Response normalization
-* Schema enforcement
-* Future model routing
-* Future caching and benchmarking
-
-This separation keeps the Laravel application focused on web and business logic while the AI Gateway handles AI-specific concerns.
-
----
-
-## High-Level Data Flow
+Fixtures are stored by type and difficulty:
 
 ```text
-User
-  ↓
-Laravel Web Application
-  ↓
-AI Gateway
-  ↓
-Ollama / Local LLM
-  ↓
-AI Gateway validates and normalizes JSON
-  ↓
-Laravel stores and renders the task
-  ↓
-User solves the exercise in the browser
-  ↓
-Laravel displays result and reference solution
+resources/exercises/
+  sql/{easy,medium,hard}/*.json
+  uml/{easy,medium,hard}/*.json
+  calculation/{easy,medium,hard}/*.json
 ```
 
----
+Each JSON file may contain one exercise object or a list of exercise objects.
+Import fixtures idempotently with:
 
-## Example AI Response
-
-The AI Gateway expects structured JSON responses. A normalized SQL exercise response can look like this:
-
-```json
-{
-  "task": "Write a SQL query that lists all customers with orders above 1000€.",
-  "mysqlstatement": "CREATE TABLE customers (...); INSERT INTO customers (...);",
-  "solution": "SELECT ... FROM customers JOIN orders ON ...;"
-}
+```bash
+php artisan exercises:import
 ```
 
-The response is validated before being forwarded to the Laravel application.
+`external_id` prevents duplicates and causes changed fixture content to update
+the existing catalog entry. Common content is stored in `exercises`; SQL,
+calculation, and UML fields are stored in one-to-one detail tables.
 
----
+SQL fixtures contain `setup_sql` and `solution`. Each learner submission creates
+a fresh temporary database, applies the catalog exercise setup, runs the
+restricted query, and drops the database before the request finishes. SQL
+database names and selected SQL exercises are not stored in session state, so
+parallel browser tabs remain independent. The exercise preview uses the same
+request-scoped cleanup pattern when it reads the sample tables.
 
-## Technology Stack
+SQL fixture tables, columns, tasks, sample data, and solutions use German
+domain names such as `kunden`, `bestellungen`, `produkte`, `preis`, and
+`menge`. The exercise page provides a next button that advances in stable
+`external_id` order within the same SQL category and difficulty and rotates
+back to the first matching exercise.
 
-### Web Application
+Fixture setup accepts only unqualified `CREATE TABLE` and
+`INSERT INTO ... VALUES` statements. Setup runs through the dedicated runtime
+account with temporary `CREATE` and `INSERT` permissions; those permissions are
+revoked before learner SQL is executed. The provisioning account never executes
+fixture SQL.
 
-* Laravel
-* PHP 8.2+
-* MySQL
-* Blade
-* Composer
-* Vite
+Learner results are row-limited. Failed queries show a sanitized database
+exception message and a learning hint without exposing stack traces, file
+paths, credentials, or connection details. Unsafe delay, file, locking,
+system-schema, and variable access constructs are rejected.
 
-### AI Gateway
+UML fixtures contain a task and `solution_plantuml`. Learner input is still
+rendered locally with Java and PlantUML.
 
-* Python
-* FastAPI
-* Ollama
-* Local language models
-* JSON schema validation
-
-### Diagram Rendering
-
-* PlantUML
-* Java Runtime Environment
-
-### Development Tools
-
-* Git
-* GitHub
-* Visual Studio Code
-* XAMPP or comparable local development environment
-
----
-
-## Repository Structure
-
-```text
-app/                Laravel application code
-routes/             Laravel route definitions
-database/           Migrations, seeders, and database structure
-resources/views/    Blade templates
-docs/               Project and technical documentation
-ai-gateway/         Python-based AI Gateway
-tests/              Automated tests
-```
-
----
-
-## Screenshots
-
-### Login Interface
-
-![Login interface](docs/image_login.png)
-
-### Dashboard
-
-![Dashboard](docs/image_dashboard.png)
-
-### SQL Practice Interface
-
-![SQL practice interface](docs/image_sqltask.png)
-
----
+Calculation fixtures contain `expected_result`, `unit`, `solution_steps`, and an
+explanation. Existing topic selection and numeric checking remain in Laravel.
 
 ## Requirements
 
-The project requires the following components:
-
-* PHP 8.2 or higher
-* Composer
-* Node.js and npm
-* MySQL
-* Python 3.10 or higher
-* Ollama
-* Java Runtime Environment
-* PlantUML
-
----
+- PHP 8.2 or newer
+- Composer
+- Node.js and npm
+- MySQL or MariaDB
+- Java Runtime Environment and a PlantUML JAR for UML rendering
+- XAMPP or a comparable local PHP/MySQL environment
 
 ## Installation
-
-Detailed installation steps should be documented in:
-
-```text
-docs/INSTALLATION.md
-```
-
-A typical local setup requires two running services:
-
-1. Laravel web application
-2. Python AI Gateway
-
-Ollama must also be running locally and must provide the configured model.
-
----
-
-## Local Development
-
-### Start the Laravel application
 
 ```bash
 composer install
 npm install
+copy .env.example .env
+php artisan key:generate
 php artisan migrate
-npm run dev
+php artisan exercises:import
+npm run build
+```
+
+Configure the main application database and the isolated SQL exercise accounts
+in `.env`. The default exercise source should remain:
+
+```env
+EXERCISE_SOURCE=database
+SQL_EXERCISE_QUERY_TIMEOUT_MS=3000
+SQL_EXERCISE_RESULT_ROW_LIMIT=200
+```
+
+`SQL_EXERCISE_RUNTIME_USERNAME` must be a dedicated account and must differ
+from `SQL_EXERCISE_ADMIN_USERNAME`. The admin account creates and drops sandbox
+schemas and grants or revokes temporary sandbox permissions. The runtime
+account starts without global privileges and is used for setup and learner
+queries. Do not configure the application database account as the runtime
+account.
+
+For a disposable local database, the catalog can also be created and imported
+through the seeders:
+
+```bash
+php artisan migrate:fresh --seed
+```
+
+The reusable-catalog migration is non-destructive for existing installations.
+It renames the previous AI-era tables to `legacy_exercises` and
+`legacy_categories`. Review and archive or remove those tables manually only
+after confirming that their historical data is no longer needed.
+
+PlantUML paths are environment-specific:
+
+```env
+PLANTUML_JAVA_PATH=java
+PLANTUML_JAR_PATH=C:\path\to\plantuml.jar
+```
+
+Do not commit local credentials or machine-specific paths.
+
+## Local Development
+
+Start Laravel:
+
+```bash
 php artisan serve
 ```
 
-### Start the AI Gateway
+Start Vite in a second terminal when working on frontend assets:
 
 ```bash
-cd ai-gateway
-python -m venv .venv
-.venv\Scripts\activate
-pip install -r requirements.txt
-uvicorn app.main:app --reload --port 8001
+npm run dev
 ```
 
-### Start Ollama
+No separate exercise generation service needs to be started.
+
+Temporary SQL databases are normally removed immediately in the request
+cleanup path. The scheduled `sql-exercises:cleanup` command is only a fallback
+for databases left behind by process termination, database outages, or failed
+cleanup calls. It recognizes both the current
+`sql_exercise_<timestamp>_<random>` format and the legacy
+`sql_exercise_<timestamp>` format. It also revokes orphaned runtime grants for
+temporary databases that no longer exist.
+
+Run a one-off fallback cleanup manually with:
 
 ```bash
-ollama serve
+php artisan sql-exercises:cleanup
 ```
 
-Pull the required model if it is not installed yet:
+For local development, keep Laravel's scheduler running in a separate terminal:
 
 ```bash
-ollama pull mistral:7b
+php artisan schedule:work
 ```
 
----
+On a Linux server, add the standard Laravel scheduler cron entry. Replace the
+project path and PHP binary when necessary:
 
-## Environment Configuration
-
-Configuration values should be stored in the Laravel `.env` file and the AI Gateway environment configuration.
-
-Example values:
-
-```env
-OLLAMA_MODEL=mistral:7b
-AI_GATEWAY_URL=http://127.0.0.1:8001
+```cron
+* * * * * cd /var/www/pruefungstrainer && /usr/bin/php artisan schedule:run >> /dev/null 2>&1
 ```
 
-Database credentials and other secrets must not be committed to the repository.
+On Windows, create a Task Scheduler task that runs the following command every
+minute from the project directory:
 
----
+```powershell
+php artisan schedule:run
+```
 
-## Security Considerations
+Laravel schedules the fallback SQL cleanup hourly. The configured
+`SQL_EXERCISE_MAX_AGE_SECONDS` determines how old a matching temporary database
+must be before it is removed.
 
-* AI execution is fully local through Ollama
-* No external AI API is required
-* Generated SQL tasks are executed in isolated temporary databases
-* User-submitted SQL should be restricted to safe query types
-* AI responses are validated before further processing
-* Sensitive configuration is stored in environment files
-* Temporary databases should be cleaned up automatically
-* Error messages should be user-friendly and avoid exposing internal details
+## Testing
 
----
+```bash
+php artisan test
+```
 
-## Current Limitations
+Validate every exercise collection against the configured local services:
 
-* The current version is a functional prototype
-* Automated grading for open-ended UML or text-based tasks is not implemented
-* UML solutions are mainly compared through reference output
-* Advanced role and permission management is not part of the first version
-* Mobile optimization is not the main focus
-* AI output quality depends on the configured local model and prompt design
+```bash
+php artisan exercises:validate
+```
 
----
+This checks JSON structure, minimum collection size, unique IDs, calculation
+topic coverage, SQL setup and solution execution in temporary MariaDB
+databases, and PlantUML rendering. Structural validation can skip those local
+service checks when necessary:
 
-## Extensibility
+```bash
+php artisan exercises:validate --skip-sql-execution --skip-uml-render
+```
 
-The platform is designed to support future extensions, including:
+The test suite verifies fixture coverage, JSON validation errors, SQL fixture
+execution, idempotent catalog imports, controller flows, PlantUML integration,
+German SQL identifiers, cyclic next-exercise navigation, and that normal
+exercise loading sends no HTTP requests.
 
-* Additional exercise categories
-* Difficulty-based task generation
-* Fixture-based tasks
-* Model routing
-* Prompt versioning
-* AI response caching
-* Multi-model benchmarking
-* Learning progress tracking
-* RAG-based context integration
-* Docker-based deployment
-* Role-based permission system
-* Integration with learning platforms such as Moodle
+## Security Notes
 
----
+- Learner SQL is treated as untrusted input.
+- Only one `SELECT` statement is accepted per submission.
+- Learner queries have an execution timeout and result-row limit.
+- Delay, file, locking, system schema, and variable access is blocked.
+- Each SQL request uses a fresh temporary database separate from the application
+  database and attempts cleanup in a `finally` path.
+- SQL sandbox names and selected SQL exercises are not kept in session state.
+- JSON fixtures are validated before use.
+- PlantUML paths are configured through environment variables.
+- SQL errors may show the sanitized database exception message, but never stack
+  traces, file paths, credentials, or connection details.
 
-## Roadmap
+## Repository Structure
 
-* Add difficulty levels for exercises
-* Improve prompt templates for SQL, UML, and calculation tasks
-* Add more predefined fixture tasks
-* Implement structured prompt versioning
-* Add automated tests for the AI Gateway
-* Add Docker support
-* Improve SQL sandbox security
-* Add model routing for different task types
-* Add response caching
-* Improve monitoring and logging
-* Extend the system with additional IT-related exercise types
-
----
-
-## Contribution Guidelines
-
-* Use feature branches
-* Keep pull requests focused and reviewable
-* Do not commit secrets or local environment files
-* Document new modules and services
-* Keep AI responses schema-compliant
-* Add or update tests when changing core logic
-* Prefer small, maintainable changes over large unstructured commits
-
----
+```text
+app/Contracts/             Exercise provider contract
+app/Services/Exercises/    Database provider, JSON validator, and fixture importer
+app/Models/                Catalog and type-specific detail models
+resources/exercises/       Local exercise collections
+resources/views/           Blade templates
+database/                  Migrations and seeders
+tests/                     Unit and feature tests
+docs/                      Project progress documentation
+```
 
 ## License
 
 This project is licensed under the GNU General Public License v3.0.
-
-See the `LICENSE` file for details.
-
----
-
-## Author
-
-Hicham El Badr

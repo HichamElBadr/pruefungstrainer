@@ -1,0 +1,35 @@
+[
+  {
+    "id": "uml-hard-001",
+    "type": "uml",
+    "difficulty": "hard",
+    "topic": "inheritance-composition",
+    "title": "Zahlungssystem",
+    "task": "Modelliere die abstrakte fachliche Struktur Zahlung mit betrag und ausfuehren(). Leite Kreditkartenzahlung und Ueberweisung ab. Eine Bestellung setzt sich aus Bestellpositionen zusammen und verweist auf eine Zahlung.",
+    "solution_plantuml": "@startuml\nclass Zahlung {\n  - betrag : Decimal\n  + ausfuehren() : Boolean\n}\nclass Kreditkartenzahlung {\n  - kartenende : String\n}\nclass Ueberweisung {\n  - iban : String\n}\nclass Bestellung {\n  - nummer : String\n}\nclass Bestellposition {\n  - menge : Integer\n}\nZahlung <|-- Kreditkartenzahlung\nZahlung <|-- Ueberweisung\nBestellung *-- Bestellposition\nBestellung -> Zahlung : bezahlt mit\n@enduml",
+    "explanation": "Spezialisierte Zahlungsarten erben von Zahlung. Die Komposition bindet Bestellpositionen an den Lebenszyklus ihrer Bestellung.",
+    "tags": ["UML", "Vererbung", "Komposition", "Polymorphie", "AP2"]
+  },
+  {
+    "id": "uml-hard-002",
+    "type": "uml",
+    "difficulty": "hard",
+    "topic": "domain-model",
+    "title": "Support-System",
+    "task": "Modelliere Ticket, Kommentar, Benutzer, Kunde und SupportMitarbeiter. Kunde und SupportMitarbeiter erben von Benutzer. Ein Ticket gehoert zu einem Kunden, kann einem SupportMitarbeiter zugewiesen sein und besteht aus Kommentaren.",
+    "solution_plantuml": "@startuml\nclass Benutzer {\n  - id : Integer\n  - name : String\n}\nclass Kunde {\n  - kundennummer : String\n}\nclass SupportMitarbeiter {\n  - kuerzel : String\n}\nclass Ticket {\n  - betreff : String\n  - status : String\n}\nclass Kommentar {\n  - text : String\n  - erstelltAm : DateTime\n}\nBenutzer <|-- Kunde\nBenutzer <|-- SupportMitarbeiter\nKunde -> Ticket : meldet\nTicket -> SupportMitarbeiter : zugewiesen an\nTicket *-- Kommentar\n@enduml",
+    "explanation": "Die Benutzerrollen teilen gemeinsame Daten durch Vererbung. Kommentare sind als Komposition an das Ticket gebunden.",
+    "tags": ["UML", "Domaenenmodell", "Vererbung", "Komposition", "AP2"]
+  },
+  {
+    "id": "uml-hard-003",
+    "type": "uml",
+    "difficulty": "hard",
+    "topic": "domain-model",
+    "title": "Kursverwaltung",
+    "task": "Modelliere Person als Oberklasse von Teilnehmer und Dozent. Ein Kurs wird von einem Dozenten geleitet. Teilnehmer werden ueber die Klasse Anmeldung einem Kurs zugeordnet; Anmeldung besitzt anmeldedatum und status.",
+    "solution_plantuml": "@startuml\nclass Person {\n  - name : String\n  - email : String\n}\nclass Teilnehmer {\n  - teilnehmernummer : String\n}\nclass Dozent {\n  - kuerzel : String\n}\nclass Kurs {\n  - titel : String\n}\nclass Anmeldung {\n  - anmeldedatum : Date\n  - status : String\n}\nPerson <|-- Teilnehmer\nPerson <|-- Dozent\nDozent -> Kurs : leitet\nTeilnehmer -> Anmeldung\nAnmeldung -> Kurs\n@enduml",
+    "explanation": "Vererbung reduziert doppelte Personendaten. Anmeldung modelliert die fachlich eigenstaendige Beziehung zwischen Teilnehmer und Kurs.",
+    "tags": ["UML", "Vererbung", "Assoziationsklasse", "AP2"]
+  }
+]

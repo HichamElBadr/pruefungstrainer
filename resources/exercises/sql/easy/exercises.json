@@ -1,0 +1,38 @@
+[
+  {
+    "id": "sql-easy-001",
+    "type": "sql",
+    "difficulty": "easy",
+    "topic": "select-where",
+    "title": "Produkte unter 100 Euro",
+    "task": "Gib den Namen und den Preis aller Produkte unter 100 Euro aus. Sortiere das Ergebnis nach dem Preis aufsteigend.",
+    "setup_sql": "CREATE TABLE produkte (id INT PRIMARY KEY, name VARCHAR(80), preis DECIMAL(10,2), bestand INT);\nINSERT INTO produkte VALUES (1, 'Tastatur', 49.90, 24), (2, 'Monitor', 189.00, 8), (3, 'Maus', 24.50, 35), (4, 'Dockingstation', 129.00, 12);",
+    "solution": "SELECT name, preis FROM produkte WHERE preis < 100 ORDER BY preis ASC;",
+    "explanation": "WHERE begrenzt die Ergebnismenge auf Produkte unter 100 Euro. ORDER BY sortiert die Treffer aufsteigend.",
+    "tags": ["SQL", "SELECT", "WHERE", "ORDER BY", "AP2"]
+  },
+  {
+    "id": "sql-easy-002",
+    "type": "sql",
+    "difficulty": "easy",
+    "topic": "select-filter",
+    "title": "Offene Supportfaelle",
+    "task": "Gib Betreff und Prioritaet aller offenen Supportfaelle aus. Sortiere die Supportfaelle alphabetisch nach dem Betreff.",
+    "setup_sql": "CREATE TABLE supportfaelle (id INT PRIMARY KEY, betreff VARCHAR(100), status VARCHAR(30), prioritaet VARCHAR(30));\nINSERT INTO supportfaelle VALUES (1, 'Drucker nicht erreichbar', 'offen', 'hoch'), (2, 'Monitor bestellen', 'geschlossen', 'mittel'), (3, 'Passwort vergessen', 'offen', 'niedrig'), (4, 'VPN-Verbindung gestoert', 'offen', 'hoch');",
+    "solution": "SELECT betreff, prioritaet FROM supportfaelle WHERE status = 'offen' ORDER BY betreff ASC;",
+    "explanation": "Die WHERE-Bedingung waehlt nur offene Supportfaelle aus. Die Sortierung erfolgt ueber die Spalte betreff.",
+    "tags": ["SQL", "SELECT", "WHERE", "Support", "AP2"]
+  },
+  {
+    "id": "sql-easy-003",
+    "type": "sql",
+    "difficulty": "easy",
+    "topic": "select-and",
+    "title": "Verfuegbare Mobilrechner",
+    "task": "Gib Hersteller, Modell und Preis aller Mobilrechner aus, die verfuegbar sind und hoechstens 900 Euro kosten.",
+    "setup_sql": "CREATE TABLE mobilrechner (id INT PRIMARY KEY, hersteller VARCHAR(60), modell VARCHAR(80), preis DECIMAL(10,2), verfuegbar VARCHAR(10));\nINSERT INTO mobilrechner VALUES (1, 'Auron', 'Arbeit 14', 849.00, 'ja'), (2, 'Bex', 'Profi 15', 1099.00, 'ja'), (3, 'Auron', 'Leicht 13', 699.00, 'nein'), (4, 'Cora', 'Buero 15', 899.00, 'ja');",
+    "solution": "SELECT hersteller, modell, preis FROM mobilrechner WHERE verfuegbar = 'ja' AND preis <= 900;",
+    "explanation": "Mit AND muessen beide Bedingungen gleichzeitig erfuellt sein: verfuegbar und maximal 900 Euro teuer.",
+    "tags": ["SQL", "SELECT", "WHERE", "AND", "AP2"]
+  }
+]

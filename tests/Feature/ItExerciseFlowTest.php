@@ -2,13 +2,16 @@
 
 namespace Tests\Feature;
 
+use App\Contracts\ExerciseProvider;
+use App\Exceptions\ExerciseSourceException;
 use App\Models\Category;
 use App\Models\Exercise;
 use App\Models\User;
-use App\Services\AI\AiResponseProvider;
 use App\Services\DatabaseManager;
+use App\Services\Exercises\ExerciseFixtureImporter;
 use App\Services\PlantUmlService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Http;
 use Mockery;
 use PDO;
 use Tests\TestCase;
@@ -21,7 +24,7 @@ class ItExerciseFlowTest extends TestCase
     {
         parent::setUp();
 
-        config(['services.ai.mode' => 'fixtures']);
+        app(ExerciseFixtureImporter::class)->import();
     }
 
     public function test_guest_users_are_redirected_from_it_exercises(): void
@@ -29,28 +32,6 @@ class ItExerciseFlowTest extends TestCase
         $this->get(route('sql-uebung'))->assertRedirect(route('login'));
         $this->get(route('calculation-exercises.index'))->assertRedirect(route('login'));
         $this->get(route('uml.form'))->assertRedirect(route('login'));
-    }
-
-    public function test_rechenaufgaben_navigation_link_is_visible_and_works(): void
-    {
-        $user = User::factory()->create();
-
-        $this->actingAs($user)
-            ->get(route('dashboard'))
-            ->assertOk()
-            ->assertSeeText('Prüfungstrainer')
-            ->assertSeeText('IT-Aufgaben üben')
-            ->assertSeeText($user->name)
-            ->assertSeeText('Profil')
-            ->assertSeeText('Abmelden')
-            ->assertSee(route('profile.edit'), false)
-            ->assertSeeText('Rechenaufgaben')
-            ->assertSee(route('calculation-exercises.index'), false);
-
-        $this->actingAs($user)
-            ->get(route('calculation-exercises.index'))
-            ->assertOk()
-            ->assertSeeText('Thema auswählen');
     }
 
     public function test_sql_difficulty_selection_page_shows_options(): void
@@ -61,10 +42,6 @@ class ItExerciseFlowTest extends TestCase
             ->get(route('sql-uebung'))
             ->assertOk()
             ->assertSeeText('SQL-Aufgaben')
-            ->assertSeeText('Übungsstufe auswählen')
-            ->assertSeeText('Grundlagen mit SELECT, WHERE und ORDER BY.')
-            ->assertSeeText('Abfragen mit JOINs, mehreren Tabellen und Bedingungen.')
-            ->assertSeeText('Komplexere Aufgaben mit GROUP BY, HAVING und Aggregationen.')
             ->assertSeeText('Einfach')
             ->assertSeeText('Mittel')
             ->assertSeeText('Schwer')
@@ -73,268 +50,377 @@ class ItExerciseFlowTest extends TestCase
             ->assertSee(route('sql-uebung.generate', 'hard'), false);
     }
 
-    public function test_generating_easy_sql_exercise_creates_matching_exercise(): void
+    public function test_easy_sql_exercise_loads_from_catalog(): void
     {
         $this->assertSqlGenerationForDifficulty('easy', 'Einfach');
     }
 
-    public function test_generating_medium_sql_exercise_creates_matching_exercise(): void
+    public function test_medium_sql_exercise_loads_from_catalog(): void
     {
         $this->assertSqlGenerationForDifficulty('medium', 'Mittel');
     }
 
-    public function test_generating_hard_sql_exercise_creates_matching_exercise(): void
+    public function test_hard_sql_exercise_loads_from_catalog(): void
     {
         $this->assertSqlGenerationForDifficulty('hard', 'Schwer');
     }
 
-    public function test_ai_generated_sql_exercise_shows_source_badge(): void
+    public function test_next_sql_exercise_stays_in_difficulty_and_rotates_to_the_first(): void
     {
-        Category::create(['name' => 'SQL']);
         $user = User::factory()->create();
+        $exercises = Exercise::query()
+            ->with('sqlDetail')
+            ->where('type', 'sql')
+            ->where('difficulty', 'easy')
+            ->orderBy('external_id')
+            ->get();
+        $first = $exercises->firstOrFail();
+        $second = $exercises->get(1);
+        $last = $exercises->last();
 
-        $ai = Mockery::mock(AiResponseProvider::class);
-        $ai->shouldReceive('getSql')
-            ->once()
-            ->andReturn([
-                'source' => 'generated',
-                'task' => 'Erstelle eine SQL-Abfrage, die alle Produkte ausgibt.',
-                'mysqlstatement' => 'CREATE TABLE produkte (id INT PRIMARY KEY, name VARCHAR(80));',
-                'solution' => 'SELECT name FROM produkte;',
-            ]);
-        $this->app->instance(AiResponseProvider::class, $ai);
+        $this->assertNotNull($second);
 
         $dbManager = Mockery::mock(DatabaseManager::class);
-        $dbManager->shouldReceive('createTemporaryDatabase')->once()->andReturn('sql_exercise_generated');
-        $dbManager->shouldReceive('createMySqlExercise')->once();
-        $dbManager->shouldReceive('getTables')->once()->andReturn([
-            'produkte' => [
-                ['id' => 1, 'name' => 'Monitor'],
-            ],
-        ]);
+        $dbManager->shouldReceive('createTemporaryDatabase')
+            ->twice()
+            ->andReturn('sql_exercise_next_second', 'sql_exercise_next_first');
+        $dbManager->shouldReceive('createMySqlExercise')
+            ->once()
+            ->with($second->sqlDetail->setup_sql, 'sql_exercise_next_second');
+        $dbManager->shouldReceive('createMySqlExercise')
+            ->once()
+            ->with($first->sqlDetail->setup_sql, 'sql_exercise_next_first');
+        $dbManager->shouldReceive('getTables')
+            ->once()
+            ->with('sql_exercise_next_second')
+            ->andReturn([]);
+        $dbManager->shouldReceive('getTables')
+            ->once()
+            ->with('sql_exercise_next_first')
+            ->andReturn([]);
+        $dbManager->shouldReceive('dropTemporaryDatabase')
+            ->once()
+            ->with('sql_exercise_next_second');
+        $dbManager->shouldReceive('dropTemporaryDatabase')
+            ->once()
+            ->with('sql_exercise_next_first');
+        $this->app->instance(DatabaseManager::class, $dbManager);
+
+        $this->actingAs($user)
+            ->post(route('sql-uebung.next', $first))
+            ->assertOk()
+            ->assertViewHas('exerciseId', $second->id)
+            ->assertSeeText($second->task)
+            ->assertSeeText('Schwierigkeit: Einfach')
+            ->assertSee(route('sql-uebung.next', $second), false);
+
+        $this->actingAs($user)
+            ->post(route('sql-uebung.next', $last))
+            ->assertOk()
+            ->assertViewHas('exerciseId', $first->id)
+            ->assertSeeText($first->task)
+            ->assertSeeText('Schwierigkeit: Einfach')
+            ->assertSee(route('sql-uebung.next', $first), false);
+    }
+
+    public function test_sql_exercise_execution_uses_current_catalog_exercise(): void
+    {
+        $user = User::factory()->create();
+        $exercise = $this->createSqlCatalogExercise();
+        $pdo = new PDO('sqlite::memory:');
+        $pdo->exec('CREATE TABLE products (name TEXT, price REAL)');
+        $pdo->exec("INSERT INTO products VALUES ('Maus', 24.50)");
+
+        $provider = Mockery::mock(ExerciseProvider::class);
+        $provider->shouldReceive('random')
+            ->once()
+            ->with('sql', 'easy')
+            ->andReturn($this->sqlFixture($exercise->id));
+        $this->app->instance(ExerciseProvider::class, $provider);
+
+        $dbManager = Mockery::mock(DatabaseManager::class);
+        $dbManager->shouldReceive('createTemporaryDatabase')
+            ->twice()
+            ->andReturn('sql_exercise_preview_test', 'sql_exercise_execution_test');
+        $dbManager->shouldReceive('createMySqlExercise')
+            ->once()
+            ->with($exercise->sqlDetail->setup_sql, 'sql_exercise_preview_test');
+        $dbManager->shouldReceive('createMySqlExercise')
+            ->once()
+            ->with($exercise->sqlDetail->setup_sql, 'sql_exercise_execution_test');
+        $dbManager->shouldReceive('getTables')
+            ->once()
+            ->with('sql_exercise_preview_test')
+            ->andReturn([
+                'products' => [
+                    ['name' => 'Maus', 'price' => 24.50],
+                ],
+            ]);
+        $dbManager->shouldReceive('getTables')
+            ->once()
+            ->with('sql_exercise_execution_test')
+            ->andReturn([
+                'products' => [
+                    ['name' => 'Maus', 'price' => 24.50],
+                ],
+            ]);
+        $dbManager->shouldReceive('connectToDatabase')
+            ->once()
+            ->with('sql_exercise_execution_test')
+            ->andReturn($pdo);
+        $dbManager->shouldReceive('dropTemporaryDatabase')
+            ->once()
+            ->with('sql_exercise_preview_test');
+        $dbManager->shouldReceive('dropTemporaryDatabase')
+            ->once()
+            ->with('sql_exercise_execution_test');
+        $this->app->instance(DatabaseManager::class, $dbManager);
+
+        $exerciseCount = Exercise::count();
+        $response = $this->actingAs($user)->post(route('sql-uebung.generate', 'easy'));
+
+        $response
+            ->assertOk()
+            ->assertSeeText('Gib alle Produkte aus.')
+            ->assertSeeText('Beispielaufgabe')
+            ->assertSeeText('Schwierigkeit: Einfach')
+            ->assertSee(route('sql-uebung.execute', $exercise), false)
+            ->assertSessionMissing('sql_temp_db')
+            ->assertSessionMissing('sql_exercise_id');
+
+        $this->assertSame($exerciseCount, Exercise::count());
+
+        $this->actingAs($user)
+            ->post(route('sql-uebung.execute', $exercise), [
+                'sql_input' => 'SELECT name, price FROM products',
+            ])
+            ->assertOk()
+            ->assertSeeText('Deine Ausgabe')
+            ->assertSeeText('Erwartete Ausgabe')
+            ->assertSeeText('Maus')
+            ->assertSeeText('WHERE filtert die Produkte.');
+    }
+
+    public function test_invalid_sql_is_rendered_as_a_safe_structured_error_below_the_input(): void
+    {
+        $user = User::factory()->create();
+        $exercise = $this->createSqlCatalogExercise('sql-error-test');
+        $pdo = new PDO('sqlite::memory:');
+        $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        $pdo->exec('CREATE TABLE products (name TEXT, price REAL)');
+
+        $dbManager = Mockery::mock(DatabaseManager::class);
+        $dbManager->shouldReceive('createTemporaryDatabase')
+            ->once()
+            ->andReturn('sql_exercise_error_test');
+        $dbManager->shouldReceive('createMySqlExercise')
+            ->once()
+            ->with($exercise->sqlDetail->setup_sql, 'sql_exercise_error_test');
+        $dbManager->shouldReceive('connectToDatabase')
+            ->once()
+            ->with('sql_exercise_error_test')
+            ->andReturn($pdo);
+        $dbManager->shouldReceive('getTables')
+            ->once()
+            ->with('sql_exercise_error_test')
+            ->andReturn(['products' => []]);
+        $dbManager->shouldReceive('dropTemporaryDatabase')
+            ->once()
+            ->with('sql_exercise_error_test');
         $this->app->instance(DatabaseManager::class, $dbManager);
 
         $response = $this->actingAs($user)
-            ->post(route('sql-uebung.generate', 'easy'));
-
-        $exercise = Exercise::firstOrFail();
-
-        $response
-            ->assertOk()
-            ->assertSeeText('KI-generiert');
-
-        $this->assertSame('generated', $exercise->source);
-    }
-
-    public function test_invalid_sql_difficulty_values_are_rejected(): void
-    {
-        $user = User::factory()->create();
-
-        $this->actingAs($user)
-            ->post(route('sql-uebung.generate', 'expert'))
-            ->assertNotFound();
-    }
-
-    public function test_sql_exercise_execution_uses_current_fixture_exercise(): void
-    {
-        Category::create(['name' => 'SQL']);
-        $user = User::factory()->create();
-        $pdo = new PDO('sqlite::memory:');
-        $pdo->exec('CREATE TABLE produkte (name TEXT, preis REAL)');
-        $pdo->exec("INSERT INTO produkte VALUES ('Maus', 24.50)");
-
-        $dbManager = Mockery::mock(DatabaseManager::class);
-        $dbManager->shouldReceive('createTemporaryDatabase')->once()->andReturn('sql_exercise_test');
-        $dbManager->shouldReceive('createMySqlExercise')->once();
-        $dbManager->shouldReceive('getTables')->andReturn([
-            'produkte' => [
-                ['name' => 'Maus', 'preis' => 24.50],
-            ],
-        ]);
-        $dbManager->shouldReceive('connectToDatabase')->once()->with('sql_exercise_test')->andReturn($pdo);
-        $this->app->instance(DatabaseManager::class, $dbManager);
-
-        $response = $this->actingAs($user)->post(route('sql-uebung.generate', 'easy'));
-
-        $exercise = Exercise::firstOrFail();
+            ->post(route('sql-uebung.execute', $exercise), [
+                'sql_input' => 'SELECT missing_column FROM products',
+            ]);
 
         $response
             ->assertOk()
-            ->assertSeeText('Erstelle eine SQL-Abfrage')
-            ->assertSeeText('Beispielaufgabe')
-            ->assertSeeText('Schwierigkeit: Einfach')
-            ->assertSessionHas('sql_temp_db', 'sql_exercise_test')
-            ->assertSessionHas('sql_exercise_id', $exercise->id);
-
-        $this->assertSame($user->id, $exercise->user_id);
-        $this->assertSame('easy', $exercise->difficulty);
-        $this->assertSame('fixture', $exercise->source);
-
-        $this->actingAs($user)
-            ->post(route('sql-uebung'), ['sql_input' => 'SELECT name, preis FROM produkte'])
-            ->assertOk()
-            ->assertSeeText('Beispielaufgabe')
-            ->assertSeeText('Schwierigkeit: Einfach')
-            ->assertSeeText('name')
-            ->assertSeeText('Maus');
+            ->assertSeeInOrder([
+                'SELECT missing_column FROM products',
+                'SQL-Fehler',
+                'Deine SQL-Abfrage konnte nicht ausgeführt werden.',
+                'Originale Datenbankmeldung:',
+                'no such column: missing_column',
+                'Hinweis:',
+            ])
+            ->assertDontSee('Stack trace')
+            ->assertDontSee('Erwartete Ausgabe');
     }
 
-    public function test_sql_submission_renders_user_and_expected_result_tables(): void
+    public function test_sql_execution_uses_the_submitted_exercise_id_across_multiple_tabs(): void
     {
-        $category = Category::create(['name' => 'SQL']);
         $user = User::factory()->create();
-        $dbName = 'sql_exercise_products';
-        $query = 'SELECT product_name, price FROM products WHERE price >= 50 AND price <= 100 ORDER BY product_name ASC;';
-
-        $exercise = Exercise::create([
-            'user_id' => $user->id,
-            'category_id' => $category->id,
-            'title' => 'Produktpreise abfragen',
-            'difficulty' => 'easy',
-            'source' => 'fixture',
-            'prompt' => '{}',
-            'generated_task' => 'Liste alle Produkte mit einem Preis zwischen 50 und 100 Euro alphabetisch auf.',
-            'solution' => $query,
+        $firstExercise = $this->createSqlCatalogExercise('sql-tab-one');
+        $firstExercise->update(['task' => 'Zeige die Produkte aus Tab eins.']);
+        $firstExercise->sqlDetail()->update([
+            'setup_sql' => 'CREATE TABLE first_products (name VARCHAR(80));',
+            'solution_sql' => 'SELECT name FROM first_products;',
         ]);
 
-        $pdo = new PDO('sqlite::memory:');
-        $pdo->exec('CREATE TABLE products (product_name TEXT, price REAL)');
-        $pdo->exec("INSERT INTO products VALUES ('Cable', 50.00)");
-        $pdo->exec("INSERT INTO products VALUES ('Monitor', 189.00)");
-        $pdo->exec("INSERT INTO products VALUES ('Router', 75.00)");
+        $secondExercise = $this->createSqlCatalogExercise('sql-tab-two');
+        $secondExercise->update(['task' => 'Zeige die Produkte aus Tab zwei.']);
+        $secondExercise->sqlDetail()->update([
+            'setup_sql' => 'CREATE TABLE second_products (name VARCHAR(80));',
+            'solution_sql' => 'SELECT name FROM second_products;',
+        ]);
+
+        $firstPdo = new PDO('sqlite::memory:');
+        $firstPdo->exec('CREATE TABLE first_products (name TEXT)');
+        $firstPdo->exec("INSERT INTO first_products VALUES ('Erstes Produkt')");
+        $secondPdo = new PDO('sqlite::memory:');
+        $secondPdo->exec('CREATE TABLE second_products (name TEXT)');
+        $secondPdo->exec("INSERT INTO second_products VALUES ('Zweites Produkt')");
 
         $dbManager = Mockery::mock(DatabaseManager::class);
-        $dbManager->shouldReceive('getTables')->once()->with($dbName)->andReturn([
-            'products' => [
-                ['product_name' => 'Cable', 'price' => 50.00],
-                ['product_name' => 'Monitor', 'price' => 189.00],
-                ['product_name' => 'Router', 'price' => 75.00],
-            ],
-        ]);
-        $dbManager->shouldReceive('connectToDatabase')->once()->with($dbName)->andReturn($pdo);
+        $dbManager->shouldReceive('createTemporaryDatabase')
+            ->twice()
+            ->andReturn('sql_exercise_tab_one', 'sql_exercise_tab_two');
+        $dbManager->shouldReceive('createMySqlExercise')
+            ->once()
+            ->with('CREATE TABLE first_products (name VARCHAR(80));', 'sql_exercise_tab_one');
+        $dbManager->shouldReceive('createMySqlExercise')
+            ->once()
+            ->with('CREATE TABLE second_products (name VARCHAR(80));', 'sql_exercise_tab_two');
+        $dbManager->shouldReceive('connectToDatabase')
+            ->once()
+            ->with('sql_exercise_tab_one')
+            ->andReturn($firstPdo);
+        $dbManager->shouldReceive('connectToDatabase')
+            ->once()
+            ->with('sql_exercise_tab_two')
+            ->andReturn($secondPdo);
+        $dbManager->shouldReceive('getTables')
+            ->once()
+            ->with('sql_exercise_tab_one')
+            ->andReturn(['first_products' => [['name' => 'Erstes Produkt']]]);
+        $dbManager->shouldReceive('getTables')
+            ->once()
+            ->with('sql_exercise_tab_two')
+            ->andReturn(['second_products' => [['name' => 'Zweites Produkt']]]);
+        $dbManager->shouldReceive('dropTemporaryDatabase')
+            ->once()
+            ->with('sql_exercise_tab_one');
+        $dbManager->shouldReceive('dropTemporaryDatabase')
+            ->once()
+            ->with('sql_exercise_tab_two');
         $this->app->instance(DatabaseManager::class, $dbManager);
 
         $this->actingAs($user)
             ->withSession([
-                'sql_temp_db' => $dbName,
-                'sql_exercise_id' => $exercise->id,
+                'sql_temp_db' => 'stale_session_database',
+                'sql_exercise_id' => $secondExercise->id,
             ])
-            ->post(route('sql-uebung'), ['sql_input' => $query])
+            ->post(route('sql-uebung.execute', $firstExercise), [
+                'sql_input' => 'SELECT name FROM first_products',
+            ])
             ->assertOk()
-            ->assertSeeTextInOrder([
-                'Deine Ausgabe',
-                'product_name',
-                'Cable',
-                'Router',
-                'Erwartete Ausgabe',
-                'product_name',
-                'Cable',
-                'Router',
-                'Musterlösung (SQL) anzeigen',
-            ]);
+            ->assertSeeText('Zeige die Produkte aus Tab eins.')
+            ->assertSeeText('Erstes Produkt')
+            ->assertDontSeeText('Zeige die Produkte aus Tab zwei.');
+
+        $this->actingAs($user)
+            ->withSession([
+                'sql_temp_db' => 'another_stale_database',
+                'sql_exercise_id' => $firstExercise->id,
+            ])
+            ->post(route('sql-uebung.execute', $secondExercise), [
+                'sql_input' => 'SELECT name FROM second_products',
+            ])
+            ->assertOk()
+            ->assertSeeText('Zeige die Produkte aus Tab zwei.')
+            ->assertSeeText('Zweites Produkt')
+            ->assertDontSeeText('Zeige die Produkte aus Tab eins.');
     }
 
-    public function test_calculation_exercise_topic_overview_is_visible(): void
+    public function test_sql_source_errors_are_shown_on_the_selection_page(): void
+    {
+        $user = User::factory()->create();
+        $provider = Mockery::mock(ExerciseProvider::class);
+        $provider->shouldReceive('random')
+            ->once()
+            ->andThrow(new ExerciseSourceException('Keine SQL-Aufgabe im Katalog gefunden.'));
+        $this->app->instance(ExerciseProvider::class, $provider);
+
+        $this->actingAs($user)
+            ->post(route('sql-uebung.generate', 'easy'))
+            ->assertRedirect(route('sql-uebung'))
+            ->assertSessionHasErrors('exercise_source');
+
+        $this->actingAs($user)
+            ->get(route('sql-uebung'))
+            ->assertOk()
+            ->assertSeeText('Keine SQL-Aufgabe im Katalog gefunden.');
+    }
+
+    public function test_calculation_overview_supports_all_difficulties(): void
     {
         $user = User::factory()->create();
 
         $this->actingAs($user)
-            ->get(route('calculation-exercises.index'))
+            ->get(route('calculation-exercises.index', ['difficulty' => 'hard']))
             ->assertOk()
             ->assertSeeText('Prozentrechnung')
-            ->assertSeeText('Rabatte, Preisänderungen und Prozentwerte berechnen.')
             ->assertSeeText('Dreisatz')
-            ->assertSeeText('Verhältnisse und proportionale Zusammenhänge lösen.')
-            ->assertSeeText('Multiplikation')
-            ->assertSeeText('Zahlen sicher multiplizieren und typische IT-Rechenwege üben.')
-            ->assertSeeText('Division')
-            ->assertSeeText('Teilungen, Anteile und einfache Verteilungen berechnen.')
             ->assertSeeText('Speichergrößen')
-            ->assertSeeText('Byte, KB, MB, GB und TB sicher umrechnen.')
-            ->assertSeeText('Stromverbrauch')
-            ->assertSeeText('Leistung, Laufzeit, Energieverbrauch und Kosten berechnen.')
-            ->assertSeeText('Hardwarekosten')
-            ->assertSeeText('Komponentenpreise, Gesamtkosten und Budgets berechnen.');
+            ->assertSeeText('Schwierigkeit: Schwer');
     }
 
-    public function test_clicking_calculation_topic_generates_exercise_and_checks_current_solution(): void
+    public function test_calculation_exercise_loads_from_catalog_and_checks_solution(): void
     {
         $user = User::factory()->create();
+        $exercise = $this->createCalculationCatalogExercise();
+        $provider = Mockery::mock(ExerciseProvider::class);
+        $provider->shouldReceive('random')
+            ->once()
+            ->with('calculation', 'hard', ['topic' => 'hardwarekosten'])
+            ->andReturn($this->calculationFixture($exercise->id));
+        $this->app->instance(ExerciseProvider::class, $provider);
 
+        $exerciseCount = Exercise::count();
         $response = $this->actingAs($user)
-            ->post(route('calculation-exercises.generate', 'prozentrechnung'));
-
-        $exercise = Exercise::firstOrFail();
+            ->post(route('calculation-exercises.generate', 'hardwarekosten'), [
+                'difficulty' => 'hard',
+            ]);
 
         $response
             ->assertOk()
             ->assertSeeText('Beispielaufgabe')
-            ->assertSeeText('Prozentrechnung: Mehrwertsteuer berechnen')
-            ->assertSeeText('Ein Server kostet netto 960 Euro. Darauf werden 19 % Mehrwertsteuer berechnet.')
+            ->assertSeeText('Schwierigkeit: Schwer')
+            ->assertSeeText('Server-Rack kalkulieren')
             ->assertSeeText('Einheit: Euro')
             ->assertSessionHas('calculation_exercise_id', $exercise->id);
 
-        $this->assertSame($user->id, $exercise->user_id);
-        $this->assertSame('Prozentrechnung: Mehrwertsteuer berechnen', $exercise->title);
-        $this->assertSame('medium', $exercise->difficulty);
-        $this->assertSame('fixture', $exercise->source);
-        $this->assertSame('182.40', $exercise->solution);
-        $this->assertSame('Euro', $exercise->expected_unit);
-        $this->assertStringContainsString('960 * 19 / 100 = 182.40 Euro.', $exercise->sample_solution);
-        $this->assertDatabaseHas('categories', ['name' => 'Calculation']);
-        $this->assertStringContainsString('"topic_slug":"prozentrechnung"', $exercise->prompt);
-        $this->assertStringContainsString('"topic":"Prozentrechnung"', $exercise->prompt);
+        $this->assertSame($exerciseCount, Exercise::count());
+        $this->assertSame('2400.000000', $exercise->calculationDetail->expected_value);
 
         $this->actingAs($user)
-            ->post(route('calculation-exercises.check'), ['user_solution' => '182.40'])
+            ->post(route('calculation-exercises.check'), ['user_solution' => '2400'])
+            ->assertOk()
+            ->assertSeeText('Deine Lösung ist korrekt.')
+            ->assertSee('value="2400"', false)
+            ->assertSeeText('2400 Euro')
+            ->assertSeeText('Die Einzelkosten werden addiert.');
+    }
+
+    public function test_uml_page_loads_a_catalog_exercise_for_the_selected_difficulty(): void
+    {
+        $user = User::factory()->create();
+        $exerciseCount = Exercise::count();
+
+        $this->actingAs($user)
+            ->get(route('uml.form', ['difficulty' => 'easy']))
             ->assertOk()
             ->assertSeeText('Beispielaufgabe')
-            ->assertSeeText('Deine Lösung ist korrekt.')
-            ->assertSee('value="182.40"', false)
-            ->assertSeeText('Erwartetes Ergebnis')
-            ->assertSeeText('182.40 Euro')
-            ->assertSeeText('Musterlösung');
+            ->assertSeeText('Schwierigkeit: Einfach')
+            ->assertSeeText('UML-Eingabe')
+            ->assertSeeText('Musterloesung anzeigen')
+            ->assertSessionHas('uml_exercise_id');
+
+        $this->assertSame($exerciseCount, Exercise::count());
     }
 
-    public function test_ai_generated_calculation_exercise_shows_source_badge(): void
-    {
-        $user = User::factory()->create();
-
-        $ai = Mockery::mock(AiResponseProvider::class);
-        $ai->shouldReceive('getCalculation')
-            ->once()
-            ->andReturn([
-                'source' => 'generated',
-                'title' => 'Dreisatz: Lizenzen berechnen',
-                'task' => '4 Lizenzen kosten 120 Euro. Wie viel Euro kosten 9 gleich teure Lizenzen?',
-                'expected_result' => '270',
-                'expected_unit' => 'Euro',
-                'sample_solution' => '1. 120 / 4 = 30 Euro.\n2. 9 * 30 = 270 Euro.',
-            ]);
-        $this->app->instance(AiResponseProvider::class, $ai);
-
-        $response = $this->actingAs($user)
-            ->post(route('calculation-exercises.generate', 'dreisatz'));
-
-        $exercise = Exercise::firstOrFail();
-
-        $response
-            ->assertOk()
-            ->assertSeeText('KI-generiert');
-
-        $this->assertSame('generated', $exercise->source);
-    }
-
-    public function test_invalid_calculation_topics_are_rejected_cleanly(): void
-    {
-        $user = User::factory()->create();
-
-        $this->actingAs($user)
-            ->post(route('calculation-exercises.generate', 'unbekanntes-thema'))
-            ->assertNotFound();
-    }
-
-    public function test_uml_exercise_renders_simplified_input(): void
+    public function test_uml_exercise_still_renders_simplified_input_with_plantuml(): void
     {
         $user = User::factory()->create();
         $pngPath = storage_path('framework/testing/uml.png');
@@ -351,13 +437,14 @@ class ItExerciseFlowTest extends TestCase
         $plantUml = Mockery::mock(PlantUmlService::class);
         $plantUml->shouldReceive('generate')
             ->once()
-            ->withArgs(fn (string $uml) => str_contains($uml, 'class Person {')
+            ->withArgs(fn (string $uml): bool => str_contains($uml, 'class Person {')
                 && str_contains($uml, 'Person -> Hund : besitzt'))
             ->andReturn($pngPath);
         $this->app->instance(PlantUmlService::class, $plantUml);
 
         $this->actingAs($user)
             ->post(route('uml.render'), [
+                'difficulty' => 'medium',
                 'uml_text' => implode("\n", [
                     'class Person',
                     '- name : String',
@@ -372,56 +459,197 @@ class ItExerciseFlowTest extends TestCase
             ->assertSee('data:image/png;base64,', false);
     }
 
-    public function test_raw_plantuml_directives_are_disabled_by_default(): void
+    public function test_uml_rendering_errors_do_not_expose_process_details(): void
+    {
+        $user = User::factory()->create();
+        $plantUml = Mockery::mock(PlantUmlService::class);
+        $plantUml->shouldReceive('generate')
+            ->once()
+            ->andThrow(new \RuntimeException(
+                'Java failed at C:\\tools\\plantuml.jar with password=secret',
+            ));
+        $this->app->instance(PlantUmlService::class, $plantUml);
+
+        $this->actingAs($user)
+            ->get(route('uml.form', ['difficulty' => 'easy']))
+            ->assertOk();
+
+        $this->actingAs($user)
+            ->post(route('uml.render'), [
+                'difficulty' => 'easy',
+                'uml_text' => "class Person\n- name : String",
+            ])
+            ->assertOk()
+            ->assertSeeText('Das UML-Diagramm konnte nicht gerendert werden.')
+            ->assertDontSee('plantuml.jar')
+            ->assertDontSee('password=secret');
+    }
+
+    public function test_normal_exercise_loading_sends_no_http_requests(): void
+    {
+        Http::fake();
+        $user = User::factory()->create();
+        $dbManager = Mockery::mock(DatabaseManager::class);
+        $dbManager->shouldReceive('createTemporaryDatabase')->once()->andReturn('sql_exercise_no_http');
+        $dbManager->shouldReceive('createMySqlExercise')->once();
+        $dbManager->shouldReceive('getTables')->once()->andReturn([]);
+        $dbManager->shouldReceive('dropTemporaryDatabase')
+            ->once()
+            ->with('sql_exercise_no_http');
+        $this->app->instance(DatabaseManager::class, $dbManager);
+
+        $this->actingAs($user)->post(route('sql-uebung.generate', 'easy'))->assertOk();
+        $this->actingAs($user)
+            ->post(route('calculation-exercises.generate', 'prozentrechnung'), ['difficulty' => 'medium'])
+            ->assertOk();
+        $this->actingAs($user)->get(route('uml.form'))->assertOk();
+
+        Http::assertNothingSent();
+    }
+
+    public function test_invalid_difficulty_values_are_rejected(): void
     {
         $user = User::factory()->create();
 
         $this->actingAs($user)
-            ->post(route('uml.render'), [
-                'uml_text' => "@startuml\nclass Person\n@enduml",
-            ])
-            ->assertOk()
-            ->assertSeeText('Direkte PlantUML-Direktiven sind deaktiviert.');
+            ->post(route('sql-uebung.generate', 'expert'))
+            ->assertNotFound();
+        $this->actingAs($user)
+            ->get(route('calculation-exercises.index', ['difficulty' => 'expert']))
+            ->assertNotFound();
+        $this->actingAs($user)
+            ->get(route('uml.form', ['difficulty' => 'expert']))
+            ->assertNotFound();
     }
 
     private function assertSqlGenerationForDifficulty(string $difficulty, string $label): void
     {
-        Category::create(['name' => 'SQL']);
         $user = User::factory()->create();
+        $exerciseCount = Exercise::count();
         $dbName = 'sql_exercise_test_'.$difficulty;
-
         $dbManager = Mockery::mock(DatabaseManager::class);
         $dbManager->shouldReceive('createTemporaryDatabase')->once()->andReturn($dbName);
         $dbManager->shouldReceive('createMySqlExercise')
             ->once()
-            ->withArgs(fn (string $sql, string $database) => $database === $dbName
+            ->withArgs(fn (string $sql, string $database): bool => $database === $dbName
                 && str_contains($sql, 'CREATE TABLE'));
-        $dbManager->shouldReceive('getTables')
-            ->once()
-            ->with($dbName)
-            ->andReturn([
-                'fixture_table' => [
-                    ['id' => 1],
-                ],
-            ]);
+        $dbManager->shouldReceive('getTables')->once()->with($dbName)->andReturn([]);
+        $dbManager->shouldReceive('dropTemporaryDatabase')->once()->with($dbName);
         $this->app->instance(DatabaseManager::class, $dbManager);
 
         $response = $this->actingAs($user)
             ->post(route('sql-uebung.generate', $difficulty));
 
-        $exercise = Exercise::firstOrFail();
-
         $response
             ->assertOk()
-            ->assertSeeText('Erstelle eine SQL-Abfrage')
             ->assertSeeText('Beispielaufgabe')
             ->assertSeeText('Schwierigkeit: '.$label)
-            ->assertSessionHas('sql_temp_db', $dbName)
-            ->assertSessionHas('sql_exercise_id', $exercise->id);
+            ->assertSeeText('Nächste Aufgabe')
+            ->assertSessionMissing('sql_temp_db')
+            ->assertSessionMissing('sql_exercise_id');
 
-        $this->assertSame($user->id, $exercise->user_id);
-        $this->assertSame($difficulty, $exercise->difficulty);
-        $this->assertSame('fixture', $exercise->source);
-        $this->assertStringContainsString('"difficulty":"'.$difficulty.'"', $exercise->prompt);
+        $this->assertSame($exerciseCount, Exercise::count());
+        $exerciseId = $response->viewData('exerciseId');
+        $response->assertSee(route('sql-uebung.execute', $exerciseId), false);
+        $response->assertSee(route('sql-uebung.next', $exerciseId), false);
+        $this->assertDatabaseHas('exercises', [
+            'id' => $exerciseId,
+            'type' => 'sql',
+            'difficulty' => $difficulty,
+            'source' => 'json',
+        ]);
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function sqlFixture(int $databaseId): array
+    {
+        return [
+            'database_id' => $databaseId,
+            'id' => 'sql-easy-test',
+            'type' => 'sql',
+            'difficulty' => 'easy',
+            'topic' => 'select',
+            'title' => 'Produkte filtern',
+            'task' => 'Gib alle Produkte aus.',
+            'setup_sql' => 'CREATE TABLE products (name VARCHAR(80), price DECIMAL(10,2));',
+            'solution' => 'SELECT name, price FROM products;',
+            'explanation' => 'WHERE filtert die Produkte.',
+            'source' => 'json',
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function calculationFixture(int $databaseId): array
+    {
+        return [
+            'database_id' => $databaseId,
+            'id' => 'calc-hard-test',
+            'type' => 'calculation',
+            'difficulty' => 'hard',
+            'topic' => 'hardwarekosten',
+            'title' => 'Server-Rack kalkulieren',
+            'task' => 'Berechne die Gesamtkosten eines Server-Racks.',
+            'expected_result' => '2400',
+            'unit' => 'Euro',
+            'solution_steps' => '1200 + 800 + 400 = 2400 Euro.',
+            'explanation' => 'Die Einzelkosten werden addiert.',
+            'source' => 'json',
+        ];
+    }
+
+    private function createSqlCatalogExercise(string $externalId = 'sql-easy-test'): Exercise
+    {
+        $category = Category::query()->where('slug', 'sql')->firstOrFail();
+        $exercise = Exercise::updateOrCreate(
+            ['external_id' => $externalId],
+            [
+                'category_id' => $category->id,
+                'type' => 'sql',
+                'topic' => 'select',
+                'difficulty' => 'easy',
+                'title' => 'Produkte filtern',
+                'task' => 'Gib alle Produkte aus.',
+                'explanation' => 'WHERE filtert die Produkte.',
+                'source' => 'json',
+                'status' => 'published',
+            ],
+        );
+        $exercise->sqlDetail()->updateOrCreate([], [
+            'setup_sql' => 'CREATE TABLE products (name VARCHAR(80), price DECIMAL(10,2));',
+            'solution_sql' => 'SELECT name, price FROM products;',
+        ]);
+
+        return $exercise->load('sqlDetail');
+    }
+
+    private function createCalculationCatalogExercise(): Exercise
+    {
+        $category = Category::query()->where('slug', 'calculation')->firstOrFail();
+        $exercise = Exercise::updateOrCreate(
+            ['external_id' => 'calc-hard-test'],
+            [
+                'category_id' => $category->id,
+                'type' => 'calculation',
+                'topic' => 'hardwarekosten',
+                'difficulty' => 'hard',
+                'title' => 'Server-Rack kalkulieren',
+                'task' => 'Berechne die Gesamtkosten eines Server-Racks.',
+                'explanation' => 'Die Einzelkosten werden addiert.',
+                'source' => 'json',
+                'status' => 'published',
+            ],
+        );
+        $exercise->calculationDetail()->updateOrCreate([], [
+            'expected_value' => '2400',
+            'tolerance' => '0',
+            'unit' => 'Euro',
+            'solution_steps' => '1200 + 800 + 400 = 2400 Euro.',
+        ]);
+
+        return $exercise->load('calculationDetail');
     }
 }

@@ -1,0 +1,93 @@
+[
+  {
+    "id": "calc-medium-001",
+    "type": "calculation",
+    "difficulty": "medium",
+    "topic": "prozentrechnung",
+    "title": "Mehrwertsteuer berechnen",
+    "task": "Ein Server kostet netto 960 Euro. Wie viele Euro Mehrwertsteuer kommen bei 19 Prozent hinzu?",
+    "expected_result": "182.40",
+    "unit": "Euro",
+    "solution_steps": "960 * 19 / 100 = 182.40 Euro.",
+    "explanation": "Die Mehrwertsteuer ist der Prozentwert des Nettopreises.",
+    "tags": ["Rechnen", "Prozentrechnung", "AP2"]
+  },
+  {
+    "id": "calc-medium-002",
+    "type": "calculation",
+    "difficulty": "medium",
+    "topic": "dreisatz",
+    "title": "Softwarelizenzen hochrechnen",
+    "task": "5 Softwarelizenzen kosten 175 Euro. Wie viel kosten 12 gleich teure Lizenzen?",
+    "expected_result": "420",
+    "unit": "Euro",
+    "solution_steps": "175 / 5 = 35 Euro pro Lizenz.\n12 * 35 = 420 Euro.",
+    "explanation": "Der Preis einer Lizenz wird auf die neue Anzahl hochgerechnet.",
+    "tags": ["Rechnen", "Dreisatz", "Lizenzen", "AP2"]
+  },
+  {
+    "id": "calc-medium-003",
+    "type": "calculation",
+    "difficulty": "medium",
+    "topic": "multiplikation",
+    "title": "Switch-Ports zaehlen",
+    "task": "Sieben Switches besitzen jeweils 16 Ports. Wie viele Ports stehen insgesamt zur Verfuegung?",
+    "expected_result": "112",
+    "unit": "Ports",
+    "solution_steps": "7 * 16 = 112 Ports.",
+    "explanation": "Die Portanzahl eines Switches wird mit der Anzahl der Switches multipliziert.",
+    "tags": ["Rechnen", "Multiplikation", "Netzwerk", "AP2"]
+  },
+  {
+    "id": "calc-medium-004",
+    "type": "calculation",
+    "difficulty": "medium",
+    "topic": "division",
+    "title": "Tickets pro Tag",
+    "task": "Ein Support-Team bearbeitet in 14 Tagen 1260 Tickets. Wie viele Tickets sind das durchschnittlich pro Tag?",
+    "expected_result": "90",
+    "unit": "Tickets",
+    "solution_steps": "1260 / 14 = 90 Tickets.",
+    "explanation": "Die Gesamtzahl wird gleichmaessig auf die 14 Tage verteilt.",
+    "tags": ["Rechnen", "Division", "Support", "AP2"]
+  },
+  {
+    "id": "calc-medium-005",
+    "type": "calculation",
+    "difficulty": "medium",
+    "topic": "speichergroessen",
+    "title": "Backups in GB umrechnen",
+    "task": "Drei Backups sind jeweils 2048 MB gross. Wie viele GB belegen sie zusammen, wenn 1024 MB einem GB entsprechen?",
+    "expected_result": "6",
+    "unit": "GB",
+    "solution_steps": "3 * 2048 = 6144 MB.\n6144 / 1024 = 6 GB.",
+    "explanation": "Zuerst werden die MB addiert, danach wird durch 1024 geteilt.",
+    "tags": ["Rechnen", "Speichergroessen", "AP2"]
+  },
+  {
+    "id": "calc-medium-006",
+    "type": "calculation",
+    "difficulty": "medium",
+    "topic": "stromverbrauch",
+    "title": "Stromkosten eines Servers",
+    "task": "Ein Server verbraucht 0.5 kW und laeuft 6 Stunden. Eine kWh kostet 0.32 Euro. Welche Kosten entstehen?",
+    "expected_result": "0.96",
+    "unit": "Euro",
+    "solution_steps": "0.5 * 6 = 3 kWh.\n3 * 0.32 = 0.96 Euro.",
+    "explanation": "Energieverbrauch und Strompreis werden nacheinander berechnet.",
+    "tags": ["Rechnen", "Stromverbrauch", "Kosten", "AP2"]
+  },
+  {
+    "id": "calc-medium-007",
+    "type": "calculation",
+    "difficulty": "medium",
+    "topic": "hardwarekosten",
+    "title": "Rabatt auf Laptops",
+    "task": "Vier Laptops kosten jeweils 850 Euro. Auf den Gesamtpreis gibt es 10 Prozent Rabatt. Wie viel muss bezahlt werden?",
+    "expected_result": "3060",
+    "unit": "Euro",
+    "solution_steps": "4 * 850 = 3400 Euro.\n3400 * 10 / 100 = 340 Euro Rabatt.\n3400 - 340 = 3060 Euro.",
+    "explanation": "Der Rabatt wird vom Gesamtpreis aller Laptops abgezogen.",
+    "tags": ["Rechnen", "Hardwarekosten", "Prozentrechnung", "AP2"]
+  }
+]

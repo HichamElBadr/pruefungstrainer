@@ -2,39 +2,26 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Category;
+use App\Contracts\ExerciseProvider;
+use App\Exceptions\ExerciseSourceException;
 use App\Models\Exercise;
-use App\Services\AI\AiResponseProvider;
 use App\Services\DatabaseManager;
 use App\Services\QueryHandler;
-use App\Services\SqlExerciseGenerator;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Str;
 use Throwable;
 
 class SqlExerciseController extends Controller
 {
     private const DIFFICULTIES = [
-        'easy' => [
-            'label' => 'Einfach',
-            'prompt' => 'easy: simple SELECT queries with WHERE, ORDER BY, and basic filtering. Avoid JOIN, GROUP BY, HAVING, and subqueries.',
-        ],
-        'medium' => [
-            'label' => 'Mittel',
-            'prompt' => 'medium: JOINs, GROUP BY, and aggregate functions. Use two or three related tables.',
-        ],
-        'hard' => [
-            'label' => 'Schwer',
-            'prompt' => 'hard: multiple JOINs, HAVING, subqueries, and more complex conditions. Use at least three related tables.',
-        ],
+        'easy' => 'Einfach',
+        'medium' => 'Mittel',
+        'hard' => 'Schwer',
     ];
-
-    private ?string $dbName = null;
 
     public function __construct(
         private readonly DatabaseManager $dbManager,
-        private readonly SqlExerciseGenerator $sqlExerciseGenerator,
+        private readonly ExerciseProvider $exerciseProvider,
     ) {}
 
     public function index()
@@ -44,158 +31,228 @@ class SqlExerciseController extends Controller
         ]);
     }
 
-    public function generate(string $difficulty, AiResponseProvider $ai)
+    public function generate(string $difficulty)
     {
         abort_if(! array_key_exists($difficulty, self::DIFFICULTIES), 404, 'Unbekannter Schwierigkeitsgrad.');
 
-        $payload = [
-            'request_id' => (string) Str::uuid(),
-            'difficulty' => $difficulty,
-            'language' => 'de',
-            'extra_context' => implode("\n", [
-                'Target audience: Fachinformatiker Anwendungsentwicklung (IHK AP2).',
-                'Selected difficulty: '.$difficulty.' ('.self::DIFFICULTIES[$difficulty]['label'].').',
-                'Difficulty definition: '.self::DIFFICULTIES[$difficulty]['prompt'],
-                'The generated SQL task must match exactly the selected difficulty.',
-                'Keep task text in German.',
-                'Use normalized, coherent sample data with at least 3 rows per table.',
-                'Use MySQL-compatible CREATE TABLE and INSERT statements.',
-                'The solution must contain exactly one SELECT query.',
-                'Suggested contexts: online shop, school, training company, support tickets, or inventory.',
-            ]),
-        ];
-
-        $mysqlstatement = null;
-
         try {
-            $generated = $this->sqlExerciseGenerator->generate($ai, $payload, 'sql');
+            $data = $this->exerciseProvider->random('sql', $difficulty);
+            $exercise = $this->findSqlExercise((int) $data['database_id']);
 
-            $this->dbName = $generated['database'];
-            session(['sql_temp_db' => $this->dbName]);
-
-            $task = $generated['task'];
-            $title = $generated['title'] ?? null;
-            $source = (string) ($generated['source'] ?? 'generated');
-            $mysqlstatement = $generated['mysqlstatement'];
-            $solution = $generated['solution'];
-
-            $category = Category::where('name', 'SQL')->firstOrFail();
-
-            $exercise = Exercise::create([
+            return $this->renderExercise($exercise);
+        } catch (ExerciseSourceException $e) {
+            Log::warning('SQL catalog exercise could not be loaded.', [
                 'user_id' => auth()->id(),
-                'category_id' => $category->id,
-                'title' => $title,
                 'difficulty' => $difficulty,
-                'source' => $source,
-                'prompt' => json_encode($generated['payload'], JSON_UNESCAPED_UNICODE),
-                'generated_task' => $task,
-                'solution' => $solution,
+                'error' => $e->getMessage(),
             ]);
 
-            session(['sql_exercise_id' => $exercise->id]);
-
-            $tables = $this->getAllTables();
-
-            return view('it.sql-exercise.index', [
-                'tables' => $tables,
-                'task' => $task,
-                'solution' => $solution,
-                'mysqlstatement' => $mysqlstatement,
-                'difficultyLabel' => self::DIFFICULTIES[$difficulty]['label'],
-                'sourceLabel' => $this->sourceLabel($source),
-            ]);
+            return redirect()
+                ->route('sql-uebung')
+                ->withErrors(['exercise_source' => $e->getMessage()]);
         } catch (Throwable $e) {
-            Log::channel('sql_exercise')->error('SQL exercise flow failed.', [
+            Log::channel('sql_exercise')->error('SQL exercise preview failed.', [
                 'user_id' => auth()->id(),
-                'request_id' => $payload['request_id'],
-                'database' => $this->dbName,
-                'difficulty' => $payload['difficulty'],
-                'generated_sql' => $mysqlstatement,
+                'difficulty' => $difficulty,
                 'exception' => $e::class,
                 'error' => $e->getMessage(),
             ]);
 
-            throw $e;
+            return redirect()
+                ->route('sql-uebung')
+                ->withErrors([
+                    'exercise_source' => 'Die SQL-Aufgabe konnte nicht vorbereitet werden. Bitte versuche es erneut.',
+                ]);
         }
     }
 
-    private function getAllTables(): array
+    public function nextExercise(Exercise $exercise)
     {
-        return $this->dbManager->getTables($this->currentDatabaseName());
+        $exercise = $this->validateSqlExercise($exercise);
+
+        try {
+            return $this->renderExercise($this->findNextExercise($exercise));
+        } catch (Throwable $e) {
+            Log::channel('sql_exercise')->error('Next SQL exercise preview failed.', [
+                'user_id' => auth()->id(),
+                'exercise_id' => $exercise->id,
+                'difficulty' => $exercise->difficulty,
+                'exception' => $e::class,
+                'error' => $e->getMessage(),
+            ]);
+
+            return redirect()
+                ->route('sql-uebung')
+                ->withErrors([
+                    'exercise_source' => 'Die naechste SQL-Aufgabe konnte nicht vorbereitet werden. Bitte versuche es erneut.',
+                ]);
+        }
     }
 
-    public function executeUserQuery(Request $request)
+    public function executeUserQuery(Request $request, Exercise $exercise)
     {
         $validated = $request->validate([
             'sql_input' => ['required', 'string', 'max:5000'],
         ]);
-
-        $pdo = $this->dbManager->connectToDatabase($this->currentDatabaseName());
-        $tables = $this->getAllTables();
+        $exercise = $this->validateSqlExercise($exercise);
         $sql = $validated['sql_input'];
-        $result = QueryHandler::executeUserQuery($pdo, $sql);
-        $exercise = $this->currentExercise();
-        $solutionResult = QueryHandler::executeUserQuery($pdo, (string) $exercise->solution);
 
-        return view('it.sql-exercise.index', [
+        try {
+            return $this->withTemporaryDatabase(
+                $exercise,
+                function (string $dbName) use ($exercise, $sql) {
+                    $pdo = $this->dbManager->connectToDatabase($dbName);
+                    $tables = $this->dbManager->getTables($dbName);
+                    $result = QueryHandler::executeUserQuery($pdo, $sql);
+                    $solutionResult = $result['success']
+                        ? QueryHandler::executeUserQuery($pdo, $exercise->sqlDetail->solution_sql)
+                        : null;
+
+                    return view('it.sql-exercise.index', $this->viewData($exercise, $tables, [
+                        'result' => $result,
+                        'solutionResult' => $solutionResult,
+                        'userSql' => $sql,
+                    ]));
+                },
+            );
+        } catch (Throwable $e) {
+            Log::channel('sql_exercise')->error('SQL exercise execution sandbox failed.', [
+                'user_id' => auth()->id(),
+                'exercise_id' => $exercise->id,
+                'exception' => $e::class,
+                'error' => $e->getMessage(),
+            ]);
+
+            return redirect()
+                ->route('sql-uebung')
+                ->withErrors([
+                    'exercise_source' => 'Die SQL-Ausführungsumgebung konnte nicht vorbereitet werden. Bitte versuche es erneut.',
+                ]);
+        }
+    }
+
+    /**
+     * @template T
+     *
+     * @param  callable(string): T  $callback
+     * @return T
+     */
+    private function withTemporaryDatabase(Exercise $exercise, callable $callback): mixed
+    {
+        $dbName = null;
+
+        try {
+            $dbName = $this->dbManager->createTemporaryDatabase();
+            $this->dbManager->createMySqlExercise($exercise->sqlDetail->setup_sql, $dbName);
+
+            return $callback($dbName);
+        } finally {
+            if ($dbName !== null) {
+                $this->dropTemporaryDatabase($dbName, $exercise->id);
+            }
+        }
+    }
+
+    private function dropTemporaryDatabase(string $dbName, int $exerciseId): void
+    {
+        try {
+            $this->dbManager->dropTemporaryDatabase($dbName);
+        } catch (Throwable $e) {
+            Log::channel('sql_exercise')->warning('Failed to clean up request-scoped SQL database.', [
+                'database' => $dbName,
+                'exercise_id' => $exerciseId,
+                'error' => $e->getMessage(),
+            ]);
+        }
+    }
+
+    private function findSqlExercise(int $exerciseId): Exercise
+    {
+        return $this->validateSqlExercise(
+            Exercise::query()->with('sqlDetail')->findOrFail($exerciseId),
+        );
+    }
+
+    private function findNextExercise(Exercise $exercise): Exercise
+    {
+        $query = Exercise::query()
+            ->with('sqlDetail')
+            ->where('type', 'sql')
+            ->where('status', 'published')
+            ->where('category_id', $exercise->category_id)
+            ->where('difficulty', $exercise->difficulty);
+
+        $next = (clone $query)
+            ->where('external_id', '>', $exercise->external_id)
+            ->orderBy('external_id')
+            ->first();
+
+        return $this->validateSqlExercise(
+            $next ?? $query->orderBy('external_id')->firstOrFail(),
+        );
+    }
+
+    private function renderExercise(Exercise $exercise)
+    {
+        $tables = $this->withTemporaryDatabase(
+            $exercise,
+            fn (string $dbName): array => $this->dbManager->getTables($dbName),
+        );
+
+        return view('it.sql-exercise.index', $this->viewData($exercise, $tables, [
+            'userSql' => $exercise->sqlDetail->starter_sql,
+        ]));
+    }
+
+    private function validateSqlExercise(Exercise $exercise): Exercise
+    {
+        abort_unless($exercise->type === 'sql' && $exercise->status === 'published', 404);
+        $exercise->loadMissing('sqlDetail');
+
+        if ($exercise->sqlDetail === null) {
+            throw new ExerciseSourceException(
+                "SQL-Aufgabendetails fehlen fuer {$exercise->external_id}.",
+            );
+        }
+
+        return $exercise;
+    }
+
+    /**
+     * @param  array<string, array<int, array<string, mixed>>>  $tables
+     * @param  array<string, mixed>  $additional
+     * @return array<string, mixed>
+     */
+    private function viewData(Exercise $exercise, array $tables, array $additional = []): array
+    {
+        return array_merge([
+            'exerciseId' => $exercise->id,
             'tables' => $tables,
-            'task' => $exercise->generated_task,
-            'solution' => $exercise->solution,
+            'task' => $exercise->task,
+            'solution' => $exercise->sqlDetail->solution_sql,
             'difficultyLabel' => $this->difficultyLabel($exercise->difficulty),
             'sourceLabel' => $this->sourceLabel($exercise->source),
-            'result' => $result,
-            'solutionResult' => $solutionResult,
-            'userSql' => $sql,
-        ]);
-    }
-
-    private function currentDatabaseName(): string
-    {
-        $dbName = session('sql_temp_db');
-
-        abort_if(! $dbName, 409, 'Keine temporäre Datenbank in der Session gefunden. Bitte starte die SQL-Übung neu.');
-
-        return $dbName;
-    }
-
-    private function currentExercise(): Exercise
-    {
-        $exerciseId = session('sql_exercise_id');
-
-        abort_if(! $exerciseId, 409, 'Keine SQL-Übung in der Session gefunden. Bitte starte die SQL-Übung neu.');
-
-        return Exercise::query()
-            ->whereKey($exerciseId)
-            ->where('user_id', auth()->id())
-            ->firstOrFail();
+            'explanation' => $exercise->explanation,
+        ], $additional);
     }
 
     private function difficultyOptions(): array
     {
-        return array_map(
-            fn (string $value, array $config) => [
-                'value' => $value,
-                'label' => $config['label'],
-            ],
-            array_keys(self::DIFFICULTIES),
-            self::DIFFICULTIES,
-        );
+        return collect(self::DIFFICULTIES)
+            ->map(fn (string $label, string $value): array => compact('value', 'label'))
+            ->values()
+            ->all();
     }
 
     private function difficultyLabel(?string $difficulty): ?string
     {
-        if ($difficulty === null || ! array_key_exists($difficulty, self::DIFFICULTIES)) {
-            return null;
-        }
-
-        return self::DIFFICULTIES[$difficulty]['label'];
+        return $difficulty !== null ? (self::DIFFICULTIES[$difficulty] ?? null) : null;
     }
 
     private function sourceLabel(?string $source): ?string
     {
         return match ($source) {
-            'generated' => 'KI-generiert',
-            'fixture' => 'Beispielaufgabe',
+            'fixture', 'json' => 'Beispielaufgabe',
             default => null,
         };
     }

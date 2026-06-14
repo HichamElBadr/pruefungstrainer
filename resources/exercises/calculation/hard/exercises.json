@@ -1,0 +1,93 @@
+[
+  {
+    "id": "calc-hard-001",
+    "type": "calculation",
+    "difficulty": "hard",
+    "topic": "prozentrechnung",
+    "title": "Ursprungspreis ermitteln",
+    "task": "Nach einem Rabatt von 12 Prozent kostet ein Server noch 1100 Euro. Wie hoch war der urspruengliche Preis?",
+    "expected_result": "1250",
+    "unit": "Euro",
+    "solution_steps": "100 - 12 = 88 Prozent.\n1100 / 88 * 100 = 1250 Euro.",
+    "explanation": "Der reduzierte Preis entspricht 88 Prozent des Ursprungspreises.",
+    "tags": ["Rechnen", "Prozentrechnung", "Grundwert", "AP2"]
+  },
+  {
+    "id": "calc-hard-002",
+    "type": "calculation",
+    "difficulty": "hard",
+    "topic": "dreisatz",
+    "title": "Projektlaufzeit anpassen",
+    "task": "Sechs Techniker benoetigen fuer eine Installation 30 Tage. Wie viele Tage benoetigen zwoelf gleich schnelle Techniker?",
+    "expected_result": "15",
+    "unit": "Tage",
+    "solution_steps": "6 * 30 = 180 Techniker-Tage.\n180 / 12 = 15 Tage.",
+    "explanation": "Bei doppelter Mitarbeiterzahl halbiert sich die Dauer, wenn alle gleich schnell arbeiten.",
+    "tags": ["Rechnen", "Antiproportionaler Dreisatz", "AP2"]
+  },
+  {
+    "id": "calc-hard-003",
+    "type": "calculation",
+    "difficulty": "hard",
+    "topic": "multiplikation",
+    "title": "Logdaten hochrechnen",
+    "task": "Ein System erzeugt pro Tag 384 MB Logdaten. Wie viele MB entstehen in 45 Tagen?",
+    "expected_result": "17280",
+    "unit": "MB",
+    "solution_steps": "384 * 45 = 17280 MB.",
+    "explanation": "Die taegliche Datenmenge wird mit der Anzahl der Tage multipliziert.",
+    "tags": ["Rechnen", "Multiplikation", "Datenmenge", "AP2"]
+  },
+  {
+    "id": "calc-hard-004",
+    "type": "calculation",
+    "difficulty": "hard",
+    "topic": "division",
+    "title": "Archivspeicher verteilen",
+    "task": "Ein Archiv mit 2.4 TB wird gleichmaessig auf 12 Datentraeger verteilt. Rechne mit 1 TB = 1000 GB. Wie viele GB entfallen auf jeden Datentraeger?",
+    "expected_result": "200",
+    "unit": "GB",
+    "solution_steps": "2.4 * 1000 = 2400 GB.\n2400 / 12 = 200 GB.",
+    "explanation": "Vor der Division wird die Gesamtmenge in die geforderte Einheit GB umgerechnet.",
+    "tags": ["Rechnen", "Division", "Speichergroessen", "AP2"]
+  },
+  {
+    "id": "calc-hard-005",
+    "type": "calculation",
+    "difficulty": "hard",
+    "topic": "speichergroessen",
+    "title": "GiB in MiB umrechnen",
+    "task": "Eine virtuelle Festplatte ist 1.5 GiB gross. Wie viele MiB sind das, wenn 1 GiB = 1024 MiB gilt?",
+    "expected_result": "1536",
+    "unit": "MiB",
+    "solution_steps": "1.5 * 1024 = 1536 MiB.",
+    "explanation": "Binaere Speichereinheiten werden mit dem Faktor 1024 umgerechnet.",
+    "tags": ["Rechnen", "Speichergroessen", "Binaereinheiten", "AP2"]
+  },
+  {
+    "id": "calc-hard-006",
+    "type": "calculation",
+    "difficulty": "hard",
+    "topic": "stromverbrauch",
+    "title": "Monatliche Serverkosten",
+    "task": "Zwoelf Server verbrauchen jeweils 0.35 kW und laufen 30 Tage rund um die Uhr. Eine kWh kostet 0.30 Euro. Wie hoch sind die Stromkosten?",
+    "expected_result": "907.20",
+    "unit": "Euro",
+    "solution_steps": "12 * 0.35 = 4.2 kW.\n30 * 24 = 720 Stunden.\n4.2 * 720 = 3024 kWh.\n3024 * 0.30 = 907.20 Euro.",
+    "explanation": "Gesamtleistung, Laufzeit, Energieverbrauch und Kosten werden schrittweise berechnet.",
+    "tags": ["Rechnen", "Stromverbrauch", "Mehrschrittaufgabe", "AP2"]
+  },
+  {
+    "id": "calc-hard-007",
+    "type": "calculation",
+    "difficulty": "hard",
+    "topic": "hardwarekosten",
+    "title": "Schulungsraum kalkulieren",
+    "task": "18 Arbeitsplaetze erhalten je einen PC fuer 780 Euro, einen Monitor fuer 210 Euro und Zubehoer fuer 45 Euro. Auf den Gesamtpreis gibt es 8 Prozent Rabatt. Wie viel muss bezahlt werden?",
+    "expected_result": "17139.60",
+    "unit": "Euro",
+    "solution_steps": "780 + 210 + 45 = 1035 Euro pro Arbeitsplatz.\n18 * 1035 = 18630 Euro.\n18630 * 8 / 100 = 1490.40 Euro Rabatt.\n18630 - 1490.40 = 17139.60 Euro.",
+    "explanation": "Zuerst werden die Kosten je Arbeitsplatz und danach Gesamtpreis und Rabatt berechnet.",
+    "tags": ["Rechnen", "Hardwarekosten", "Prozentrechnung", "AP2"]
+  }
+]

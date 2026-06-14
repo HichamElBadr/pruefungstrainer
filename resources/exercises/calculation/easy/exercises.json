@@ -1,0 +1,93 @@
+[
+  {
+    "id": "calc-easy-001",
+    "type": "calculation",
+    "difficulty": "easy",
+    "topic": "prozentrechnung",
+    "title": "Rabatt berechnen",
+    "task": "Ein Monitor kostet 125 Euro. Es gibt 20 Prozent Rabatt. Wie viele Euro werden abgezogen?",
+    "expected_result": "25",
+    "unit": "Euro",
+    "solution_steps": "125 * 20 / 100 = 25 Euro.",
+    "explanation": "Der Prozentwert wird aus Grundwert mal Prozentsatz geteilt durch 100 berechnet.",
+    "tags": ["Rechnen", "Prozentrechnung", "AP2"]
+  },
+  {
+    "id": "calc-easy-002",
+    "type": "calculation",
+    "difficulty": "easy",
+    "topic": "dreisatz",
+    "title": "Netzwerkkabel kalkulieren",
+    "task": "8 Netzwerkkabel kosten 24 Euro. Wie viel kosten 14 gleich teure Kabel?",
+    "expected_result": "42",
+    "unit": "Euro",
+    "solution_steps": "24 / 8 = 3 Euro pro Kabel.\n14 * 3 = 42 Euro.",
+    "explanation": "Zuerst wird der Preis fuer ein Kabel, danach der Preis fuer 14 Kabel berechnet.",
+    "tags": ["Rechnen", "Dreisatz", "AP2"]
+  },
+  {
+    "id": "calc-easy-003",
+    "type": "calculation",
+    "difficulty": "easy",
+    "topic": "multiplikation",
+    "title": "SSD-Kosten berechnen",
+    "task": "Eine SSD kostet 48 Euro. Fuer einen Schulungsraum werden 12 SSDs gekauft. Wie hoch sind die Gesamtkosten?",
+    "expected_result": "576",
+    "unit": "Euro",
+    "solution_steps": "12 * 48 = 576 Euro.",
+    "explanation": "Anzahl und Einzelpreis werden multipliziert.",
+    "tags": ["Rechnen", "Multiplikation", "Hardware", "AP2"]
+  },
+  {
+    "id": "calc-easy-004",
+    "type": "calculation",
+    "difficulty": "easy",
+    "topic": "division",
+    "title": "Speicherplatz aufteilen",
+    "task": "Ein Backup mit 960 GB wird gleichmaessig auf 8 Festplatten verteilt. Wie viele GB entfallen auf jede Festplatte?",
+    "expected_result": "120",
+    "unit": "GB",
+    "solution_steps": "960 / 8 = 120 GB.",
+    "explanation": "Der Gesamtspeicher wird durch die Anzahl der Festplatten geteilt.",
+    "tags": ["Rechnen", "Division", "Speicher", "AP2"]
+  },
+  {
+    "id": "calc-easy-005",
+    "type": "calculation",
+    "difficulty": "easy",
+    "topic": "speichergroessen",
+    "title": "USB-Speicher addieren",
+    "task": "Vier USB-Sticks besitzen jeweils 32 GB. Wie viele GB Speicher stehen insgesamt zur Verfuegung?",
+    "expected_result": "128",
+    "unit": "GB",
+    "solution_steps": "4 * 32 = 128 GB.",
+    "explanation": "Gleich grosse Speichermengen werden ueber eine Multiplikation addiert.",
+    "tags": ["Rechnen", "Speichergroessen", "AP2"]
+  },
+  {
+    "id": "calc-easy-006",
+    "type": "calculation",
+    "difficulty": "easy",
+    "topic": "stromverbrauch",
+    "title": "Energiebedarf eines PCs",
+    "task": "Ein PC benoetigt 250 Watt und laeuft 4 Stunden. Wie viele kWh werden verbraucht?",
+    "expected_result": "1",
+    "unit": "kWh",
+    "solution_steps": "250 / 1000 = 0.25 kW.\n0.25 * 4 = 1 kWh.",
+    "explanation": "Watt werden in Kilowatt umgerechnet und mit der Laufzeit multipliziert.",
+    "tags": ["Rechnen", "Stromverbrauch", "AP2"]
+  },
+  {
+    "id": "calc-easy-007",
+    "type": "calculation",
+    "difficulty": "easy",
+    "topic": "hardwarekosten",
+    "title": "Arbeitsplatz ausstatten",
+    "task": "Drei Monitore zu je 150 Euro und zwei Tastaturen zu je 35 Euro werden gekauft. Wie hoch sind die Gesamtkosten?",
+    "expected_result": "520",
+    "unit": "Euro",
+    "solution_steps": "3 * 150 = 450 Euro.\n2 * 35 = 70 Euro.\n450 + 70 = 520 Euro.",
+    "explanation": "Die Kosten jeder Artikelgruppe werden berechnet und anschliessend addiert.",
+    "tags": ["Rechnen", "Hardwarekosten", "AP2"]
+  }
+]

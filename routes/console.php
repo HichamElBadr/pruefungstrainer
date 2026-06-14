@@ -10,11 +10,11 @@ Artisan::command('inspire', function () {
 })->purpose('Display an inspiring quote');
 
 Artisan::command('sql-exercises:cleanup', function () {
-    $count = app(DatabaseManager::class)->cleanOldDatabases();
-    $this->info("Dropped {$count} stale SQL exercise databases.");
-})->purpose('Drop stale temporary SQL exercise databases');
+    $result = app(DatabaseManager::class)->cleanOldDatabases();
+    $this->info(
+        "Dropped {$result['databases']} stale SQL exercise databases "
+        ."and revoked {$result['grants']} orphaned runtime grants.",
+    );
+})->purpose('Drop stale SQL exercise databases and revoke orphaned grants');
 
 Schedule::command('sql-exercises:cleanup')->hourly();
-Schedule::call(function () {
-    \App\Models\Exercise::where('created_at', '<', now()->subDay())->delete();
-})->daily();

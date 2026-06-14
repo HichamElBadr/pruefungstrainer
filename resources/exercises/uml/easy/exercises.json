@@ -1,0 +1,35 @@
+[
+  {
+    "id": "uml-easy-001",
+    "type": "uml",
+    "difficulty": "easy",
+    "topic": "class-diagram",
+    "title": "Kunde und Bestellung",
+    "task": "Erstelle ein Klassendiagramm mit den Klassen Kunde und Bestellung. Kunde besitzt name und kundennummer. Bestellung besitzt bestellnummer und datum. Ein Kunde kann Bestellungen aufgeben.",
+    "solution_plantuml": "@startuml\nclass Kunde {\n  - name : String\n  - kundennummer : Integer\n}\nclass Bestellung {\n  - bestellnummer : Integer\n  - datum : Date\n}\nKunde -> Bestellung : gibt auf\n@enduml",
+    "explanation": "Die beiden Klassen enthalten ihre fachlichen Attribute. Die gerichtete Beziehung beschreibt, dass ein Kunde eine Bestellung aufgibt.",
+    "tags": ["UML", "Klassendiagramm", "Beziehung", "AP2"]
+  },
+  {
+    "id": "uml-easy-002",
+    "type": "uml",
+    "difficulty": "easy",
+    "topic": "class-diagram",
+    "title": "Mitarbeiter und Abteilung",
+    "task": "Modelliere die Klassen Mitarbeiter und Abteilung. Mitarbeiter hat name und personalnummer. Abteilung hat bezeichnung. Ein Mitarbeiter ist einer Abteilung zugeordnet.",
+    "solution_plantuml": "@startuml\nclass Mitarbeiter {\n  - name : String\n  - personalnummer : Integer\n}\nclass Abteilung {\n  - bezeichnung : String\n}\nMitarbeiter -> Abteilung : gehoert zu\n@enduml",
+    "explanation": "Attribute stehen innerhalb der Klassen. Die Zuordnung wird als gerichtete Beziehung zwischen Mitarbeiter und Abteilung dargestellt.",
+    "tags": ["UML", "Klassendiagramm", "Attribute", "AP2"]
+  },
+  {
+    "id": "uml-easy-003",
+    "type": "uml",
+    "difficulty": "easy",
+    "topic": "class-diagram",
+    "title": "Benutzer und Profil",
+    "task": "Erstelle ein Klassendiagramm mit Benutzer und Profil. Benutzer besitzt benutzername. Profil besitzt anzeigename. Ein Benutzer besitzt ein Profil.",
+    "solution_plantuml": "@startuml\nclass Benutzer {\n  - benutzername : String\n}\nclass Profil {\n  - anzeigename : String\n}\nBenutzer -> Profil : besitzt\n@enduml",
+    "explanation": "Das Diagramm trennt Anmeldedaten und Profildaten in zwei Klassen und verbindet sie ueber eine Besitzbeziehung.",
+    "tags": ["UML", "Klassendiagramm", "Beziehung", "AP2"]
+  }
+]

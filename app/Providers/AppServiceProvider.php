@@ -2,7 +2,10 @@
 
 namespace App\Providers;
 
+use App\Contracts\ExerciseProvider;
+use App\Services\Exercises\DatabaseExerciseProvider;
 use Illuminate\Support\ServiceProvider;
+use RuntimeException;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -11,7 +14,14 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        $this->app->singleton(ExerciseProvider::class, function ($app): ExerciseProvider {
+            return match (config('exercises.source', 'database')) {
+                'database' => $app->make(DatabaseExerciseProvider::class),
+                default => throw new RuntimeException(
+                    'Unsupported exercise source: '.config('exercises.source'),
+                ),
+            };
+        });
     }
 
     /**

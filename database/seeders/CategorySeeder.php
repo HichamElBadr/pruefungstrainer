@@ -2,9 +2,8 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
-use Illuminate\Database\Seeder;
 use App\Models\Category;
+use Illuminate\Database\Seeder;
 
 class CategorySeeder extends Seeder
 {
@@ -13,16 +12,27 @@ class CategorySeeder extends Seeder
      */
     public function run(): void
     {
-        Category::insert([
-            ['name' => 'SQL'],
-            ['name' => 'UML'],
-            ['name' => 'ER-Modell'],
-            ['name' => 'Programmierung'],
-            ['name' => 'Netzwerktechnik'],
-            ['name' => 'Calculation'],
-            ['name' => 'WISO'],
-            ['name' => 'Sonstiges'],
-            ['name' => 'IT-Sicherheit']
-        ]);
+        $categories = [
+            ['slug' => 'sql', 'name' => 'SQL'],
+            ['slug' => 'uml', 'name' => 'UML'],
+            ['slug' => 'er-modell', 'name' => 'ER-Modell'],
+            ['slug' => 'programmierung', 'name' => 'Programmierung'],
+            ['slug' => 'netzwerktechnik', 'name' => 'Netzwerktechnik'],
+            ['slug' => 'calculation', 'name' => 'Calculation'],
+            ['slug' => 'wiso', 'name' => 'WISO'],
+            ['slug' => 'sonstiges', 'name' => 'Sonstiges'],
+            ['slug' => 'it-sicherheit', 'name' => 'IT-Sicherheit'],
+        ];
+
+        foreach ($categories as $sortOrder => $category) {
+            Category::updateOrCreate(
+                ['slug' => $category['slug']],
+                [
+                    'name' => $category['name'],
+                    'sort_order' => ($sortOrder + 1) * 10,
+                    'is_active' => true,
+                ],
+            );
+        }
     }
 }
