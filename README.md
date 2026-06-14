@@ -54,6 +54,12 @@ database names and selected SQL exercises are not stored in session state, so
 parallel browser tabs remain independent. The exercise preview uses the same
 request-scoped cleanup pattern when it reads the sample tables.
 
+SQL fixture tables, columns, tasks, sample data, and solutions use German
+domain names such as `kunden`, `bestellungen`, `produkte`, `preis`, and
+`menge`. The exercise page provides a next button that advances in stable
+`external_id` order within the same SQL category and difficulty and rotates
+back to the first matching exercise.
+
 Fixture setup accepts only unqualified `CREATE TABLE` and
 `INSERT INTO ... VALUES` statements. Setup runs through the dedicated runtime
 account with temporary `CREATE` and `INSERT` permissions; those permissions are
@@ -206,7 +212,8 @@ php artisan exercises:validate --skip-sql-execution --skip-uml-render
 
 The test suite verifies fixture coverage, JSON validation errors, SQL fixture
 execution, idempotent catalog imports, controller flows, PlantUML integration,
-and that normal exercise loading sends no HTTP requests.
+German SQL identifiers, cyclic next-exercise navigation, and that normal
+exercise loading sends no HTTP requests.
 
 ## Security Notes
 

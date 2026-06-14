@@ -141,4 +141,13 @@
             </details>
         </div>
     </section>
+
+    <div class="flex justify-end">
+        <form method="POST" action="{{ route('sql-uebung.next', $exerciseId) }}">
+            @csrf
+            <button type="submit" class="exercise-button">
+                Nächste Aufgabe &rarr;
+            </button>
+        </form>
+    </div>
 </x-exercise-layout>

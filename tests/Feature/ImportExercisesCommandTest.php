@@ -3,8 +3,11 @@
 namespace Tests\Feature;
 
 use App\Contracts\ExerciseProvider;
+use App\Models\CalculationExerciseDetail;
 use App\Models\Category;
 use App\Models\Exercise;
+use App\Models\SqlExerciseDetail;
+use App\Models\UmlExerciseDetail;
 use Database\Seeders\DatabaseSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\File;
@@ -35,6 +38,13 @@ class ImportExercisesCommandTest extends TestCase
         $this->assertTrue(Schema::hasTable('sql_exercise_details'));
         $this->assertTrue(Schema::hasTable('calculation_exercise_details'));
         $this->assertTrue(Schema::hasTable('uml_exercise_details'));
+    }
+
+    public function test_detail_models_use_exercise_id_as_their_primary_key(): void
+    {
+        $this->assertSame('exercise_id', (new SqlExerciseDetail)->getKeyName());
+        $this->assertSame('exercise_id', (new CalculationExerciseDetail)->getKeyName());
+        $this->assertSame('exercise_id', (new UmlExerciseDetail)->getKeyName());
     }
 
     public function test_catalog_migration_can_resume_after_its_tables_already_exist(): void

@@ -99,6 +99,62 @@ class JsonExerciseProviderTest extends TestCase
         }
     }
 
+    public function test_sql_fixtures_use_german_table_and_column_names(): void
+    {
+        $forbiddenIdentifiers = [
+            'customers',
+            'orders',
+            'products',
+            'order_items',
+            'sales',
+            'projects',
+            'employees',
+            'departments',
+            'courses',
+            'enrollments',
+            'time_entries',
+            'tickets',
+            'notebooks',
+            'subject',
+            'priority',
+            'manufacturer',
+            'model',
+            'price',
+            'available',
+            'stock',
+            'amount',
+            'customer_id',
+            'course_id',
+            'department_id',
+            'salary',
+            'participant',
+            'project_id',
+            'employee_id',
+            'hours',
+            'sku',
+            'quantity',
+            'product_id',
+        ];
+
+        foreach (config('exercises.difficulties') as $difficulty) {
+            $fixtures = $this->fixturesFrom(resource_path("exercises/sql/{$difficulty}"));
+
+            $this->assertGreaterThanOrEqual(3, count($fixtures));
+
+            foreach ($fixtures as $fixture) {
+                $sql = $fixture['setup_sql']."\n".$fixture['solution'];
+
+                foreach ($forbiddenIdentifiers as $identifier) {
+                    $this->assertDoesNotMatchRegularExpression(
+                        '/\b'.preg_quote($identifier, '/').'\b/i',
+                        $sql,
+                        "English identifier '{$identifier}' found in {$fixture['id']}.",
+                    );
+                }
+            }
+        }
+    }
+
     public function test_missing_exercise_directory_has_a_clear_error(): void
     {
         config(['exercises.path' => $this->temporaryRoot]);

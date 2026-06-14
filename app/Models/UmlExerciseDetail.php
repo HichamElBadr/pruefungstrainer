@@ -7,6 +7,10 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class UmlExerciseDetail extends Model
 {
+    protected $primaryKey = 'exercise_id';
+
+    public $incrementing = false;
+
     protected $fillable = [
         'diagram_type',
         'starter_plantuml',

@@ -28,6 +28,9 @@ Route::middleware(['auth', 'verified'])->prefix('it')->group(function () {
     Route::post('sql-uebung/{exercise}/execute', [SqlExerciseController::class, 'executeUserQuery'])
         ->whereNumber('exercise')
         ->name('sql-uebung.execute');
+    Route::post('sql-uebung/{exercise}/next', [SqlExerciseController::class, 'nextExercise'])
+        ->whereNumber('exercise')
+        ->name('sql-uebung.next');
 
     Route::get('calculation-exercises', [CalculationExerciseController::class, 'overview'])
         ->name('calculation-exercises.index');

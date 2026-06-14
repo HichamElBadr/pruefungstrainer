@@ -7,6 +7,10 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class CalculationExerciseDetail extends Model
 {
+    protected $primaryKey = 'exercise_id';
+
+    public $incrementing = false;
+
     protected $fillable = [
         'expected_value',
         'tolerance',

@@ -38,14 +38,8 @@ class SqlExerciseController extends Controller
         try {
             $data = $this->exerciseProvider->random('sql', $difficulty);
             $exercise = $this->findSqlExercise((int) $data['database_id']);
-            $tables = $this->withTemporaryDatabase(
-                $exercise,
-                fn (string $dbName): array => $this->dbManager->getTables($dbName),
-            );
 
-            return view('it.sql-exercise.index', $this->viewData($exercise, $tables, [
-                'userSql' => $exercise->sqlDetail->starter_sql,
-            ]));
+            return $this->renderExercise($exercise);
         } catch (ExerciseSourceException $e) {
             Log::warning('SQL catalog exercise could not be loaded.', [
                 'user_id' => auth()->id(),
@@ -68,6 +62,29 @@ class SqlExerciseController extends Controller
                 ->route('sql-uebung')
                 ->withErrors([
                     'exercise_source' => 'Die SQL-Aufgabe konnte nicht vorbereitet werden. Bitte versuche es erneut.',
+                ]);
+        }
+    }
+
+    public function nextExercise(Exercise $exercise)
+    {
+        $exercise = $this->validateSqlExercise($exercise);
+
+        try {
+            return $this->renderExercise($this->findNextExercise($exercise));
+        } catch (Throwable $e) {
+            Log::channel('sql_exercise')->error('Next SQL exercise preview failed.', [
+                'user_id' => auth()->id(),
+                'exercise_id' => $exercise->id,
+                'difficulty' => $exercise->difficulty,
+                'exception' => $e::class,
+                'error' => $e->getMessage(),
+            ]);
+
+            return redirect()
+                ->route('sql-uebung')
+                ->withErrors([
+                    'exercise_source' => 'Die naechste SQL-Aufgabe konnte nicht vorbereitet werden. Bitte versuche es erneut.',
                 ]);
         }
     }
@@ -154,6 +171,37 @@ class SqlExerciseController extends Controller
         return $this->validateSqlExercise(
             Exercise::query()->with('sqlDetail')->findOrFail($exerciseId),
         );
+    }
+
+    private function findNextExercise(Exercise $exercise): Exercise
+    {
+        $query = Exercise::query()
+            ->with('sqlDetail')
+            ->where('type', 'sql')
+            ->where('status', 'published')
+            ->where('category_id', $exercise->category_id)
+            ->where('difficulty', $exercise->difficulty);
+
+        $next = (clone $query)
+            ->where('external_id', '>', $exercise->external_id)
+            ->orderBy('external_id')
+            ->first();
+
+        return $this->validateSqlExercise(
+            $next ?? $query->orderBy('external_id')->firstOrFail(),
+        );
+    }
+
+    private function renderExercise(Exercise $exercise)
+    {
+        $tables = $this->withTemporaryDatabase(
+            $exercise,
+            fn (string $dbName): array => $this->dbManager->getTables($dbName),
+        );
+
+        return view('it.sql-exercise.index', $this->viewData($exercise, $tables, [
+            'userSql' => $exercise->sqlDetail->starter_sql,
+        ]));
     }
 
     private function validateSqlExercise(Exercise $exercise): Exercise

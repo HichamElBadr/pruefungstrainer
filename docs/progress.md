@@ -1,5 +1,66 @@
 # Progress Update
 
+## 2026-06-13 - Germanize SQL fixtures and add cyclic navigation
+
+### Summary
+
+Converted all SQL fixture schemas, sample data, tasks, and solutions to German
+domain terminology. Added deterministic next-exercise navigation that stays
+within the current SQL difficulty and rotates after the final exercise.
+
+### Changed Files
+
+- `README.md`
+- `agents.md`
+- `app/Http/Controllers/SqlExerciseController.php`
+- `app/Models/CalculationExerciseDetail.php`
+- `app/Models/SqlExerciseDetail.php`
+- `app/Models/UmlExerciseDetail.php`
+- `resources/exercises/sql/easy/exercises.json`
+- `resources/exercises/sql/medium/exercises.json`
+- `resources/exercises/sql/hard/exercises.json`
+- `resources/views/it/sql-exercise/index.blade.php`
+- `routes/web.php`
+- `tests/Feature/ItExerciseFlowTest.php`
+- `tests/Feature/ImportExercisesCommandTest.php`
+- `tests/Unit/JsonExerciseProviderTest.php`
+- `docs/progress.md`
+
+### Behavior Changes
+
+- All nine SQL fixtures use German table and column names.
+- SQL tasks, sample values, explanations, and solution queries use German
+  domain terminology.
+- Existing `easy`, `medium`, and `hard` fixture directories retain three SQL
+  exercises each.
+- SQL exercise pages display a clearly visible `Nächste Aufgabe` button.
+- The next exercise is selected by stable `external_id` order within the same
+  category and difficulty.
+- Navigation from the final matching exercise rotates to the first one.
+- SQL execution, expected result rendering, and request-scoped sandbox cleanup
+  remain unchanged.
+- Type-specific detail models now use their actual `exercise_id` primary key so
+  changed fixtures update correctly on MySQL.
+
+### Testing
+
+- `php artisan test --filter="JsonExerciseProviderTest|ItExerciseFlowTest"`:
+  passed, 27 tests and 679 assertions.
+- `php artisan exercises:import`: updated all 39 catalog exercises twice
+  without duplicates.
+- Catalog check: three published SQL exercises exist for each difficulty.
+- `php artisan test`: passed, 86 tests and 878 assertions.
+- `php artisan exercises:validate`: passed for all 39 fixtures with SQL and
+  PlantUML checks enabled.
+- `php artisan view:cache`: passed.
+- Laravel Pint and `git diff --check`: passed.
+- Final MariaDB residue check: zero temporary SQL schemas and zero
+  database-specific runtime grants.
+
+### Follow-up Notes
+
+- None.
+
 ## 2026-06-13 - Harden SQL provisioning and internal error boundaries
 
 ### Summary

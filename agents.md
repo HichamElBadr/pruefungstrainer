@@ -85,6 +85,10 @@ The project is intended as a maintainable prototype and foundation for future ex
   `{prefix}{timestamp}_{random}` and legacy `{prefix}{timestamp}` database names.
 - Match temporary database names strictly before dropping any schema.
 - SQL fixtures must provide valid `setup_sql` and one safe solution query.
+- Use German domain names for SQL fixture tables, columns, tasks, sample data,
+  and solutions.
+- Keep next-exercise navigation within the same SQL category and difficulty and
+  rotate to the first matching catalog exercise after the last one.
 - Allow fixture setup statements only for unqualified `CREATE TABLE` and
   `INSERT INTO ... VALUES` operations.
 - Execute fixture setup through a dedicated runtime user with temporary write

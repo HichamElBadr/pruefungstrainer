@@ -65,6 +65,64 @@ class ItExerciseFlowTest extends TestCase
         $this->assertSqlGenerationForDifficulty('hard', 'Schwer');
     }
 
+    public function test_next_sql_exercise_stays_in_difficulty_and_rotates_to_the_first(): void
+    {
+        $user = User::factory()->create();
+        $exercises = Exercise::query()
+            ->with('sqlDetail')
+            ->where('type', 'sql')
+            ->where('difficulty', 'easy')
+            ->orderBy('external_id')
+            ->get();
+        $first = $exercises->firstOrFail();
+        $second = $exercises->get(1);
+        $last = $exercises->last();
+
+        $this->assertNotNull($second);
+
+        $dbManager = Mockery::mock(DatabaseManager::class);
+        $dbManager->shouldReceive('createTemporaryDatabase')
+            ->twice()
+            ->andReturn('sql_exercise_next_second', 'sql_exercise_next_first');
+        $dbManager->shouldReceive('createMySqlExercise')
+            ->once()
+            ->with($second->sqlDetail->setup_sql, 'sql_exercise_next_second');
+        $dbManager->shouldReceive('createMySqlExercise')
+            ->once()
+            ->with($first->sqlDetail->setup_sql, 'sql_exercise_next_first');
+        $dbManager->shouldReceive('getTables')
+            ->once()
+            ->with('sql_exercise_next_second')
+            ->andReturn([]);
+        $dbManager->shouldReceive('getTables')
+            ->once()
+            ->with('sql_exercise_next_first')
+            ->andReturn([]);
+        $dbManager->shouldReceive('dropTemporaryDatabase')
+            ->once()
+            ->with('sql_exercise_next_second');
+        $dbManager->shouldReceive('dropTemporaryDatabase')
+            ->once()
+            ->with('sql_exercise_next_first');
+        $this->app->instance(DatabaseManager::class, $dbManager);
+
+        $this->actingAs($user)
+            ->post(route('sql-uebung.next', $first))
+            ->assertOk()
+            ->assertViewHas('exerciseId', $second->id)
+            ->assertSeeText($second->task)
+            ->assertSeeText('Schwierigkeit: Einfach')
+            ->assertSee(route('sql-uebung.next', $second), false);
+
+        $this->actingAs($user)
+            ->post(route('sql-uebung.next', $last))
+            ->assertOk()
+            ->assertViewHas('exerciseId', $first->id)
+            ->assertSeeText($first->task)
+            ->assertSeeText('Schwierigkeit: Einfach')
+            ->assertSee(route('sql-uebung.next', $first), false);
+    }
+
     public function test_sql_exercise_execution_uses_current_catalog_exercise(): void
     {
         $user = User::factory()->create();
@@ -486,12 +544,14 @@ class ItExerciseFlowTest extends TestCase
             ->assertOk()
             ->assertSeeText('Beispielaufgabe')
             ->assertSeeText('Schwierigkeit: '.$label)
+            ->assertSeeText('Nächste Aufgabe')
             ->assertSessionMissing('sql_temp_db')
             ->assertSessionMissing('sql_exercise_id');
 
         $this->assertSame($exerciseCount, Exercise::count());
         $exerciseId = $response->viewData('exerciseId');
         $response->assertSee(route('sql-uebung.execute', $exerciseId), false);
+        $response->assertSee(route('sql-uebung.next', $exerciseId), false);
         $this->assertDatabaseHas('exercises', [
             'id' => $exerciseId,
             'type' => 'sql',
