@@ -230,6 +230,7 @@ class SqlExerciseController extends Controller
             'tables' => $tables,
             'task' => $exercise->task,
             'solution' => $exercise->sqlDetail->solution_sql,
+            'hints' => $exercise->hints ?? [],
             'difficultyLabel' => $this->difficultyLabel($exercise->difficulty),
             'sourceLabel' => $this->sourceLabel($exercise->source),
             'explanation' => $exercise->explanation,

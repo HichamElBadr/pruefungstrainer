@@ -34,6 +34,7 @@ class ImportExercisesCommandTest extends TestCase
         $this->assertTrue(Schema::hasTable('legacy_exercises'));
         $this->assertTrue(Schema::hasTable('legacy_categories'));
         $this->assertTrue(Schema::hasTable('exercises'));
+        $this->assertTrue(Schema::hasColumn('exercises', 'hints'));
         $this->assertTrue(Schema::hasTable('categories'));
         $this->assertTrue(Schema::hasTable('sql_exercise_details'));
         $this->assertTrue(Schema::hasTable('calculation_exercise_details'));
@@ -88,6 +89,8 @@ class ImportExercisesCommandTest extends TestCase
 
         $this->assertSame('sql', $exercise->type);
         $this->assertNotNull($exercise->sqlDetail);
+        $this->assertCount(3, $exercise->hints);
+        $this->assertSame(1, $exercise->hints[0]['level']);
         $this->assertStringContainsString('CREATE TABLE', $exercise->sqlDetail->setup_sql);
     }
 
@@ -134,16 +137,22 @@ class ImportExercisesCommandTest extends TestCase
             'topic' => 'hardwarekosten',
         ]);
         $uml = app(ExerciseProvider::class)->all('uml', 'easy');
+        $activity = app(ExerciseProvider::class)->all('uml', 'hard', [
+            'diagram_type' => 'activity',
+        ]);
 
         $this->assertArrayHasKey('database_id', $sql[0]);
         $this->assertArrayHasKey('setup_sql', $sql[0]);
         $this->assertArrayHasKey('solution', $sql[0]);
+        $this->assertSame([1, 2, 3], array_column($sql[0]['hints'], 'level'));
         $this->assertSame('17139.6', $calculation[0]['expected_result']);
+        $this->assertSame([], $calculation[0]['hints']);
         $this->assertSame('class', $uml[0]['diagram_type']);
         $this->assertNotEmpty($uml[0]['scenario']);
         $this->assertIsArray($uml[0]['requirements']);
         $this->assertIsArray($uml[0]['expected_elements']);
         $this->assertStringContainsString('@startuml', $uml[0]['solution_plantuml']);
+        $this->assertSame([1, 2, 3], array_column($activity[0]['hints'], 'level'));
     }
 
     public function test_category_boolean_cast_is_applied(): void

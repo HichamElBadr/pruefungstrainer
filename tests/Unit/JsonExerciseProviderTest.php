@@ -76,8 +76,50 @@ class JsonExerciseProviderTest extends TestCase
                 $this->assertSame($difficulty, $exercise['difficulty']);
                 $this->assertSame($topic, $exercise['topic']);
                 $this->assertSame('json', $exercise['source']);
+                $this->assertSame([], $exercise['hints']);
             }
         }
+    }
+
+    public function test_provider_normalizes_valid_and_invalid_hint_entries(): void
+    {
+        $directory = $this->temporaryRoot.'/sql/easy';
+        File::ensureDirectoryExists($directory);
+        $fixture = $this->validSqlFixture();
+        $fixture['hints'] = [
+            ['level' => 3, 'title' => 'Dritter Tipp', 'text' => 'Dritter Text'],
+            ['level' => 4, 'title' => 'Ungültig', 'text' => 'Ungültiger Text'],
+            ['level' => 1, 'title' => 'Erster Tipp', 'text' => 'Erster Text'],
+            ['level' => 2, 'title' => '', 'text' => 'Unvollständig'],
+            ['level' => 2, 'title' => 'Zweiter Tipp', 'text' => 'Zweiter Text'],
+        ];
+        file_put_contents(
+            $directory.'/hints.json',
+            json_encode($fixture, JSON_THROW_ON_ERROR),
+        );
+        config(['exercises.path' => $this->temporaryRoot]);
+
+        $exercise = (new JsonExerciseProvider)->random('sql', 'easy');
+
+        $this->assertSame([1, 2, 3], array_column($exercise['hints'], 'level'));
+        $this->assertSame('Erster Tipp', $exercise['hints'][0]['title']);
+    }
+
+    public function test_provider_ignores_a_non_array_hints_field(): void
+    {
+        $directory = $this->temporaryRoot.'/sql/easy';
+        File::ensureDirectoryExists($directory);
+        $fixture = $this->validSqlFixture();
+        $fixture['hints'] = 'invalid';
+        file_put_contents(
+            $directory.'/invalid-hints.json',
+            json_encode($fixture, JSON_THROW_ON_ERROR),
+        );
+        config(['exercises.path' => $this->temporaryRoot]);
+
+        $exercise = (new JsonExerciseProvider)->random('sql', 'easy');
+
+        $this->assertSame([], $exercise['hints']);
     }
 
     public function test_uml_fixtures_cover_and_load_every_supported_diagram_type(): void

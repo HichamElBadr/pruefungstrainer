@@ -8,6 +8,10 @@ use App\Models\Exercise;
 
 class DatabaseExerciseProvider implements ExerciseProvider
 {
+    public function __construct(
+        private readonly ExerciseHintNormalizer $hintNormalizer,
+    ) {}
+
     public function random(string $type, string $difficulty, array $criteria = []): array
     {
         $matching = $this->all($type, $difficulty, $criteria);
@@ -62,6 +66,7 @@ class DatabaseExerciseProvider implements ExerciseProvider
             'title' => $exercise->title,
             'task' => $exercise->task,
             'explanation' => $exercise->explanation,
+            'hints' => $this->hintNormalizer->normalize($exercise->hints),
             'source' => $exercise->source,
         ];
 

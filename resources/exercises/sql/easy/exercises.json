@@ -9,6 +9,23 @@
     "setup_sql": "CREATE TABLE produkte (id INT PRIMARY KEY, name VARCHAR(80), preis DECIMAL(10,2), bestand INT);\nINSERT INTO produkte VALUES (1, 'Tastatur', 49.90, 24), (2, 'Monitor', 189.00, 8), (3, 'Maus', 24.50, 35), (4, 'Dockingstation', 129.00, 12);",
     "solution": "SELECT name, preis FROM produkte WHERE preis < 100 ORDER BY preis ASC;",
     "explanation": "WHERE begrenzt die Ergebnismenge auf Produkte unter 100 Euro. ORDER BY sortiert die Treffer aufsteigend.",
+    "hints": [
+      {
+        "level": 1,
+        "title": "Benötigte Spalten",
+        "text": "In der Ausgabe werden nur der Produktname und der Preis benötigt."
+      },
+      {
+        "level": 2,
+        "title": "Preis filtern",
+        "text": "Verwende eine WHERE-Bedingung, die nur Preise unter 100 berücksichtigt."
+      },
+      {
+        "level": 3,
+        "title": "Sortierung ergänzen",
+        "text": "Sortiere das gefilterte Ergebnis mit ORDER BY preis aufsteigend."
+      }
+    ],
     "tags": ["SQL", "SELECT", "WHERE", "ORDER BY", "AP2"]
   },
   {

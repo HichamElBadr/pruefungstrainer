@@ -17,9 +17,17 @@ class Exercise extends Model
         'title',
         'task',
         'explanation',
+        'hints',
         'source',
         'status',
     ];
+
+    protected function casts(): array
+    {
+        return [
+            'hints' => 'array',
+        ];
+    }
 
     public function category(): BelongsTo
     {

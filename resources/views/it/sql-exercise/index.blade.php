@@ -22,6 +22,8 @@
         </div>
     </section>
 
+    <x-exercise.hints :hints="$hints ?? []" />
+
     @if(!empty($tables))
         <section class="exercise-card">
             <div class="exercise-card-body space-y-5">

@@ -57,6 +57,8 @@
             </div>
         </section>
 
+        <x-exercise.hints :hints="$hints ?? []" />
+
         <section class="exercise-card">
             <div class="exercise-card-body">
                 <h2 class="font-heading text-xl font-semibold text-slate-950">Deine Antwort</h2>

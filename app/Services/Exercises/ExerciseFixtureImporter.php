@@ -68,6 +68,7 @@ class ExerciseFixtureImporter
                                 'title' => $fixture['title'],
                                 'task' => $fixture['task'],
                                 'explanation' => $fixture['explanation'],
+                                'hints' => $fixture['hints'],
                                 'source' => 'json',
                                 'status' => 'published',
                             ],

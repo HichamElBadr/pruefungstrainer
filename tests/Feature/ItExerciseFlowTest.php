@@ -120,6 +120,10 @@ class ItExerciseFlowTest extends TestCase
             ->assertViewHas('exerciseId', $first->id)
             ->assertSeeText($first->task)
             ->assertSeeText('Schwierigkeit: Einfach')
+            ->assertSeeText('Hinweise')
+            ->assertSeeText('Tipp 1 anzeigen')
+            ->assertSeeText('Benötigte Spalten')
+            ->assertSee('data-hint-mode="practice"', false)
             ->assertSee(route('sql-uebung.next', $first), false);
     }
 
@@ -389,6 +393,9 @@ class ItExerciseFlowTest extends TestCase
             ->assertSeeText('Schwierigkeit: Schwer')
             ->assertSeeText('Server-Rack kalkulieren')
             ->assertSeeText('Einheit: Euro')
+            ->assertSeeText('Hinweise')
+            ->assertSeeText('Tipp 1 anzeigen')
+            ->assertSeeText('Rechenweg beginnen')
             ->assertSessionHas('calculation_exercise_id', $exercise->id);
 
         $this->assertSame($exerciseCount, Exercise::count());
@@ -400,6 +407,7 @@ class ItExerciseFlowTest extends TestCase
             ->assertSeeText('Deine Lösung ist korrekt.')
             ->assertSee('value="2400"', false)
             ->assertSeeText('2400 Euro')
+            ->assertSeeText('Rechenweg beginnen')
             ->assertSeeText('Die Einzelkosten werden addiert.');
     }
 
@@ -497,6 +505,9 @@ class ItExerciseFlowTest extends TestCase
             ->assertSeeText('Das UML-Diagramm konnte nicht gerendert werden.')
             ->assertSeeText('Support-Ticket bearbeiten')
             ->assertSeeText('Ticket prüfen')
+            ->assertSeeText('Hinweise')
+            ->assertSeeText('Tipp 1 anzeigen')
+            ->assertSeeText('Ablauf identifizieren')
             ->assertDontSee('plantuml.jar')
             ->assertDontSee('password=secret');
     }
@@ -616,6 +627,13 @@ class ItExerciseFlowTest extends TestCase
             'unit' => 'Euro',
             'solution_steps' => '1200 + 800 + 400 = 2400 Euro.',
             'explanation' => 'Die Einzelkosten werden addiert.',
+            'hints' => [
+                [
+                    'level' => 1,
+                    'title' => 'Rechenweg beginnen',
+                    'text' => 'Addiere die Einzelkosten.',
+                ],
+            ],
             'source' => 'json',
         ];
     }
@@ -658,6 +676,13 @@ class ItExerciseFlowTest extends TestCase
                 'title' => 'Server-Rack kalkulieren',
                 'task' => 'Berechne die Gesamtkosten eines Server-Racks.',
                 'explanation' => 'Die Einzelkosten werden addiert.',
+                'hints' => [
+                    [
+                        'level' => 1,
+                        'title' => 'Rechenweg beginnen',
+                        'text' => 'Addiere die Einzelkosten.',
+                    ],
+                ],
                 'source' => 'json',
                 'status' => 'published',
             ],

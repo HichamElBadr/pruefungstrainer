@@ -98,6 +98,23 @@
       "Entscheidung mit zwei Pfaden",
       "Eskalationsaktivität"
     ],
+    "hints": [
+      {
+        "level": 1,
+        "title": "Ablauf identifizieren",
+        "text": "Ordnen Sie zuerst die Aktivitäten vom Eingang des Tickets bis zum Prozessende."
+      },
+      {
+        "level": 2,
+        "title": "Entscheidung modellieren",
+        "text": "Die direkte Lösbarkeit teilt den Prozess in zwei alternative Pfade."
+      },
+      {
+        "level": 3,
+        "title": "Pfade abschließen",
+        "text": "Der Lösungs- und der Eskalationspfad müssen beide zu einem definierten Ende führen."
+      }
+    ],
     "tags": ["UML", "Aktivitätsdiagramm", "Prozessmodell", "AP2"]
   }
 ]

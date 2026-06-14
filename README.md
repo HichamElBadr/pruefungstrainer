@@ -37,6 +37,11 @@ resources/exercises/
 ```
 
 Each JSON file may contain one exercise object or a list of exercise objects.
+Every exercise type may optionally provide up to three progressive `hints`.
+Valid hint entries use integer levels `1` to `3` plus non-empty `title` and
+`text` fields. Missing or malformed hints are ignored without rejecting the
+exercise.
+
 Import fixtures idempotently with:
 
 ```bash

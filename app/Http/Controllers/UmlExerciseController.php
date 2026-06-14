@@ -216,6 +216,7 @@ class UmlExerciseController extends Controller
             'requirements' => $exercise->umlDetail->requirements ?? [],
             'task' => $exercise->task,
             'explanation' => $exercise->explanation,
+            'hints' => $exercise->hints ?? [],
             'source' => $exercise->source,
             'diagram_type' => $exercise->umlDetail->diagram_type,
             'starter_plantuml' => $exercise->umlDetail->starter_plantuml,

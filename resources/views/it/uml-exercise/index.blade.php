@@ -92,8 +92,14 @@
                         {{ $exercise['task'] }}
                     </div>
                 </div>
+            </div>
+        </section>
 
-                <h3 class="mt-7 font-heading text-lg font-semibold text-slate-950">PlantUML-Eingabe</h3>
+        <x-exercise.hints :hints="$exercise['hints'] ?? []" />
+
+        <section class="exercise-card">
+            <div class="exercise-card-body">
+                <h3 class="font-heading text-lg font-semibold text-slate-950">PlantUML-Eingabe</h3>
 
                 <form action="{{ route('uml.render') }}" method="POST" class="mt-4 space-y-4">
                     @csrf

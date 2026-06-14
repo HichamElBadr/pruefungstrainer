@@ -1,5 +1,66 @@
 # Progress Update
 
+## 2026-06-14 - Add reusable progressive exercise hints
+
+### Summary
+
+Added optional progressive hints as a shared exercise feature for SQL, UML,
+calculation, and future catalog types. Centralized hint normalization and added
+one reusable collapsible Blade component across the existing exercise views.
+
+### Changed Files
+
+- `README.md`
+- `app/Http/Controllers/CalculationExerciseController.php`
+- `app/Http/Controllers/SqlExerciseController.php`
+- `app/Http/Controllers/UmlExerciseController.php`
+- `app/Models/Exercise.php`
+- `app/Services/Exercises/DatabaseExerciseProvider.php`
+- `app/Services/Exercises/ExerciseFixtureImporter.php`
+- `app/Services/Exercises/ExerciseHintNormalizer.php`
+- `app/Services/Exercises/JsonExerciseProvider.php`
+- `database/migrations/2026_06_14_000001_add_hints_to_exercises_table.php`
+- `resources/exercises/sql/easy/exercises.json`
+- `resources/exercises/uml/hard/exercises.json`
+- `resources/views/components/exercise/hints.blade.php`
+- `resources/views/it/calculation-exercises/index.blade.php`
+- `resources/views/it/sql-exercise/index.blade.php`
+- `resources/views/it/uml-exercise/index.blade.php`
+- `tests/Feature/ImportExercisesCommandTest.php`
+- `tests/Feature/ItExerciseFlowTest.php`
+- `tests/Unit/ExerciseHintNormalizerTest.php`
+- `tests/Unit/JsonExerciseProviderTest.php`
+- `docs/progress.md`
+
+### Behavior Changes
+
+- Every exercise payload now contains a normalized `hints` array.
+- Missing or non-array hints become an empty array.
+- Incomplete entries, invalid levels, and duplicate levels are ignored without
+  rejecting the exercise.
+- Valid hints are sorted by levels `1`, `2`, and `3` and limited to three.
+- SQL, UML, and calculation pages use the same collapsed hint component before
+  the learner input area.
+- Hint usage is not stored and does not reveal or affect sample solutions.
+- One SQL fixture and one UML fixture include minimal example hints.
+
+### Testing
+
+- Focused hint, provider, import, and exercise-flow tests: passed, 44 tests and
+  808 assertions.
+- `php artisan exercises:validate`: passed for all 43 fixtures with SQL and
+  PlantUML execution enabled.
+- `php artisan exercises:import`: passed; 43 existing catalog exercises
+  updated.
+- `php artisan test`: passed, 96 tests and 963 assertions.
+- `php artisan view:cache`: passed.
+- Laravel Pint and `git diff --check`: passed.
+
+### Follow-up Notes
+
+- The component accepts a `mode` value for future behavior changes, but practice
+  and exam-mode differences are intentionally not implemented yet.
+
 ## 2026-06-14 - Support structured multi-type UML exercises
 
 ### Summary

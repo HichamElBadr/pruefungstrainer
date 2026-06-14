@@ -8,6 +8,13 @@ use JsonException;
 
 class JsonExerciseProvider implements ExerciseProvider
 {
+    private readonly ExerciseHintNormalizer $hintNormalizer;
+
+    public function __construct(?ExerciseHintNormalizer $hintNormalizer = null)
+    {
+        $this->hintNormalizer = $hintNormalizer ?? new ExerciseHintNormalizer;
+    }
+
     public function random(string $type, string $difficulty, array $criteria = []): array
     {
         $matching = $this->all($type, $difficulty, $criteria);
@@ -41,6 +48,7 @@ class JsonExerciseProvider implements ExerciseProvider
 
         foreach ($files as $file) {
             foreach ($this->loadFile($file) as $index => $fixture) {
+                $fixture['hints'] = $this->hintNormalizer->normalize($fixture['hints'] ?? []);
                 $this->validateFixture($fixture, $type, $difficulty, $file, $index);
                 $fixtures[] = $fixture;
             }
