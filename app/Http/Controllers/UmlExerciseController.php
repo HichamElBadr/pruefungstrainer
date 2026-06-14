@@ -6,10 +6,13 @@ use App\Contracts\ExerciseProvider;
 use App\Exceptions\ExerciseSourceException;
 use App\Models\Exercise;
 use App\Services\PlantUmlInput;
+use App\Services\PlantUmlRenderCache;
 use App\Services\PlantUmlService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 use RuntimeException;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 use Throwable;
 
 class UmlExerciseController extends Controller
@@ -23,6 +26,7 @@ class UmlExerciseController extends Controller
     public function __construct(
         private readonly ExerciseProvider $exerciseProvider,
         private readonly PlantUmlInput $plantUmlInput,
+        private readonly PlantUmlRenderCache $solutionRenderCache,
     ) {}
 
     public function create(Request $request)
@@ -89,6 +93,19 @@ class UmlExerciseController extends Controller
         }
     }
 
+    public function solutionImage(string $hash): StreamedResponse
+    {
+        $path = "plantuml-cache/{$hash}.png";
+        $disk = Storage::disk('public');
+
+        abort_unless($disk->exists($path), 404);
+
+        return $disk->response($path, "{$hash}.png", [
+            'Cache-Control' => 'public, max-age=31536000, immutable',
+            'Content-Type' => 'image/png',
+        ]);
+    }
+
     /**
      * @return array<string, mixed>
      */
@@ -147,6 +164,7 @@ class UmlExerciseController extends Controller
         return [
             'input' => $input,
             'imageDataUrl' => $imageDataUrl,
+            'solutionImageUrl' => $this->solutionImageUrl($exercise),
             'error' => $error,
             'exercise' => $exercise,
             'difficulties' => collect(self::DIFFICULTIES)
@@ -241,6 +259,31 @@ class UmlExerciseController extends Controller
             if (is_file($pngPath)) {
                 unlink($pngPath);
             }
+        }
+    }
+
+    /**
+     * @param  array<string, mixed>|null  $exercise
+     */
+    private function solutionImageUrl(?array $exercise): ?string
+    {
+        if (! is_array($exercise) || empty($exercise['solution_plantuml'])) {
+            return null;
+        }
+
+        try {
+            $cached = $this->solutionRenderCache
+                ->cache((string) $exercise['solution_plantuml']);
+
+            return route('uml.solution-image', ['hash' => $cached['hash']]);
+        } catch (Throwable $e) {
+            Log::warning('UML sample solution cache failed.', [
+                'exercise_id' => $exercise['id'] ?? null,
+                'exception' => $e::class,
+                'error' => $e->getMessage(),
+            ]);
+
+            return null;
         }
     }
 }

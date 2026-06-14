@@ -148,6 +148,16 @@
                         Musterlösung anzeigen
                     </summary>
 
+                    @if(!empty($solutionImageUrl))
+                        <div class="mt-4 overflow-x-auto rounded-lg border border-slate-200 bg-slate-50 p-4">
+                            <img
+                                src="{{ $solutionImageUrl }}"
+                                alt="Gerenderte UML-Musterlösung"
+                                class="max-w-full rounded-md border border-slate-200 bg-white"
+                            >
+                        </div>
+                    @endif
+
                     <pre class="exercise-code mt-4 overflow-x-auto"><code>{{ $exercise['solution_plantuml'] }}</code></pre>
 
                     @if(!empty($exercise['expected_elements']))

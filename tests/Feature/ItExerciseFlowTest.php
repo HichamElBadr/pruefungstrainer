@@ -9,9 +9,11 @@ use App\Models\Exercise;
 use App\Models\User;
 use App\Services\DatabaseManager;
 use App\Services\Exercises\ExerciseFixtureImporter;
+use App\Services\PlantUmlRenderCache;
 use App\Services\PlantUmlService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Storage;
 use Mockery;
 use PDO;
 use Tests\TestCase;
@@ -25,6 +27,14 @@ class ItExerciseFlowTest extends TestCase
         parent::setUp();
 
         app(ExerciseFixtureImporter::class)->import();
+
+        $solutionCache = Mockery::mock(PlantUmlRenderCache::class);
+        $solutionCache->shouldReceive('cache')->byDefault()->andReturn([
+            'hash' => str_repeat('a', 64),
+            'path' => 'plantuml-cache/'.str_repeat('a', 64).'.png',
+            'rendered' => false,
+        ]);
+        $this->app->instance(PlantUmlRenderCache::class, $solutionCache);
     }
 
     public function test_guest_users_are_redirected_from_it_exercises(): void
@@ -423,6 +433,8 @@ class ItExerciseFlowTest extends TestCase
             ->assertSeeText('Schwierigkeit: Einfach')
             ->assertSeeText('PlantUML-Eingabe')
             ->assertSeeText('Musterlösung anzeigen')
+            ->assertSee(route('uml.solution-image', ['hash' => str_repeat('a', 64)]), false)
+            ->assertSee('alt="Gerenderte UML-Musterlösung"', false)
             ->assertSessionMissing('uml_exercise_id');
 
         $this->assertSame($exerciseCount, Exercise::count());
@@ -430,6 +442,29 @@ class ItExerciseFlowTest extends TestCase
             'name="exercise_id" value="'.$response->viewData('exercise')['database_id'].'"',
             false,
         );
+    }
+
+    public function test_cached_uml_solution_image_is_served_through_laravel(): void
+    {
+        Storage::fake('public');
+        $user = User::factory()->create();
+        $hash = str_repeat('b', 64);
+        Storage::disk('public')->put(
+            "plantuml-cache/{$hash}.png",
+            base64_decode(
+                'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/aQ0AAAAASUVORK5CYII=',
+            ),
+        );
+
+        $response = $this->actingAs($user)
+            ->get(route('uml.solution-image', ['hash' => $hash]))
+            ->assertOk()
+            ->assertHeader('content-type', 'image/png');
+
+        $cacheControl = (string) $response->headers->get('cache-control');
+        $this->assertStringContainsString('public', $cacheControl);
+        $this->assertStringContainsString('max-age=31536000', $cacheControl);
+        $this->assertStringContainsString('immutable', $cacheControl);
     }
 
     public function test_uml_page_filters_catalog_exercises_by_diagram_type(): void
@@ -503,11 +538,11 @@ class ItExerciseFlowTest extends TestCase
             ])
             ->assertOk()
             ->assertSeeText('Das UML-Diagramm konnte nicht gerendert werden.')
-            ->assertSeeText('Support-Ticket bearbeiten')
+            ->assertSeeText($exercise->title)
             ->assertSeeText('Ticket prüfen')
             ->assertSeeText('Hinweise')
             ->assertSeeText('Tipp 1 anzeigen')
-            ->assertSeeText('Ablauf identifizieren')
+            ->assertSeeText($exercise->hints[0]['title'])
             ->assertDontSee('plantuml.jar')
             ->assertDontSee('password=secret');
     }

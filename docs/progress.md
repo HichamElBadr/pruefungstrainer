@@ -1,5 +1,62 @@
 # Progress Update
 
+## 2026-06-14 - Cache rendered UML sample solutions
+
+### Summary
+
+Added hash-based caching for rendered UML sample-solution diagrams. The
+PlantUML source remains authoritative, while web requests and a new Artisan
+command reuse PNG files stored on the public Laravel disk.
+
+### Changed Files
+
+- `README.md`
+- `app/Console/Commands/RenderUmlSolutions.php`
+- `app/Http/Controllers/UmlExerciseController.php`
+- `app/Services/PlantUmlRenderCache.php`
+- `resources/views/it/uml-exercise/index.blade.php`
+- `tests/Feature/ItExerciseFlowTest.php`
+- `tests/Feature/RenderUmlSolutionsCommandTest.php`
+- `tests/Unit/PlantUmlRenderCacheTest.php`
+- `docs/progress.md`
+
+### Behavior Changes
+
+- UML sample-solution PNG files are named with a SHA-256 hash of
+  `solution_plantuml`.
+- Existing cache files are returned without invoking PlantUML again.
+- Changed PlantUML source produces a different cache path automatically.
+- The UML sample-solution section displays the cached diagram, source code,
+  expected elements, and explanation.
+- Cached images are served through an authenticated Laravel route instead of
+  relying on the public-disk `APP_URL`, so XAMPP subdirectory installations
+  generate working image URLs.
+- Cache failures do not prevent the exercise page or source solution from
+  loading.
+- `php artisan exercises:render-uml-solutions` processes all UML JSON fixtures,
+  continues after individual failures, and reports rendered, reused, and failed
+  counts.
+- Learner-submitted PlantUML continues to use the existing dynamic rendering
+  path.
+
+### Testing
+
+- Focused cache, command, and UML-flow tests: passed, 22 tests and 229
+  assertions.
+- First real cache command run: 12 rendered, 1 reused, 0 failed.
+- Second real cache command run: 0 rendered, 13 reused, 0 failed.
+- `php artisan test`: passed, 101 tests and 1000 assertions.
+- `php artisan view:cache`: passed.
+- Cache filesystem check: 13 SHA-256-named PNG files and an active public
+  storage link.
+- Local XAMPP HTTP check reached the image route under
+  `/pruefungstrainer/public` and correctly applied authentication.
+- Laravel Pint and `git diff --check`: passed.
+
+### Follow-up Notes
+
+- None.
+
 ## 2026-06-14 - Add reusable progressive exercise hints
 
 ### Summary

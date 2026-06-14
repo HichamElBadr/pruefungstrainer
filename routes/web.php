@@ -38,6 +38,9 @@ Route::middleware(['auth', 'verified'])->prefix('it')->group(function () {
         ->name('calculation-exercises.check');
     Route::post('calculation-exercises/{topic}', [CalculationExerciseController::class, 'generate'])
         ->name('calculation-exercises.generate');
+    Route::get('/uml/solution-cache/{hash}.png', [UmlExerciseController::class, 'solutionImage'])
+        ->where('hash', '[a-f0-9]{64}')
+        ->name('uml.solution-image');
     Route::get('/uml', [UmlExerciseController::class, 'create'])->name('uml.form');
     Route::post('/uml', [UmlExerciseController::class, 'render'])->name('uml.render');
 });

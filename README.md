@@ -80,7 +80,9 @@ UML fixtures support `class`, `er`, `use_case`, `sequence`, and `activity`
 diagram types. They contain a scenario, requirements, optional starter code,
 the PlantUML sample solution, and expected elements. Learner input is rendered
 locally with Java and PlantUML. Input without `@startuml` is wrapped without
-diagram-specific transformations.
+diagram-specific transformations. `solution_plantuml` remains the source of
+truth for sample solutions; rendered PNG files are cached by source hash under
+`storage/app/public/plantuml-cache`.
 
 Calculation fixtures contain `expected_result`, `unit`, `solution_steps`, and an
 explanation. Existing topic selection and numeric checking remain in Laravel.
@@ -140,6 +142,18 @@ PlantUML paths are environment-specific:
 PLANTUML_JAVA_PATH=java
 PLANTUML_JAR_PATH=C:\path\to\plantuml.jar
 ```
+
+Pre-render or refresh all UML sample-solution images with:
+
+```bash
+php artisan exercises:render-uml-solutions
+```
+
+The command reuses images whose PlantUML source hash already exists and reports
+rendered, reused, and failed diagrams. A changed `solution_plantuml` value
+automatically produces a new cache filename. Cached images are served through
+an authenticated Laravel route, so installations in an Apache/XAMPP
+subdirectory do not depend on `APP_URL` matching the web path.
 
 Do not commit local credentials or machine-specific paths.
 
